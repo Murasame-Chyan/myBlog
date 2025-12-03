@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>博客主页</title>
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 1.header -->
+    <header th:replace="~{fragment/header :: nav}"></header>
+
+    <!-- 2.blogList -->
+    <main class="container my-4">
+        <h5 class="mb-3">最新文章</h5>
+
+        <div class="card shadow-sm mb-3" th:each="b : ${blogBrief}">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <!-- 左侧 标题 + 摘要 -->
+                    <div class="col-9">
+                        <h5 class="card-title">
+                            <a th:href="@{/blogs/{id}(id=${b.id})}" th:text="${b.title}">标题</a>
+                        </h5>
+                        <p class="card-text text-muted small"
+                           th:text="${b.brief}+'...'">摘要...</p>
+                    </div>
+
+                    <!-- 右侧 作者 + 时间 -->
+                    <div class="col-3 text-end">
+                        <div class="small text-muted">
+                            <div>发布者:<span th:text="${b.author}">作者</span></div>
+                            <div>发布时间:<span th:text="${#temporals.format(b.created_at,'yyyy-MM-dd HH:mm')}">2025-12-03 17:00</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 选择性显示 -->
+        <div th:if="${blogBrief.size() < 5}" class="alert alert-info">
+            没有更多文章了，先来写一篇吧~ 御坂网路支持中...
+        </div>
+        <div th:if="${blogBrief.size() >= 5}" class="alert alert-info">
+            已收录 <span th:text="${blogBrief.size()}"></span> 篇文章~ 御坂网路支持中...
+        </div>
+    </main>
+
+
+    <!-- 99.Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
