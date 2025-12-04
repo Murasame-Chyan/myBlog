@@ -6,6 +6,6 @@ import java.math.BigInteger;
 
 @Data
 public class Users {
-	BigInteger id;
+	Long id;
 	String nickname;
 }

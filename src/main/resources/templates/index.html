@@ -5,6 +5,7 @@
     <title>博客主页</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body>
     <!-- 1.header -->
@@ -20,7 +21,7 @@
                     <!-- 左侧 标题 + 摘要 -->
                     <div class="col-9">
                         <h5 class="card-title">
-                            <a th:href="@{/blogs/{id}(id=${b.id})}" th:text="${b.title}">标题</a>
+                            <a th:href="@{/blogs/read/{id}(id=${b.id})}" th:text="${b.title}">标题</a>
                         </h5>
                         <p class="card-text text-muted small"
                            th:text="${b.brief}+'...'">摘要...</p>
@@ -45,6 +46,12 @@
             已收录 <span th:text="${blogBrief.size()}"></span> 篇文章~ 御坂网路支持中...
         </div>
     </main>
+
+    <!-- 3.publishBlogButton  -->
+    <a th:href="@{/blogs/write}"
+       class="position-fixed bottom-0 end-0 m-4 btn btn-lg btn-primary rounded-circle shadow">
+        <i class="bi bi-plus-lg"></i>   <!-- Bootstrap Icons -->
+    </a>
 
 
     <!-- 99.Bootstrap JS -->
