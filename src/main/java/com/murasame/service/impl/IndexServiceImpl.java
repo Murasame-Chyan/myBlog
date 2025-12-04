@@ -16,17 +16,6 @@ public class IndexServiceImpl implements IndexService {
 	IndexMapper indexMapper;
 
 	@Override
-	public String getBlogById_toString(BigInteger id) {
-		Blogs blog =  indexMapper.getBlogById(id);
-		return blog.toString();
-	}
-
-	@Override
-	public Blogs getBlogById(BigInteger id) {
-		return indexMapper.getBlogById(id);
-	}
-
-	@Override
 	public List<BlogBriefVO> getRecent5BlogsBrief(){
 		return indexMapper.getRecent5BlogsBrief();
 	}

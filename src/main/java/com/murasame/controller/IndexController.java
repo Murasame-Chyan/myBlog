@@ -2,8 +2,10 @@ package com.murasame.controller;
 
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.entity.Blogs;
+import com.murasame.service.BlogService;
 import com.murasame.service.IndexService;
 import jakarta.annotation.Resource;
+import jakarta.annotation.Resources;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +20,8 @@ public class IndexController {
 	// 资源区
 	@Resource
 	IndexService indexService;
+	@Resource
+	BlogService blogService;
 
 	// 博客主页
 	@GetMapping({"/", "/index"})
@@ -27,24 +31,11 @@ public class IndexController {
 		return "index";
 	}
 
-	// 点击跳转文章正文 RESTful跟随文章id
-	@GetMapping("/blogs/{id}")
-	public String readBlog(@PathVariable BigInteger id, Model model) {
-		Blogs blog = indexService.getBlogById(id);
-		if (blog == null) {
-			String errorInf = "您访问的博客不存在！";
-			model.addAttribute("errorInf", errorInf);
-			return "error";
-		}
-		model.addAttribute("blog", blog);
-		return "readBlog";
-	}
-
 	// test
 	@ResponseBody
 	@GetMapping("/test")
 	public String test() {
-		BigInteger id = new BigInteger("1");
-		return indexService.getBlogById_toString(id);
+		Long id = 1L;
+		return blogService.getBlogById_toString(id);
 	}
 }
