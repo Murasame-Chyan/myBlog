@@ -2,7 +2,6 @@ package com.murasame.entity;
 
 import lombok.Data;
 
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Data
