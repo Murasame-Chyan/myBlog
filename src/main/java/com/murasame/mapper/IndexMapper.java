@@ -1,12 +1,9 @@
 package com.murasame.mapper;
 
 import com.murasame.domain.vo.BlogBriefVO;
-import com.murasame.entity.Blogs;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
-import java.math.BigInteger;
 import java.util.List;
 
 @Mapper

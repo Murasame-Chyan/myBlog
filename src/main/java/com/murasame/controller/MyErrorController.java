@@ -1,11 +1,13 @@
 package com.murasame.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
+@Tag(name="错误处理接口", description = "错误跳转")
 public class MyErrorController implements ErrorController {
 	@RequestMapping("/error")
 	public Object handleError(HttpServletRequest request) {

@@ -2,7 +2,6 @@ package com.murasame.domain.vo;
 
 import lombok.Data;
 
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 // 博客摘要词条 - 前端展示VO

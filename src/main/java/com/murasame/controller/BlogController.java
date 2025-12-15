@@ -2,20 +2,20 @@ package com.murasame.controller;
 
 import com.murasame.entity.Blogs;
 import com.murasame.service.BlogService;
-import com.murasame.service.IndexService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigInteger;
 import java.util.Map;
 
 @RequestMapping("/blogs")
 @Controller
+@Tag(name="博客接口", description = "博客相关CRUD")
 public class BlogController {
 	@Resource
-	BlogService blogService;
+	private BlogService blogService;
 
 	// From index 点击跳转文章正文 RESTful跟随文章id
 	@GetMapping("read/{id}")
@@ -45,5 +45,19 @@ public class BlogController {
 		return Map.of("code", newId > 0 ? 200 : 500,
 				"msg",  newId > 0 ? "发布成功" : "发布失败",
 				"id",   newId);
+	}
+
+	// From noWhere（testing in swagger）
+	@ResponseBody
+	@PostMapping("/delete/{id}")
+	public String deleteBlog(@PathVariable Long id){
+		int dropStatus = blogService.dropBlogToBin(id);
+		return dropStatus == 1 ? "已移入回收箱。" : "博客不存在！";
+	}
+	@ResponseBody
+	@PostMapping("/recover/{id}")
+	public String recoverBlog(@PathVariable Long id){
+		int recoverStatus = blogService.recoverBlogFromBin(id);
+		return recoverStatus == 1 ? "博客已重新发布！" : "博客不存在！";
 	}
 }

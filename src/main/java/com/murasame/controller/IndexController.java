@@ -1,21 +1,19 @@
 package com.murasame.controller;
 
 import com.murasame.domain.vo.BlogBriefVO;
-import com.murasame.entity.Blogs;
 import com.murasame.service.BlogService;
 import com.murasame.service.IndexService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
-import jakarta.annotation.Resources;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.math.BigInteger;
 import java.util.List;
 
 @Controller
+@Tag(name="主页接口", description = "主页相关操作")
 public class IndexController {
 	// 资源区
 	@Resource
