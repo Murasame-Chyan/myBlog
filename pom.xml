@@ -77,6 +77,12 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.8.14</version>
         </dependency>
+        <!-- Jsoup Html解析器 防博文HTML注入 -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.21.2</version>
+        </dependency>
         <!--    -->
     </dependencies>
 

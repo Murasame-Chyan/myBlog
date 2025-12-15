@@ -4,6 +4,8 @@ import com.murasame.entity.Blogs;
 import com.murasame.service.BlogService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -39,8 +41,12 @@ public class BlogController {
 	@PostMapping("/publish")
 	public Map<String, Object> publishBlog(
 			@RequestParam String title,
-			@RequestParam String content,
+			@RequestParam String content, // 已转义 + <br>
 			@RequestParam(value = "authorId", defaultValue = "1") Integer authorId) { // 默认 1
+		// 1 白名单过滤：只允许 <br>，其它标签全剥
+		String safeHtml = Jsoup.clean(content, Safelist.basic().addTags("br"));
+
+		// 2 正常插入（MyBatis 参数绑定已防 SQL 注入）
 		int newId = blogService.publishBlog(authorId, title, content);
 		return Map.of("code", newId > 0 ? 200 : 500,
 				"msg",  newId > 0 ? "发布成功" : "发布失败",
