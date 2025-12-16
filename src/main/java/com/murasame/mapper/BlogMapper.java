@@ -33,4 +33,10 @@ public interface BlogMapper {
 	"VALUES (#{blog.author_id}, #{blog.title}, #{blog.content}, #{blog.created_at}, NOW())")
 	@Options(useGeneratedKeys = true, keyProperty = "id")
 	int recoverBlogFromBin(@Param("blog") Blogs blog);
+
+	// 更新博文
+	@Update("UPDATE blogs SET title=#{title}, content=#{content}, updated_at=NOW() WHERE id=#{id}")
+	int editBlog(@Param("id") Long id,
+	             @Param("title") String title,
+	             @Param("content") String content);
 }

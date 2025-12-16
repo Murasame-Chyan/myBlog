@@ -31,7 +31,8 @@
                     <div class="col-3 text-end">
                         <div class="small text-muted">
                             <div>发布者:<span th:text="${b.author}">作者</span></div>
-                            <div>发布时间:<span th:text="${#temporals.format(b.created_at,'yyyy-MM-dd HH:mm')}">2025-12-03 17:00</span></div>
+                            <div>发布时间:<span th:text="${#temporals.format(b.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span></div>
+                            <div>上次更新:<span th:text="${#temporals.format(b.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span></div>
                         </div>
                     </div>
                 </div>

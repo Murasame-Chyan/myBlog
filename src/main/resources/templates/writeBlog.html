@@ -12,25 +12,31 @@
 
     <!-- 2.writeBlogArea -->
     <main class="container my-4">
-        <h4>写新博文</h4>
-        <form id="publishForm">
+        <h4 th:text="${blog} ? '更新文章' : '写新博文'">写新博文</h4>
+        <form id="publishForm"
+              th:action="@{${blog != null ? '/blogs/update' : '/blogs/publish'}}"
+              method="post">
             <!-- 标题 -->
+            <input type="hidden" th:value="${blog != null ? blog.getId() : 0}" id="getBlogId">
             <div class="mb-3">
                 <label class="form-label">标题</label>
-                <input type="text" class="form-control" name="title" required maxlength="200">
+                <input th:value="${blog?.getTitle()}" type="text" class="form-control" name="title" id="title" required maxlength="200">
             </div>
 
             <!-- 正文（这里用简单 textarea，以后可换富文本） -->
             <div class="mb-3">
                 <label class="form-label">正文</label>
-                <textarea class="form-control" id="content" rows="15" required></textarea>
+                <textarea th:text="${blog?.content}" class="form-control" id="content" rows="15" required></textarea>
             </div>
 
             <!-- 作者 ID（隐藏写死） -->
             <input type="hidden" name="authorId" value="1">
+            <!-- 编辑模式下带上blog.id来update -->
+            <input th:if="${blog}" type="hidden" name="id" th:value="${blog.id}">
 
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-send"></i> 立即发布
+                <i class="bi bi-send"></i>
+                <span th:text="${blog} ? '更新文章' : '立即发布'">立即发布</span>
             </button>
             <a th:href="@{/}" class="btn btn-link">返回首页</a>
         </form>

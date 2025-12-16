@@ -53,4 +53,9 @@ public class BlogServiceImpl implements BlogService {
 		}
 		return 0;
 	}
+
+	@Override
+	public int updateBlog(Long id, String title, String content){
+		return blogMapper.editBlog(id, title, content);
+	}
 }
