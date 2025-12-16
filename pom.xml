@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.Murasame</groupId>
     <artifactId>myBlog</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0-alpha</version>
     <name>myBlog</name>
     <description>myBlog</description>
     <url/>
@@ -82,6 +82,12 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.21.2</version>
+        </dependency>
+        <!-- MarkDown <-> Html 文本格式互转（后端进行） -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>0.27.0</version>
         </dependency>
         <!--    -->
     </dependencies>

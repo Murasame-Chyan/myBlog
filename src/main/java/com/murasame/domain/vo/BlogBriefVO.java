@@ -11,5 +11,6 @@ public class BlogBriefVO {
 	private String title;               // blogs.title
 	private String brief;               // top 30 char of blogs.content
 	private LocalDateTime created_at;   // same
+	private LocalDateTime updated_at;
 	private String author;              // users.nickname
 }

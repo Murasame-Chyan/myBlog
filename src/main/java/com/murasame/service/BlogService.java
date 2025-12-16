@@ -14,4 +14,6 @@ public interface BlogService {
 	int dropBlogToBin(Long id);                                         // 删除blogs.id的博文移入回收箱
 
 	int recoverBlogFromBin(Long id);                                    // 恢复blogsBin.id的博文回到blogs
+
+	int updateBlog(Long id, String title, String content);              // 更新blog，自动更新update_at时间
 }

@@ -2,6 +2,7 @@ package com.murasame.controller;
 
 import com.murasame.entity.Blogs;
 import com.murasame.service.BlogService;
+import com.murasame.util.BlogHtmlUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.jsoup.Jsoup;
@@ -28,6 +29,7 @@ public class BlogController {
 			model.addAttribute("errorInf", errorInf);
 			return "error";
 		}
+		blog.setContent(BlogHtmlUtil.toHtml(blog.getContent()));    // 自定义工具类：从储存格式markdown转化干净的博客Html
 		model.addAttribute("blog", blog);
 		return "readBlog";
 	}
@@ -42,7 +44,7 @@ public class BlogController {
 	public Map<String, Object> publishBlog(
 			@RequestParam String title,
 			@RequestParam String content, // 已转义 + <br>
-			@RequestParam(value = "authorId", defaultValue = "1") Integer authorId) { // 默认 1
+			@RequestParam(value = "authorId", defaultValue = "1") Integer authorId) {
 		// 1 白名单过滤：只允许 <br>，其它标签全剥
 		String safeHtml = Jsoup.clean(content, Safelist.basic().addTags("br"));
 
@@ -51,6 +53,31 @@ public class BlogController {
 		return Map.of("code", newId > 0 ? 200 : 500,
 				"msg",  newId > 0 ? "发布成功" : "发布失败",
 				"id",   newId);
+	}
+
+	// From readBlog 点击修改文章按钮
+	@GetMapping("/edit/{id}")
+	public String editBlog(@PathVariable Long id, Model model) {
+		Blogs blog = blogService.getBlogById(id);
+		if (blog != null) {
+			blog.setContent(BlogHtmlUtil.toHtml(blog.getContent()));    // 自定义工具类：从储存格式markdown转化干净的博客Html
+			model.addAttribute("blog", blog);
+			return "writeBlog";
+		}
+		return "redirect:/read/{id}";
+	}
+	@ResponseBody
+	@PostMapping("/update")
+	public Map<String, Object> updateBlog(
+			@RequestParam String title,
+			@RequestParam String content,   // 已转义 + <br>
+			@RequestParam Long id,
+			Model model) {        // id是Blog.id
+		if (!model.containsAttribute("id"))
+			model.addAttribute("id", id);
+		return (blogService.updateBlog(id, title, content) > 0)
+				? Map.of("code", 200, "msg", "成功更新")
+				: Map.of("code", 500, "msg", "更新失败");
 	}
 
 	// From noWhere（testing in swagger）
