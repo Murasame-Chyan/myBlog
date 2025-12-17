@@ -5,7 +5,7 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 
-// 后端传值将html博客文本与markdown之间互转保存或取值（Jsoup + commonmark）
+// (暂时未使用)后端传值将html博客文本与markdown之间互转保存或取值（Jsoup + commonmark）
 public class BlogHtmlUtil {
 	private static final Parser PARSER = Parser.builder().build();
 	private static final HtmlRenderer RENDERER = HtmlRenderer.builder().build();
@@ -16,7 +16,6 @@ public class BlogHtmlUtil {
 	// markdown to clean html
 	public static String toHtml(String markdown){
 		if (markdown == null) return "";
-		markdown = markdown.replace("\n","\n\n");
 		String html = RENDERER.render(PARSER.parse(markdown));
 		return Jsoup.clean(html, SAFE);
 	}

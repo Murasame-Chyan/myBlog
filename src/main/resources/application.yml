@@ -8,3 +8,9 @@ spring:
   profiles:
     active: dev
 
+  datasource:
+    url: jdbc:mysql://localhost:3306/myblogdb
+    username: root
+    password: zjh6851265
+    driver-class-name: com.mysql.cj.jdbc.Driver
+

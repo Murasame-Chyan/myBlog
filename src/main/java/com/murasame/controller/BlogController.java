@@ -29,7 +29,6 @@ public class BlogController {
 			model.addAttribute("errorInf", errorInf);
 			return "error";
 		}
-		blog.setContent(BlogHtmlUtil.toHtml(blog.getContent()));    // 自定义工具类：从储存格式markdown转化干净的博客Html
 		model.addAttribute("blog", blog);
 		return "readBlog";
 	}
@@ -45,10 +44,6 @@ public class BlogController {
 			@RequestParam String title,
 			@RequestParam String content, // 已转义 + <br>
 			@RequestParam(value = "authorId", defaultValue = "1") Integer authorId) {
-		// 1 白名单过滤：只允许 <br>，其它标签全剥
-		String safeHtml = Jsoup.clean(content, Safelist.basic().addTags("br"));
-
-		// 2 正常插入（MyBatis 参数绑定已防 SQL 注入）
 		int newId = blogService.publishBlog(authorId, title, content);
 		return Map.of("code", newId > 0 ? 200 : 500,
 				"msg",  newId > 0 ? "发布成功" : "发布失败",
@@ -60,7 +55,6 @@ public class BlogController {
 	public String editBlog(@PathVariable Long id, Model model) {
 		Blogs blog = blogService.getBlogById(id);
 		if (blog != null) {
-			blog.setContent(BlogHtmlUtil.toHtml(blog.getContent()));    // 自定义工具类：从储存格式markdown转化干净的博客Html
 			model.addAttribute("blog", blog);
 			return "writeBlog";
 		}
@@ -86,6 +80,12 @@ public class BlogController {
 	public String deleteBlog(@PathVariable Long id){
 		int dropStatus = blogService.dropBlogToBin(id);
 		return dropStatus == 1 ? "已移入回收箱。" : "博客不存在！";
+	}
+	@ResponseBody
+	@PostMapping("/deleteAll")
+	public String deleteBlog(){
+		int dropStatus = blogService.moveAllBlogsToBin();
+		return dropStatus != 0 ? "已全体移入回收箱。" : "全体移除失败！";
 	}
 	@ResponseBody
 	@PostMapping("/recover/{id}")
