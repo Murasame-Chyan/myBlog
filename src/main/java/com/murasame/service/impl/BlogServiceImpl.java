@@ -6,6 +6,7 @@ import com.murasame.service.BlogService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -44,11 +45,27 @@ public class BlogServiceImpl implements BlogService {
 		return 0;
 	}
 
+	private static <T> List<List<T>> splitList(List<T> list, int size) {    // 自定义List分片函数
+		List<List<T>> result = new ArrayList<>();
+		for (int i = 0; i < list.size(); i += size) {
+			result.add(list.subList(i, Math.min(i + size, list.size())));
+		}
+		return result;
+	}
+
 	@Override
 	public int moveAllBlogsToBin(){ // 全体blog缓存后删除，全部移入垃圾箱
 		List<Blogs> droppingBlogs = blogMapper.getAllBlogs();
+		if (droppingBlogs.isEmpty()) {
+			return 0;
+		}
+		int sum = 0;
+		// 每 500 条一批(性能优化)
+		for (List<Blogs> batch : splitList(droppingBlogs, 500)) {
+			sum += blogMapper.dropAllBlogsToBin(batch);
+		}
 		blogMapper.removeAllBlogs();
-		return blogMapper.dropAllBlogsToBin(droppingBlogs);
+		return sum;
 	}
 
 	@Override
