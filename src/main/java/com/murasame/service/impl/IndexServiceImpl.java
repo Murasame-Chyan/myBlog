@@ -16,11 +16,6 @@ public class IndexServiceImpl implements IndexService {
 
 	@Override
 	public List<BlogBriefVO> getRecent5BlogsBrief(){
-		List<BlogBriefVO> blogsBrief = indexMapper.getRecent5BlogsBrief();
-		// 自定义工具类：转换干净html文本
-		for(BlogBriefVO blogBriefVO : blogsBrief){
-			blogBriefVO.setBrief(BlogHtmlUtil.toHtml(blogBriefVO.getBrief()));
-		}
-		return blogsBrief;
+		return indexMapper.getRecent5BlogsBrief();
 	}
 }
