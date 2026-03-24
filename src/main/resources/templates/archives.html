@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>归档页面</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/common.css">
+</head>
+<body>
+    <header th:replace="~{fragment/header :: nav('archives')}"></header>
+
+    <main class="container my-4">
+        <div class="row">
+            <aside class="col-lg-3 col-md-4 mb-4">
+                <div class="sidebar-left">
+                    <div class="sidebar-section">
+                        <h6 class="sidebar-title">
+                            <i class="bi bi-tags"></i> 标签
+                        </h6>
+                        <div class="tags-cloud">
+                            <a href="#" class="tag-badge">Java</a>
+                            <a href="#" class="tag-badge">Spring Boot</a>
+                            <a href="#" class="tag-badge">Vue3</a>
+                            <a href="#" class="tag-badge">MySQL</a>
+                            <a href="#" class="tag-badge">前端开发</a>
+                            <a href="#" class="tag-badge">后端开发</a>
+                            <a href="#" class="tag-badge">算法</a>
+                            <a href="#" class="tag-badge">数据库</a>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="col-lg-6 col-md-8 mb-4">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle"></i> 此处展示已删除的文章，仅支持阅读，不支持评论。
+                </div>
+
+                <h5 class="mb-3">已归档文章</h5>
+
+                <div class="card shadow-sm mb-3" th:each="a : ${archiveBrief}">
+                    <div class="card-body">
+                        <h5 class="card-title mb-2">
+                            <a th:href="@{/archives/read/{id}(id=${a.id})}" th:text="${a.title}">标题</a>
+                        </h5>
+                        
+                        <p class="card-text text-muted small mb-3"
+                           th:text="${a.brief}+'...'">摘要...</p>
+                        
+                        <div class="blog-meta">
+                            <span class="meta-item">
+                                <i class="bi bi-person"></i>
+                                <span th:text="${a.author}">作者</span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-calendar"></i>
+                                <span th:text="${#temporals.format(a.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-clock-history"></i>
+                                <span th:text="${#temporals.format(a.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${totalPages > 1}" class="pagination-container mb-3">
+                    <nav aria-label="归档分页">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${currentPage == 1 ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/archives(page=1)}" title="首页">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            <li class="page-item" th:classappend="${currentPage == 1 ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/archives(page=${currentPage - 1})}" title="上一页">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            <th:block th:if="${totalPages <= 7}">
+                                <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}" 
+                                    th:classappend="${pageNum == currentPage ? 'active' : ''}">
+                                    <a class="page-link" th:href="@{/archives(page=${pageNum})}" th:text="${pageNum}">1</a>
+                                </li>
+                            </th:block>
+                            
+                            <th:block th:if="${totalPages > 7}">
+                                <li class="page-item" th:classappend="${currentPage == 1 ? 'active' : ''}">
+                                    <a class="page-link" th:href="@{/archives(page=1)}">1</a>
+                                </li>
+                                
+                                <li class="page-item disabled" th:if="${currentPage > 4}">
+                                    <span class="page-link">...</span>
+                                </li>
+                                
+                                <th:block th:with="startPage=${T(java.lang.Math).max(2, currentPage - 2)}, 
+                                                 endPage=${T(java.lang.Math).min(totalPages - 1, currentPage + 2)}">
+                                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(startPage, endPage)}" 
+                                        th:classappend="${pageNum == currentPage ? 'active' : ''}">
+                                        <a class="page-link" th:href="@{/archives(page=${pageNum})}" th:text="${pageNum}">5</a>
+                                    </li>
+                                </th:block>
+                                
+                                <li class="page-item disabled" th:if="${currentPage < totalPages - 3}">
+                                    <span class="page-link">...</span>
+                                </li>
+                                
+                                <li class="page-item" th:classappend="${currentPage == totalPages ? 'active' : ''}">
+                                    <a class="page-link" th:href="@{/archives(page=${totalPages})}" th:text="${totalPages}">100</a>
+                                </li>
+                            </th:block>
+                            
+                            <li class="page-item" th:classappend="${currentPage == totalPages ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/archives(page=${currentPage + 1})}" title="下一页">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            
+                            <li class="page-item" th:classappend="${currentPage == totalPages ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/archives(page=${totalPages})}" title="末页">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <div class="quick-jump text-center mt-2">
+                        <span class="text-muted small">跳转到</span>
+                        <form th:action="@{/archives}" method="get" class="d-inline-block mx-2">
+                            <input type="number" name="page" min="1" th:max="${totalPages}" 
+                                   class="form-control d-inline-block" style="width: 70px; display: inline-block;"
+                                   placeholder="页码" required>
+                            <span class="text-muted small">/ <span th:text="${totalPages}">100</span> 页</span>
+                            <button type="submit" class="btn btn-sm btn-outline-primary ms-2">跳转</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div th:if="${totalArchives == 0}" class="alert alert-info">
+                    归档为空，暂无已删除的文章~ 御坂网路支持中...
+                </div>
+                <div th:if="${totalArchives > 0}" class="alert alert-info">
+                    已归档 <span th:text="${totalArchives}"></span> 篇文章~ 御坂网路支持中...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
