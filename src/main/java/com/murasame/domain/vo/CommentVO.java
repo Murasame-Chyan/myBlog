@@ -8,9 +8,9 @@ import java.util.List;
 @Data
 public class CommentVO {
 	Long id;
-	Long blog_id;
+	Long b_id;
 	Long parent_cid;
-	Integer author_id;
+	Integer u_id;
 	String author_name;
 	String content;
 	LocalDateTime created_at;

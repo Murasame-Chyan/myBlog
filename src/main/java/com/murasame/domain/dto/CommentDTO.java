@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 @Data
 public class CommentDTO {
 	Long id;
-	Long blog_id;
+	Long b_id;
 	Long parent_cid;
-	Integer author_id;
+	Integer u_id;
 	String content;
 	LocalDateTime created_at;
 }
