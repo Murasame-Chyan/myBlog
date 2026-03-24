@@ -18,4 +18,15 @@ public class IndexServiceImpl implements IndexService {
 	public List<BlogBriefVO> getRecent5BlogsBrief(){
 		return indexMapper.getRecent5BlogsBrief();
 	}
+
+	@Override
+	public long getTotalBlogCount(){
+		return indexMapper.getTotalBlogCount();
+	}
+
+	@Override
+	public List<BlogBriefVO> getBlogsByPage(int page, int pageSize){
+		int offset = (page - 1) * pageSize;
+		return indexMapper.getBlogsByPage(pageSize, offset);
+	}
 }

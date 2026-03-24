@@ -1,8 +1,12 @@
 package com.murasame.controller;
 
+
+import com.murasame.domain.vo.CommentVO;
 import com.murasame.entity.Blogs;
 import com.murasame.service.BlogService;
+import com.murasame.service.CommentService;
 import com.murasame.util.BlogHtmlUtil;
+import com.murasame.util.ReturnUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.jsoup.Jsoup;
@@ -11,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RequestMapping("/blogs")
@@ -19,6 +24,8 @@ import java.util.Map;
 public class BlogController {
 	@Resource
 	private BlogService blogService;
+	@Resource
+	private CommentService commentService;
 
 	// From index 点击跳转文章正文 RESTful跟随文章id
 	@GetMapping("read/{id}")
@@ -29,7 +36,9 @@ public class BlogController {
 			model.addAttribute("errorInf", errorInf);
 			return "error";
 		}
+		List<CommentVO> comments = commentService.getCommentTree(id);
 		model.addAttribute("blog", blog);
+		model.addAttribute("comments", comments);
 		return "readBlog";
 	}
 
@@ -42,12 +51,14 @@ public class BlogController {
 	@PostMapping("/publish")
 	public Map<String, Object> publishBlog(
 			@RequestParam String title,
-			@RequestParam String content, // 已转义 + <br>
+			@RequestParam String content,
 			@RequestParam(value = "authorId", defaultValue = "1") Integer authorId) {
 		int newId = blogService.publishBlog(authorId, title, content);
-		return Map.of("code", newId > 0 ? 200 : 500,
-				"msg",  newId > 0 ? "发布成功" : "发布失败",
-				"id",   newId);
+		if (newId > 0) {
+			return ReturnUtil.custom(200, "发布成功", newId);
+		} else {
+			return ReturnUtil.error("发布失败");
+		}
 	}
 
 	// From readBlog 点击修改文章按钮
@@ -64,14 +75,16 @@ public class BlogController {
 	@PostMapping("/update")
 	public Map<String, Object> updateBlog(
 			@RequestParam String title,
-			@RequestParam String content,   // 已转义 + <br>
+			@RequestParam String content,
 			@RequestParam Long id,
-			Model model) {        // id是Blog.id
+			Model model) {
 		if (!model.containsAttribute("id"))
 			model.addAttribute("id", id);
-		return (blogService.updateBlog(id, title, content) > 0)
-				? Map.of("code", 200, "msg", "成功更新")
-				: Map.of("code", 500, "msg", "更新失败");
+		if (blogService.updateBlog(id, title, content) > 0) {
+			return ReturnUtil.success("成功更新");
+		} else {
+			return ReturnUtil.error("更新失败");
+		}
 	}
 
 	// From noWhere（testing in swagger）
