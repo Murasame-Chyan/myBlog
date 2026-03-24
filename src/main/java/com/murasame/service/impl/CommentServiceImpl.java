@@ -25,17 +25,17 @@ public class CommentServiceImpl implements CommentService {
 	@Override
 	public int addComment(Long blogId, Long parentCid, Integer authorId, String content) {
 		CommentDTO comment = new CommentDTO();
-		comment.setBlog_id(blogId);
-		comment.setAuthor_id(authorId);
+		comment.setB_id(blogId);
+		comment.setU_id(authorId);
 		comment.setContent(content);
 		
 		Long finalParentCid = parentCid;
 		
-		if (parentCid != null) {
+		if (parentCid != null && parentCid != 0) {
 			Comments parentComment = commentMapper.getCommentById(parentCid);
 			if (parentComment != null) {
-				if (parentComment.getParent_cid().equals(parentComment.getId())) {
-					finalParentCid = parentCid;
+				if (parentComment.getParent_cid() == 0) {
+					finalParentCid = parentComment.getId();
 				} else {
 					finalParentCid = parentComment.getParent_cid();
 				}
@@ -97,10 +97,10 @@ public class CommentServiceImpl implements CommentService {
 		for (Comments comment : comments) {
 			CommentVO vo = new CommentVO();
 			vo.setId(comment.getId());
-			vo.setBlog_id(comment.getBlog_id());
+			vo.setB_id(comment.getB_id());
 			vo.setParent_cid(comment.getParent_cid());
-			vo.setAuthor_id(comment.getAuthor_id());
-			String nickname = userMapper.getNicknameById(comment.getAuthor_id().longValue());
+			vo.setU_id(comment.getU_id());
+			String nickname = userMapper.getNicknameById(comment.getU_id().longValue());
 			vo.setAuthor_name(nickname != null ? nickname : "未知用户");
 			vo.setContent(comment.getContent());
 			vo.setCreated_at(comment.getCreated_at());

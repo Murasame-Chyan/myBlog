@@ -205,9 +205,9 @@
                                 </div>
                             </li>
                             <li th:each="comment : ${recentComments}">
-                                <a th:href="@{/blogs/read/{id}(id=${comment.blog_id})}" class="sidebar-link">
+                                <a th:href="@{/blogs/read/{id}(id=${comment.b_id})}" class="sidebar-link">
                                     <div class="comment-item">
-                                        <div class="comment-user" th:text="${comment.author_name != null ? comment.author_name : '用户' + comment.author_id}">用户</div>
+                                        <div class="comment-user" th:text="${comment.author_name != null ? comment.author_name : '用户' + comment.u_id}">用户</div>
                                         <div class="comment-text">
                                             <span class="comment-content-short" 
                                                   th:text="${comment.content.length() > 15 ? comment.content.substring(0, 15) + '...' : comment.content}">评论内容</span>
@@ -216,25 +216,6 @@
                                 </a>
                             </li>
                         </ul>
-                    </div>
-
-                    <div class="sidebar-section mt-4">
-                        <h6 class="sidebar-title">
-                            <i class="bi bi-person-circle"></i> 关于博主
-                        </h6>
-                        <div class="about-me">
-                            <div class="about-avatar">
-                                <i class="bi bi-person-fill" style="font-size: 3rem;"></i>
-                            </div>
-                            <p class="about-text">
-                                热爱编程，专注于Java和前端开发。分享技术心得，记录学习历程。
-                            </p>
-                            <div class="social-links">
-                                <a href="#" class="social-link"><i class="bi bi-github"></i></a>
-                                <a href="#" class="social-link"><i class="bi bi-twitter"></i></a>
-                                <a href="#" class="social-link"><i class="bi bi-envelope"></i></a>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </aside>
