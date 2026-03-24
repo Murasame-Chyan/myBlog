@@ -28,7 +28,7 @@ public class BlogServiceImpl implements BlogService {
 	public int publishBlog(Integer authorId, String title, String content){ // 发布博文，成功返回博文id，否则返回0
 		Blogs blog = new Blogs();
 		blog.setAuthor_id(authorId);
-		blog.setTitle(title.substring(Math.min(title.length(), 255)));   // 标题限长
+		blog.setTitle(title.substring(0, Math.min(title.length(), 255)));   // 标题限长
 		blog.setContent(content);
 		return blogMapper.insertBlog(blog) == 1 ? blog.getId().intValue() : 0;
 	}

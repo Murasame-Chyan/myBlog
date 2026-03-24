@@ -1,5 +1,46 @@
 <!-- 可替换首部 -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<th:block th:fragment="nav(currentPage)">
+<style>
+  .navbar-custom {
+    background-color: rgba(135, 206, 235, 0.8) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  .navbar-brand {
+    color: #ffffff !important;
+    font-weight: bold;
+    font-size: 1.5rem;
+  }
+  .nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    transition: all 0.3s ease;
+  }
+  .nav-link:hover {
+    color: #ffffff !important;
+  }
+  .nav-link.active {
+    color: #ffffff !important;
+    font-weight: bold;
+    border-bottom: 2px solid #ffffff;
+  }
+  .btn-publish {
+    background: linear-gradient(135deg, #DA70D6 0%, #FF69B4 100%);
+    border: none;
+    color: #ffffff !important;
+    font-weight: bold;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(218, 112, 214, 0.4);
+  }
+  .btn-publish:hover {
+    background: linear-gradient(135deg, #FF69B4 0%, #DA70D6 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(218, 112, 214, 0.6);
+    color: #ffffff !important;
+  }
+</style>
+<nav class="navbar navbar-expand-lg navbar-custom">
   <div class="container">
     <a class="navbar-brand" th:href="@{/}">MyBlog</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
@@ -7,12 +48,18 @@
     </button>
     <div class="collapse navbar-collapse" id="navMain">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" th:href="@{/}">首页</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/about}">个人简介</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/tech}">技术杂谈</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/life}">生活随笔</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/archives}">归档</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'index' ? 'active' : ''}" th:href="@{/}">首页</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'about' ? 'active' : ''}" th:href="@{/about}">个人简介</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'tech' ? 'active' : ''}" th:href="@{/tech}">技术杂谈</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'life' ? 'active' : ''}" th:href="@{/life}">生活随笔</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'archives' ? 'active' : ''}" th:href="@{/archives}">归档</a></li>
+        <li class="nav-item ms-lg-3">
+          <a th:href="@{/blogs/write}" class="btn btn-publish">
+            <i class="bi bi-pencil-square"></i> 发布
+          </a>
+        </li>
       </ul>
     </div>
   </div>
 </nav>
+</th:block>
