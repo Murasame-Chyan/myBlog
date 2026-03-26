@@ -30,6 +30,18 @@
                 <textarea th:text="${blog?.content}" class="form-control" id="content" rows="15" required></textarea>
             </div>
 
+            <!-- 标签选择 -->
+            <div class="mb-3">
+                <label class="form-label">标签（可多选）</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <th:block th:each="tag : ${allTags}">
+                        <input type="checkbox" class="btn-check" name="tagIds" th:id="'tag-' + ${tag.id}" th:value="${tag.id}"
+                               th:checked="${blog != null and blog.t_id != null and blog.t_id.tagList != null and #lists.contains(blog.t_id.tagList, tag.id)}">
+                        <label class="btn btn-outline-primary" th:for="'tag-' + ${tag.id}" th:text="${tag.tagName}">标签</label>
+                    </th:block>
+                </div>
+            </div>
+
             <!-- 作者 ID（隐藏写死） -->
             <input type="hidden" name="authorId" value="1">
             <!-- 编辑模式下带上blog.id来update -->

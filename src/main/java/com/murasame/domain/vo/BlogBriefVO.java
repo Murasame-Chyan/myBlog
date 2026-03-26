@@ -1,5 +1,7 @@
 package com.murasame.domain.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.murasame.domain.dto.TagWrapper;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,4 +15,6 @@ public class BlogBriefVO {
 	private LocalDateTime created_at;   // same
 	private LocalDateTime updated_at;
 	private String author;              // users.nickname
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	TagWrapper t_id;              // 标签列表
 }

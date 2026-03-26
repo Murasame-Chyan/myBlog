@@ -19,7 +19,7 @@
         <h2 id="textTitle" th:text="${blog.title}">标题</h2>
         <!--  meta 行  -->
         <div class="text-muted mb-3">
-            <span>作者：<span th:text="${blog.getAuthor_id()}">1</span></span>
+            <span>作者ID：<span th:text="${blog.u_id}">1</span></span>
             <span class="ms-3">发布时间：
                 <span th:text="${#temporals.format(blog.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
@@ -27,9 +27,16 @@
                 <span th:text="${#temporals.format(blog.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
             <span class="ms-3">
-                <a th:href="@{/blogs/edit/{id}(id=${blog.getId()})}" class="btn btn-sm btn-outline-primary">修改博客</a>
+                <a th:href="@{/blogs/edit/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary">修改博客</a>
                 <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="deleteBlog()">删除博客</button>
             </span>
+        </div>
+
+        <div class="mb-3" th:if="${blog.t_id != null and blog.t_id.tagList != null and !blog.t_id.tagList.isEmpty()}">
+            <span class="me-2"><strong>标签：</strong></span>
+            <th:block th:each="tagId : ${blog.t_id.tagList}">
+                <span th:each="tag : ${allTags}" th:if="${tag.id == tagId}" class="badge bg-secondary me-1" th:text="${tag.tagName}">标签</span>
+            </th:block>
         </div>
 
         <hr>

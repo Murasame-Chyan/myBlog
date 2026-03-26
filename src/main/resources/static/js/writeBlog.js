@@ -14,12 +14,23 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
     // const htmlContent = escapeHtml(rawContent)
     //         .replace(/\n/g, '<br>');
 
-    // 1.2 以新字段数据发送后端
+    // 1.2 收集选中的标签
+    const tagCheckboxes = document.querySelectorAll('input[name="tagIds"]:checked');
+    const tagIds = Array.from(tagCheckboxes).map(cb => cb.value).join(',');
+
+    // 1.3 验证是否选择了标签
+    if (tagIds.trim() === '') {
+        alert('请至少选择一个标签！');
+        return;
+    }
+
+    // 1.4 以新字段数据发送后端
     const body = new URLSearchParams({
         title:   form.title.value,
         content: rawContent,
         authorId:form.authorId.value,
-        id:      form.id?.value || ''   // 编辑模式必须带 id
+        id:      form.id?.value || '',   // 编辑模式必须带 id
+        tagIds:  tagIds                   // 添加标签ID
     });
 
     // 1.3.1 收集表单数据

@@ -1,5 +1,6 @@
 package com.murasame.service.impl;
 
+import com.murasame.domain.dto.TagWrapper;
 import com.murasame.entity.Blogs;
 import com.murasame.mapper.BlogMapper;
 import com.murasame.service.BlogService;
@@ -27,9 +28,19 @@ public class BlogServiceImpl implements BlogService {
 	@Override
 	public int publishBlog(Integer authorId, String title, String content){ // 发布博文，成功返回博文id，否则返回0
 		Blogs blog = new Blogs();
-		blog.setAuthor_id(authorId);
+		blog.setU_id(authorId);
 		blog.setTitle(title.substring(0, Math.min(title.length(), 255)));   // 标题限长
 		blog.setContent(content);
+		return blogMapper.insertBlog(blog) == 1 ? blog.getId().intValue() : 0;
+	}
+
+	@Override
+	public int publishBlogWithTags(Integer authorId, String title, String content, TagWrapper tags) {
+		Blogs blog = new Blogs();
+		blog.setU_id(authorId);
+		blog.setTitle(title.substring(0, Math.min(title.length(), 255)));   // 标题限长
+		blog.setContent(content);
+		blog.setT_id(tags);
 		return blogMapper.insertBlog(blog) == 1 ? blog.getId().intValue() : 0;
 	}
 
@@ -83,5 +94,19 @@ public class BlogServiceImpl implements BlogService {
 	@Override
 	public int updateBlog(Long id, String title, String content){
 		return blogMapper.editBlog(id, title, content);
+	}
+
+	@Override
+	public int updateBlogWithTags(Long id, String title, String content, TagWrapper tags) {
+		int result = blogMapper.editBlog(id, title, content);
+		if (result > 0 && tags != null) {
+			blogMapper.updateBlogTags(id, tags);
+		}
+		return result;
+	}
+
+	@Override
+	public List<Blogs> getBlogsByTagId(Integer tagId) {
+		return blogMapper.getBlogsByTagId(tagId);
 	}
 }

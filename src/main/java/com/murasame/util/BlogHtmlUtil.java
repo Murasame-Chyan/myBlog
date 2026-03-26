@@ -19,4 +19,14 @@ public class BlogHtmlUtil {
 		String html = RENDERER.render(PARSER.parse(markdown));
 		return Jsoup.clean(html, SAFE);
 	}
+
+	// 提取博客摘要（去除HTML标签，截取前200个字符）
+	public static String extractBrief(String content) {
+		if (content == null) return "";
+		String text = Jsoup.clean(content, Safelist.none());
+		if (text.length() > 200) {
+			return text.substring(0, 200) + "...";
+		}
+		return text;
+	}
 }

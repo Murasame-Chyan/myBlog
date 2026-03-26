@@ -14,7 +14,7 @@
         <input type="hidden" th:value="${archive != null ? archive.getId() : 0}" id="getArchiveId">
         <h2 id="textTitle" th:text="${archive.title}">标题</h2>
         <div class="text-muted mb-3">
-            <span>作者：<span th:text="${archive.getAuthor_id()}">1</span></span>
+            <span>作者ID：<span th:text="${archive.u_id}">1</span></span>
             <span class="ms-3">发布时间：
                 <span th:text="${#temporals.format(archive.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
@@ -24,6 +24,13 @@
             <span class="ms-3">删除时间：
                 <span th:text="${#temporals.format(archive.deleted_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
+        </div>
+
+        <div class="mb-3" th:if="${archive.t_id != null and archive.t_id.tagList != null and !archive.t_id.tagList.isEmpty()}">
+            <span class="me-2"><strong>标签：</strong></span>
+            <th:block th:each="tagId : ${archive.t_id.tagList}">
+                <span th:each="tag : ${allTags}" th:if="${tag.id == tagId}" class="badge bg-secondary me-1" th:text="${tag.tagName}">标签</span>
+            </th:block>
         </div>
 
         <hr>
