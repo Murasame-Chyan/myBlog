@@ -12,4 +12,5 @@ public interface ArchiveService {
 	long getTotalArchiveCount();
 	List<BlogBriefVO> getArchivesByPage(int page, int pageSize);
 	BlogsBin getArchiveById(Long id);
+	List<BlogBriefVO> getArchivesByTagId(Integer tagId);
 }

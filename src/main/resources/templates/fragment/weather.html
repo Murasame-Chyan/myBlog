@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div id="weather-component" class="weather-component" th:fragment="weather">
+    <div class="weather-header">
+        <span class="weather-date" id="weather-date">--/--</span>
+        <span class="weather-location" id="weather-location">加载中...</span>
+    </div>
+    <div class="weather-greeting" id="weather-greeting"></div>
+    <div class="weather-body">
+        <div class="weather-icon-container">
+            <img id="weather-icon" src="/pics/weather/loading.svg" alt="天气图标" class="weather-icon">
+        </div>
+        <div class="weather-info">
+            <div class="weather-temp" id="weather-temp">--°C</div>
+            <div class="weather-desc" id="weather-desc">--</div>
+        </div>
+    </div>
+    <div class="weather-footer">
+        <div class="weather-today">
+            <span class="weather-label">今日</span>
+            <span class="weather-range" id="weather-today-range">--°C ~ --°C</span>
+        </div>
+        <div class="weather-tomorrow">
+            <span class="weather-label">明日</span>
+            <span class="weather-range" id="weather-tomorrow-range">--°C ~ --°C</span>
+            <span class="weather-desc" id="weather-tomorrow-desc">--</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

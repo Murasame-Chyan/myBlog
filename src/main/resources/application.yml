@@ -14,3 +14,8 @@ spring:
     password: zjh6851265
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+weather:
+  seniverse:
+    uid: PAgNTT0HTkR6d5lb5      # 心知天气公钥
+    key: Szk2kphOxWouB8QUE     # 心知天气私钥
+    sign-enabled: false

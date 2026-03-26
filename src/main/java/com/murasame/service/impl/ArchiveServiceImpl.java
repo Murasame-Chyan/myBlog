@@ -34,4 +34,9 @@ public class ArchiveServiceImpl implements ArchiveService {
 	public BlogsBin getArchiveById(Long id){
 		return archiveMapper.getArchiveById(id);
 	}
+
+	@Override
+	public List<BlogBriefVO> getArchivesByTagId(Integer tagId){
+		return archiveMapper.getArchivesByTagId(tagId);
+	}
 }
