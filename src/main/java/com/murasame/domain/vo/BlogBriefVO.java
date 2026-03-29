@@ -17,4 +17,7 @@ public class BlogBriefVO {
 	private String author;              // users.nickname
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	TagWrapper t_id;              // 标签列表
+	private Long read_count;       // 阅读量
+	private Long like_count;       // 点赞量
+	private Integer comment_count; // 评论数
 }

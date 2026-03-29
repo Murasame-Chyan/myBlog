@@ -3,7 +3,6 @@ package com.murasame.service.impl;
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.mapper.IndexMapper;
 import com.murasame.service.IndexService;
-import com.murasame.util.BlogHtmlUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -28,5 +27,10 @@ public class IndexServiceImpl implements IndexService {
 	public List<BlogBriefVO> getBlogsByPage(int page, int pageSize){
 		int offset = (page - 1) * pageSize;
 		return indexMapper.getBlogsByPage(pageSize, offset);
+	}
+
+	@Override
+	public List<BlogBriefVO> getHotBlogs(){
+		return indexMapper.getHotBlogs();
 	}
 }

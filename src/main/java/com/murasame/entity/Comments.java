@@ -9,7 +9,7 @@ public class Comments {
 	Long id;
 	Long b_id;
 	Long parent_cid;
-	Integer u_id;
+	Long u_id;
 	String content;
 	LocalDateTime created_at;
 }

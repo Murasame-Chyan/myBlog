@@ -23,18 +23,6 @@
                         <div th:replace="~{fragment/weather :: weather}"></div>
                     </div>
 
-                    <div class="sidebar-section">
-                        <h6 class="sidebar-title">
-                            <i class="bi bi-folder"></i> 分类
-                        </h6>
-                        <ul class="list-unstyled sidebar-list">
-                            <li><a href="#" class="sidebar-link">技术杂谈</a></li>
-                            <li><a href="#" class="sidebar-link">生活随笔</a></li>
-                            <li><a href="#" class="sidebar-link">学习笔记</a></li>
-                            <li><a href="#" class="sidebar-link">项目实战</a></li>
-                        </ul>
-                    </div>
-
                     <div class="sidebar-section mt-4">
                         <h6 class="sidebar-title">
                             <i class="bi bi-tags"></i> 标签
@@ -67,6 +55,18 @@
                         <!-- 元信息 -->
                         <div class="blog-meta">
                             <span class="meta-item">
+                                <i class="bi bi-eye"></i>
+                                <span th:text="${b.read_count != null ? b.read_count : 0}">0</span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-hand-thumbs-up"></i>
+                                <span th:text="${b.like_count != null ? b.like_count : 0}">0</span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-chat"></i>
+                                <span th:text="${b.comment_count != null ? b.comment_count : 0}">0</span>
+                            </span>
+                            <span class="meta-item">
                                 <i class="bi bi-person"></i>
                                 <span th:text="${b.author}">作者</span>
                             </span>
@@ -74,11 +74,15 @@
                                 <i class="bi bi-calendar"></i>
                                 <span th:text="${#temporals.format(b.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span>
                             </span>
-                            <span class="meta-item">
-                                <i class="bi bi-clock-history"></i>
-                                <span th:text="${#temporals.format(b.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span>
-                            </span>
                         </div>
+
+                        <div class="blog-tags" th:if="${b.t_id != null and b.t_id.tagList != null and !b.t_id.tagList.isEmpty()}">
+                            <span class="me-2"><strong>标签：</strong></span>
+                            <th:block th:each="tagId : ${b.t_id.tagList}">
+                                <span th:each="tag : ${allTags}" th:if="${tag.id == tagId}" class="blog-tag" th:text="${tag.tagName}">标签</span>
+                            </th:block>
+                        </div>
+
                     </div>
                 </div>
 
@@ -187,15 +191,17 @@
                             <i class="bi bi-fire"></i> 热门文章
                         </h6>
                         <ul class="list-unstyled sidebar-list">
-                            <li><a href="#" class="sidebar-link">Spring Boot 3.x 新特性详解</a></li>
-                            <li><a href="#" class="sidebar-link">Vue3 Composition API 实战</a></li>
-                            <li><a href="#" class="sidebar-link">MySQL 性能优化指南</a></li>
-                            <li><a href="#" class="sidebar-link">Java 并发编程基础</a></li>
-                            <li><a href="#" class="sidebar-link">前端工程化实践</a></li>
+                            <li th:if="${hotBlogs == null || hotBlogs.isEmpty()}">
+                                <a href="#" class="sidebar-link">暂无热门文章</a>
+                            </li>
+                            <li th:each="blog : ${hotBlogs}">
+                                <a th:href="@{/blogs/read/{id}(id=${blog.id})}" class="sidebar-link" 
+                                   th:text="${#strings.abbreviate(blog.title, 13)}">标题</a>
+                            </li>
                         </ul>
                     </div>
 
-                    <div class="sidebar-section mt-4">
+                    <div class="sidebar-section mt-4" th:if="${selectedTagId == null}">
                         <h6 class="sidebar-title">
                             <i class="bi bi-clock-history"></i> 最新评论
                         </h6>

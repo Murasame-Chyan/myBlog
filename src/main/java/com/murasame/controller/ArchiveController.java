@@ -1,12 +1,11 @@
 package com.murasame.controller;
 
 import com.murasame.domain.vo.BlogBriefVO;
-import com.murasame.domain.vo.CommentVO;
 import com.murasame.entity.BlogsBin;
 import com.murasame.entity.Tag;
 import com.murasame.service.ArchiveService;
-import com.murasame.service.CommentService;
 import com.murasame.service.TagService;
+import com.murasame.service.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,9 +21,10 @@ public class ArchiveController {
 	@Resource
 	ArchiveService archiveService;
 	@Resource
-	CommentService commentService;
-	@Resource
 	TagService tagService;
+
+	@Resource
+	UserService userService;
 
 	@GetMapping("/archives")
 	public String archives(Model model,
@@ -47,25 +47,22 @@ public class ArchiveController {
 	@GetMapping("/archives/read/{id}")
 	public String readArchive(@PathVariable Long id, Model model) {
 		BlogsBin archive = archiveService.getArchiveById(id);
-		if (archive == null) {
-			String errorInf = "您访问的归档不存在！";
-			model.addAttribute("errorInf", errorInf);
-			return "error";
-		}
+		String authorName = userService.getNicknameById(archive.getU_id());
 		List<Tag> allTags = tagService.getAllTags();
 		model.addAttribute("archive", archive);
 		model.addAttribute("allTags", allTags);
+		model.addAttribute("authorName", authorName);
 		return "readArchive";
 	}
 
 	@GetMapping("/archives/tag/{id}")
 	public String getArchivesByTag(@PathVariable Integer id, Model model) {
 		List<BlogBriefVO> archiveBriefList = archiveService.getArchivesByTagId(id);
+		List<Tag> allTags = tagService.getAllTags();
 		model.addAttribute("archiveBrief", archiveBriefList);
 		model.addAttribute("totalArchives", archiveBriefList.size());
 		model.addAttribute("currentPage", 1);
 		model.addAttribute("totalPages", 1);
-		List<Tag> allTags = tagService.getAllTags();
 		model.addAttribute("allTags", allTags);
 		model.addAttribute("selectedTagId", id);
 		return "archives";

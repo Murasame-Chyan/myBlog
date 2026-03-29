@@ -20,7 +20,8 @@ public class WeatherServiceImpl implements WeatherService {
 	private final SeniverseApiClient apiClient;
 	private static final long CACHE_DURATION = 60 * 60 * 1000;
 	private static String cachedLocation;
-	private static WeatherComponentVO cachedWeatherData;
+	private static WeatherNowDTO cachedNowData;
+	private static WeatherDailyDTO cachedDailyData;
 	private static long cacheTime;
 
 	@Override
@@ -70,9 +71,31 @@ public class WeatherServiceImpl implements WeatherService {
 		long currentTime = System.currentTimeMillis();
 
 		if (cachedLocation != null && cachedLocation.equals(location)
-				&& cachedWeatherData != null
+				&& cachedNowData != null && cachedDailyData != null
 				&& (currentTime - cacheTime) < CACHE_DURATION) {
-			return cachedWeatherData;
+			WeatherComponentVO vo = new WeatherComponentVO();
+
+			vo.setCurrentDate(LocalDate.now().getMonthValue() + "/" + LocalDate.now().getDayOfMonth());
+			vo.setLocation(cachedNowData.getCity());
+			vo.setWeatherIcon(mapWeatherToIcon(cachedNowData.getText()));
+			vo.setTodayWeatherDesc(cachedNowData.getText());
+			vo.setCurrentTemp(cachedNowData.getTemperature() + "°C");
+
+			if (cachedDailyData.getDailyList() != null && !cachedDailyData.getDailyList().isEmpty()) {
+				vo.setTodayHighTemp(cachedDailyData.getDailyList().get(0).getHigh() + "°C");
+				vo.setTodayLowTemp(cachedDailyData.getDailyList().get(0).getLow() + "°C");
+			}
+
+			if (cachedDailyData.getDailyList() != null && cachedDailyData.getDailyList().size() > 1) {
+				vo.setTomorrowWeatherDesc(cachedDailyData.getDailyList().get(1).getTextDay());
+				vo.setTomorrowHighTemp(cachedDailyData.getDailyList().get(1).getHigh() + "°C");
+				vo.setTomorrowLowTemp(cachedDailyData.getDailyList().get(1).getLow() + "°C");
+			}
+
+			vo.setGreeting(generateGreeting());
+			vo.setTimePoint(generateTimePoint());
+
+			return vo;
 		}
 
 		WeatherNowDTO now = getWeatherNow(location);
@@ -106,9 +129,11 @@ public class WeatherServiceImpl implements WeatherService {
 		}
 
 		vo.setGreeting(generateGreeting());
+		vo.setTimePoint(generateTimePoint());
 
+		cachedNowData = now;
+		cachedDailyData = daily;
 		cachedLocation = location;
-		cachedWeatherData = vo;
 		cacheTime = currentTime;
 
 		return vo;
@@ -120,7 +145,7 @@ public class WeatherServiceImpl implements WeatherService {
 		String text = weatherText.toLowerCase();
 		if (text.contains("晴") || text.contains("sunny")) {
 			return "/pics/weather/sunny.svg";
-		} else if (text.contains("多云") || text.contains("cloudy")) {
+		} else if (text.contains("阴") || text.contains("overcast") || text.contains("多云") || text.contains("cloudy")) {
 			return "/pics/weather/cloudy.svg";
 		} else if (text.contains("雨") || text.contains("rain")) {
 			return "/pics/weather/rainy.svg";
@@ -152,5 +177,12 @@ public class WeatherServiceImpl implements WeatherService {
 		}
 
 		return timePeriod + "好啊~";
+	}
+
+	private String generateTimePoint() {
+		int hour = LocalTime.now().getHour();
+		int minute = LocalTime.now().getMinute();
+		String period = hour >= 12 ? "p.m." : "a.m.";
+		return String.format("现在是%d:%02d %s", hour, minute, period);
 	}
 }

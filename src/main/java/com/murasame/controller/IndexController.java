@@ -39,6 +39,7 @@ public class IndexController {
 		int totalPages = (int) Math.ceil((double) totalBlogs / pageSize);
 		List<CommentVO> recentComments = commentService.getRecentComments(5);
 		List<Tag> allTags = tagService.getAllTags();
+		List<BlogBriefVO> hotBlogs = indexService.getHotBlogs();
 		
 		model.addAttribute("blogBrief", blogBrief);
 		model.addAttribute("currentPage", page);
@@ -48,7 +49,8 @@ public class IndexController {
 		model.addAttribute("recentComments", recentComments);
 		model.addAttribute("allTags", allTags);
 		model.addAttribute("selectedTagId", null);
-		return "index";
+		model.addAttribute("hotBlogs", hotBlogs);
+ 		return "index";
 	}
 
 	// test

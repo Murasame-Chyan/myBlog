@@ -7,11 +7,13 @@ import java.util.List;
 
 @Service
 public interface CommentService {
-	int addComment(Long blogId, Long parentCid, Integer authorId, String content);
+	int addComment(Long blogId, Long parentCid, Long authorId, String content);
 
 	List<CommentVO> getCommentsByBlogId(Long blogId);
 
 	List<CommentVO> getRecentComments(int limit);
 
 	List<CommentVO> getCommentTree(Long blogId);
+
+	int getCommentCountByBlogId(Long blogId);
 }

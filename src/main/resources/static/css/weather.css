@@ -20,6 +20,21 @@
     opacity: 0.95;
     font-weight: 500;
     line-height: 1.4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.weather-greeting-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.weather-time {
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    opacity: 0.9;
+    font-weight: 400;
 }
 
 .weather-date {

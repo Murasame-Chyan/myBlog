@@ -1,13 +1,11 @@
 package com.murasame.controller;
 
 import com.murasame.domain.vo.CommentVO;
-import com.murasame.entity.Comments;
 import com.murasame.service.CommentService;
 import com.murasame.util.ReturnUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +23,7 @@ public class UserController {
 	public Map<String, Object> addComment(
 			@RequestParam Long blogId,
 			@RequestParam(required = false) Long parentCid,
-			@RequestParam Integer authorId,
+			@RequestParam Long authorId,
 			@RequestParam String content) {
 		int newId = commentService.addComment(blogId, parentCid, authorId, content);
 		if (newId > 0) {

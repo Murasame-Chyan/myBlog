@@ -5,6 +5,7 @@
     <title>博客</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/readBlog.css">
 </head>
@@ -19,11 +20,19 @@
         <h2 id="textTitle" th:text="${blog.title}">标题</h2>
         <!--  meta 行  -->
         <div class="text-muted mb-3">
-            <span>作者ID：<span th:text="${blog.u_id}">1</span></span>
-            <span class="ms-3">发布时间：
+            <span class="me-3">
+                <i class="bi bi-eye"></i>
+                <span th:text="${blog.read_count != null ? blog.read_count : 0}">0</span>
+            </span>
+            <span class="me-3">
+                <i class="bi bi-chat"></i>
+                <span th:text="${commentCount != null ? commentCount : 0}">0</span>
+            </span>
+            <span class="me-3">作者：<span th:text="${authorName}">1</span></span>
+            <span class="me-3">发布时间：
                 <span th:text="${#temporals.format(blog.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
-            <span class="ms-3">上次更新：
+            <span class="me-3">上次更新：
                 <span th:text="${#temporals.format(blog.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
             <span class="ms-3">
@@ -44,11 +53,24 @@
         <!--  正文  -->
         <div class="blog-content" id="textContent" th:utext="${blog.content}">正文</div>
 
+        <!-- 点赞和分享区域 -->
+        <div class="interaction-section mt-4 mb-4">
+            <div class="interaction-buttons">
+                <button type="button" class="btn btn-outline-primary me-2" id="likeButton" onclick="handleLike()">
+                    <i class="bi bi-hand-thumbs-up" id="likeIcon"></i>
+                    <span id="likeCount" th:text="${blog.like_count != null ? blog.like_count : 0}" class="ms-1">0</span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="shareBlog()">
+                    <i class="bi bi-arrow-up-right"></i>
+                </button>
+            </div>
+        </div>
+
         <hr>
 
         <!-- 评论区 -->
         <div class="comment-section mt-5">
-            <h5 class="mb-4">评论 (<span id="commentCount">0</span>)</h5>
+            <h5 class="mb-4">评论 (<span id="commentCount" th:text="${commentCount != null ? commentCount : 0}">0</span>)</h5>
             
             <!-- 发表评论 -->
             <div class="card mb-4">
@@ -80,5 +102,6 @@
     <!-- 99.Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/comment.js"></script>
+    <script src="/js/blogInteraction.js"></script>
 </body>
 </html>

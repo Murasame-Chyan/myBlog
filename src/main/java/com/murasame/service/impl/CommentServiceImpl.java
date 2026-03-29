@@ -3,7 +3,6 @@ package com.murasame.service.impl;
 import com.murasame.domain.dto.CommentDTO;
 import com.murasame.domain.vo.CommentVO;
 import com.murasame.entity.Comments;
-import com.murasame.entity.Users;
 import com.murasame.mapper.CommentMapper;
 import com.murasame.mapper.UserMapper;
 import com.murasame.service.CommentService;
@@ -23,7 +22,7 @@ public class CommentServiceImpl implements CommentService {
 	private UserMapper userMapper;
 
 	@Override
-	public int addComment(Long blogId, Long parentCid, Integer authorId, String content) {
+	public int addComment(Long blogId, Long parentCid, Long authorId, String content) {
 		CommentDTO comment = new CommentDTO();
 		comment.setB_id(blogId);
 		comment.setU_id(authorId);
@@ -92,6 +91,11 @@ public class CommentServiceImpl implements CommentService {
 		return rootComments;
 	}
 
+	@Override
+	public int getCommentCountByBlogId(Long blogId) {
+		return commentMapper.getCommentCountByBlogId(blogId);
+	}
+
 	private List<CommentVO> convertToVOList(List<Comments> comments) {
 		List<CommentVO> vos = new ArrayList<>();
 		for (Comments comment : comments) {
@@ -100,7 +104,7 @@ public class CommentServiceImpl implements CommentService {
 			vo.setB_id(comment.getB_id());
 			vo.setParent_cid(comment.getParent_cid());
 			vo.setU_id(comment.getU_id());
-			String nickname = userMapper.getNicknameById(comment.getU_id().longValue());
+			String nickname = userMapper.getNicknameById(comment.getU_id());
 			vo.setAuthor_name(nickname != null ? nickname : "未知用户");
 			vo.setContent(comment.getContent());
 			vo.setCreated_at(comment.getCreated_at());

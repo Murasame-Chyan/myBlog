@@ -17,7 +17,8 @@ function loadWeatherData() {
 function updateWeatherUI(data) {
     document.getElementById('weather-date').textContent = data.currentDate;
     document.getElementById('weather-location').textContent = data.location;
-    document.getElementById('weather-greeting').textContent = data.greeting || '';
+    document.getElementById('weather-time').textContent = data.timePoint || '';
+    document.getElementById('weather-greeting-text').textContent = data.greeting || '';
     document.getElementById('weather-icon').src = data.weatherIcon;
     document.getElementById('weather-temp').textContent = data.currentTemp;
     document.getElementById('weather-desc').textContent = data.todayWeatherDesc;
