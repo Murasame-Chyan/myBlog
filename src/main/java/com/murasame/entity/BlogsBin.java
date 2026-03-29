@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class BlogsBin {
 	Long id;
-	Integer u_id;
+	Long u_id;
 	LocalDateTime created_at;
 	LocalDateTime updated_at;
 	String title;

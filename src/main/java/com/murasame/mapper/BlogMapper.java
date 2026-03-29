@@ -17,7 +17,9 @@ public interface BlogMapper {
 		@Result(property = "updated_at", column = "updated_at"),
 		@Result(property = "title", column = "title"),
 		@Result(property = "content", column = "content"),
-		@Result(property = "t_id", column = "t_id", typeHandler = TagWrapperTypeHandler.class)
+		@Result(property = "t_id", column = "t_id", typeHandler = TagWrapperTypeHandler.class),
+		@Result(property = "read_count", column = "read_count"),
+		@Result(property = "like_count", column = "like_count")
 	})
 	@Select("SELECT b.* FROM blogs b WHERE b.id=#{id}")
 	Blogs getBlogById(@Param("id") Long id);
@@ -47,7 +49,7 @@ public interface BlogMapper {
 	// 批量移入垃圾箱
 	@Insert("""
 		<script>
-		INSERT INTO blogsBin(id, u_id, title, content, created_at, updated_at, deleted_at, t_id) VALUES 
+		INSERT INTO blogsBin(id, u_id, title, content, created_at, updated_at, deleted_at, t_id) VALUES
 		<foreach collection='blogList' item='blog' separator=','>
 		    (#{blog.id}, #{blog.u_id}, #{blog.title}, #{blog.content}, #{blog.created_at}, #{blog.updated_at}, NOW(), #{blog.t_id, typeHandler=com.murasame.handler.TagWrapperTypeHandler})
 		</foreach>
@@ -79,4 +81,16 @@ public interface BlogMapper {
 	@ResultMap("blogResultMap")
 	@Select("SELECT * FROM blogs WHERE JSON_CONTAINS(t_id, CAST(#{tagId} AS JSON), '$.tagList')")
 	List<Blogs> getBlogsByTagId(@Param("tagId") Integer tagId);
+
+	// 增加博客阅读量
+	@Update("UPDATE blogs SET read_count = read_count + 1 WHERE id = #{blogId}")
+	int incrementReadCount(@Param("blogId") Long blogId);
+
+	// 增加博客点赞量
+	@Update("UPDATE blogs SET like_count = like_count + 1 WHERE id = #{blogId}")
+	int incrementLikeCount(@Param("blogId") Long blogId);
+
+	// 减少博客点赞量
+	@Update("UPDATE blogs SET like_count = like_count - 1 WHERE id = #{blogId}")
+	int decrementLikeCount(@Param("blogId") Long blogId);
 }

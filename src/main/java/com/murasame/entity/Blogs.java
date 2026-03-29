@@ -9,11 +9,13 @@ import java.time.LocalDateTime;
 @Data
 public class Blogs {
 	Long id;
-	Integer u_id;
+	Long u_id;
 	LocalDateTime created_at;
 	LocalDateTime updated_at;
 	String title;
 	String content;
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	TagWrapper t_id;
+	Long read_count;
+	Long like_count;
 }

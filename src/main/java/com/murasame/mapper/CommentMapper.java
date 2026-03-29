@@ -35,4 +35,7 @@ public interface CommentMapper {
 
 	@Update("UPDATE comments SET parent_cid=#{parentCid} WHERE id=#{id}")
 	int updateParentCid(@Param("id") Long id, @Param("parentCid") Long parentCid);
+
+	@Select("SELECT COUNT(*) FROM comments WHERE b_id=#{blogId}")
+	int getCommentCountByBlogId(@Param("blogId") Long blogId);
 }

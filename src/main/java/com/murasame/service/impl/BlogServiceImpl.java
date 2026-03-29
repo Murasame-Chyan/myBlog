@@ -26,7 +26,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
-	public int publishBlog(Integer authorId, String title, String content){ // 发布博文，成功返回博文id，否则返回0
+	public int publishBlog(Long authorId, String title, String content){ // 发布博文，成功返回博文id，否则返回0
 		Blogs blog = new Blogs();
 		blog.setU_id(authorId);
 		blog.setTitle(title.substring(0, Math.min(title.length(), 255)));   // 标题限长
@@ -35,7 +35,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
-	public int publishBlogWithTags(Integer authorId, String title, String content, TagWrapper tags) {
+	public int publishBlogWithTags(Long authorId, String title, String content, TagWrapper tags) {
 		Blogs blog = new Blogs();
 		blog.setU_id(authorId);
 		blog.setTitle(title.substring(0, Math.min(title.length(), 255)));   // 标题限长
@@ -108,5 +108,20 @@ public class BlogServiceImpl implements BlogService {
 	@Override
 	public List<Blogs> getBlogsByTagId(Integer tagId) {
 		return blogMapper.getBlogsByTagId(tagId);
+	}
+
+	@Override
+	public int incrementReadCount(Long blogId) {
+		return blogMapper.incrementReadCount(blogId);
+	}
+
+	@Override
+	public int incrementLikeCount(Long blogId) {
+		return blogMapper.incrementLikeCount(blogId);
+	}
+
+	@Override
+	public int decrementLikeCount(Long blogId) {
+		return blogMapper.decrementLikeCount(blogId);
 	}
 }

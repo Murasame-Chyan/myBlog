@@ -53,11 +53,15 @@
                                 <i class="bi bi-calendar"></i>
                                 <span th:text="${#temporals.format(a.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span>
                             </span>
-                            <span class="meta-item">
-                                <i class="bi bi-clock-history"></i>
-                                <span th:text="${#temporals.format(a.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span>
-                            </span>
                         </div>
+
+                        <div class="blog-tags" th:if="${a.t_id != null and a.t_id.tagList != null and !a.t_id.tagList.isEmpty()}">
+                            <span class="me-2"><strong>标签：</strong></span>
+                            <th:block th:each="tagId : ${a.t_id.tagList}">
+                                <span th:each="tag : ${allTags}" th:if="${tag.id == tagId}" class="blog-tag" th:text="${tag.tagName}">标签</span>
+                            </th:block>
+                        </div>
+                    </div>
                     </div>
                 </div>
 

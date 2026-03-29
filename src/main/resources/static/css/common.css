@@ -63,6 +63,27 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.9rem;
 }
 
+.blog-tags {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+}
+
+.blog-tag {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
+}
+
+.blog-tag:not(:last-child)::after {
+    content: "|";
+    margin-left: 0.5rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
 .text-muted {
     color: rgba(255, 255, 255, 0.7) !important;
 }

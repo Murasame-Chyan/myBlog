@@ -10,7 +10,7 @@ public class CommentVO {
 	Long id;
 	Long b_id;
 	Long parent_cid;
-	Integer u_id;
+	Long u_id;
 	String author_name;
 	String content;
 	LocalDateTime created_at;

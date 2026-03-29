@@ -15,4 +15,5 @@ public class WeatherComponentVO {
 	private String tomorrowHighTemp;
 	private String tomorrowLowTemp;
 	private String greeting;
+	private String timePoint;
 }
