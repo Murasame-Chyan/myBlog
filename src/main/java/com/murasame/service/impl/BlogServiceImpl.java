@@ -1,13 +1,23 @@
 package com.murasame.service.impl;
 
+import com.murasame.domain.vo.BlogBriefVO;
+import java.time.LocalDateTime;
+
 import com.murasame.domain.dto.TagWrapper;
+
 import com.murasame.entity.Blogs;
+
 import com.murasame.mapper.BlogMapper;
+
 import com.murasame.service.BlogService;
+
 import jakarta.annotation.Resource;
+
 import org.springframework.stereotype.Service;
 
+
 import java.util.ArrayList;
+
 import java.util.List;
 
 @Service
@@ -29,7 +39,7 @@ public class BlogServiceImpl implements BlogService {
 	public int publishBlog(Long authorId, String title, String content){ // 发布博文，成功返回博文id，否则返回0
 		Blogs blog = new Blogs();
 		blog.setU_id(authorId);
-		blog.setTitle(title.substring(0, Math.min(title.length(), 255)));   // 标题限长
+		blog.setTitle(title);
 		blog.setContent(content);
 		return blogMapper.insertBlog(blog) == 1 ? blog.getId().intValue() : 0;
 	}
@@ -38,7 +48,7 @@ public class BlogServiceImpl implements BlogService {
 	public int publishBlogWithTags(Long authorId, String title, String content, TagWrapper tags) {
 		Blogs blog = new Blogs();
 		blog.setU_id(authorId);
-		blog.setTitle(title.substring(0, Math.min(title.length(), 255)));   // 标题限长
+		blog.setTitle(title);
 		blog.setContent(content);
 		blog.setT_id(tags);
 		return blogMapper.insertBlog(blog) == 1 ? blog.getId().intValue() : 0;
@@ -124,4 +134,27 @@ public class BlogServiceImpl implements BlogService {
 	public int decrementLikeCount(Long blogId) {
 		return blogMapper.decrementLikeCount(blogId);
 	}
+
+    @Override
+    public List<BlogBriefVO> searchBlogs(String keyword, LocalDateTime dateFrom, LocalDateTime dateTo, String sortBy, int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        return blogMapper.searchBlogs(keyword, dateFrom, dateTo, sortBy, pageSize, offset);
+    }
+
+    @Override
+    public long countSearchBlogs(String keyword, LocalDateTime dateFrom, LocalDateTime dateTo) {
+        return blogMapper.countSearchBlogs(keyword, dateFrom, dateTo);
+    }
+
+    @Override
+    public List<BlogBriefVO> getUserBlogs(Long userId, String keyword, String sortBy, int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        return blogMapper.getBlogsByUserId(userId, keyword, sortBy, pageSize, offset);
+    }
+
+    @Override
+    public long countUserBlogs(Long userId, String keyword) {
+        return blogMapper.countBlogsByUserId(userId, keyword);
+    }
+
 }

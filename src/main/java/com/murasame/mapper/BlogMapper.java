@@ -148,6 +148,39 @@ public interface BlogMapper {
         "FROM blogs b " +
         "LEFT JOIN users u ON b.u_id=u.id " +
         "LEFT JOIN (SELECT b_id, COUNT(*) AS comment_count FROM comments GROUP BY b_id) c ON b.id=c.b_id " +
+        "WHERE b.u_id=#{userId} " +
+        "<if test='keyword != null and keyword != \"\"'>" +
+        "AND b.title LIKE CONCAT('%',#{keyword},'%') " +
+        "</if>" +
+        "<choose>" +
+        "<when test='sortBy == \"reads\"'>ORDER BY b.read_count DESC</when>" +
+        "<when test='sortBy == \"likes\"'>ORDER BY b.like_count DESC</when>" +
+        "<otherwise>ORDER BY b.created_at DESC</otherwise>" +
+        "</choose>" +
+        "LIMIT #{pageSize} OFFSET #{offset}" +
+        "</script>")
+    List<BlogBriefVO> getBlogsByUserId(@Param("userId") Long userId,
+                                       @Param("keyword") String keyword,
+                                       @Param("sortBy") String sortBy,
+                                       @Param("pageSize") int pageSize,
+                                       @Param("offset") int offset);
+
+    @Select("<script>" +
+        "SELECT COUNT(*) FROM blogs b WHERE b.u_id=#{userId} " +
+        "<if test='keyword != null and keyword != \"\"'>" +
+        "AND b.title LIKE CONCAT('%',#{keyword},'%') " +
+        "</if>" +
+        "</script>")
+    long countBlogsByUserId(@Param("userId") Long userId, @Param("keyword") String keyword);
+
+    @ResultMap("com.murasame.mapper.IndexMapper.blogBriefResultMap")
+    @Select("<script>" +
+        "SELECT b.id, b.title, LEFT(b.content,30) AS brief, b.created_at, b.updated_at, " +
+        "u.nickname AS author, b.t_id, b.read_count, b.like_count, " +
+        "COALESCE(c.comment_count,0) AS comment_count " +
+        "FROM blogs b " +
+        "LEFT JOIN users u ON b.u_id=u.id " +
+        "LEFT JOIN (SELECT b_id, COUNT(*) AS comment_count FROM comments GROUP BY b_id) c ON b.id=c.b_id " +
         "WHERE b.id IN " +
         "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
         " ORDER BY b.created_at DESC" +
