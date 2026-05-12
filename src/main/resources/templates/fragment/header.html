@@ -106,7 +106,8 @@
     </div>
   </div>
 </nav>
-<!-- 编辑资料模态框 -->
+<!-- 编辑资料模态框（仅登录用户可见） -->
+<th:block th:if="${session.currentUser != null}">
 <div class="edit-profile-overlay" id="editProfileOverlay">
     <div class="edit-profile-modal">
         <div class="edit-profile-header">
@@ -196,6 +197,7 @@
         </div>
     </div>
 </div>
+</th:block>
 
 <!-- 登录/注册模态窗 -->
 <div class="auth-overlay" id="authOverlay">
