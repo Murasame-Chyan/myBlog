@@ -3,6 +3,8 @@ package com.murasame.service;
 import com.murasame.entity.Users;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public interface UserService {
 	Users getUserById(Long id);
@@ -18,4 +20,10 @@ public interface UserService {
 	Users register(String email, String nickname, String password);
 
 	Users login(String email, String password);
+
+	Users updateProfile(Users user);
+
+	int calculateLevel(int exp);
+
+	List<com.murasame.domain.vo.BlogBriefVO> getLikedBlogs(Long userId, int limit);
 }
