@@ -43,6 +43,31 @@
 <nav class="navbar navbar-expand-lg navbar-custom">
   <div class="container">
     <a class="navbar-brand" th:href="@{/}">MyBlog</a>
+
+    <!-- 居中头像 -->
+    <div class="navbar-avatar mx-auto">
+      <!-- 已登录：显示用户头像 -->
+      <img th:if="${session.currentUser != null and session.currentUser.avatar != null}"
+           th:src="${session.currentUser.avatar}"
+           alt="用户头像"
+           class="rounded-circle avatar-img"
+           style="width: 40px; height: 40px; object-fit: cover;">
+      <!-- 已登录但无头像：显示默认头像 -->
+      <img th:if="${session.currentUser != null and session.currentUser.avatar == null}"
+           src="/images/default-avatar.png"
+           alt="默认头像"
+           class="rounded-circle avatar-img"
+           style="width: 40px; height: 40px; object-fit: cover;">
+      <!-- 未登录：显示登录入口 -->
+      <img th:if="${session.currentUser == null}"
+           src="/images/default-avatar.png"
+           alt="点击登录"
+           class="rounded-circle avatar-img"
+           style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;"
+           onclick="openAuthModal('login')"
+           title="点击登录 / 注册">
+    </div>
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -59,4 +84,64 @@
     </div>
   </div>
 </nav>
+<!-- 登录/注册模态窗 -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-modal">
+    <div class="auth-modal-header">
+      <div class="auth-modal-logo">My<span>Blog</span></div>
+      <button class="auth-modal-close" onclick="closeAuthModal()">&#10005;</button>
+    </div>
+    <div class="auth-modal-tabs">
+      <div class="auth-tab active" id="authTabLogin" onclick="switchAuthTab('login')">登录</div>
+      <div class="auth-tab" id="authTabRegister" onclick="switchAuthTab('register')">注册</div>
+    </div>
+    <div class="auth-modal-body">
+      <!-- 登录面板 -->
+      <div class="auth-form-panel active" id="loginPanel">
+        <div class="auth-form-group">
+          <label>邮箱</label>
+          <input type="text" class="auth-form-input" id="loginEmail" placeholder="请输入邮箱地址" autocomplete="email">
+          <div class="auth-error-msg" data-field="loginEmail"></div>
+        </div>
+        <div class="auth-form-group">
+          <label>密码</label>
+          <input type="password" class="auth-form-input" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+          <div class="auth-error-msg" data-field="loginPassword"></div>
+        </div>
+        <button class="auth-btn-submit auth-btn-login" onclick="handleLogin()">登 录</button>
+        <div class="auth-switch-text">
+          还没有账号？<a onclick="switchAuthTab('register')">立即注册</a>
+        </div>
+      </div>
+      <!-- 注册面板 -->
+      <div class="auth-form-panel" id="registerPanel">
+        <div class="auth-form-group">
+          <label>昵称</label>
+          <input type="text" class="auth-form-input" id="registerNickname" placeholder="如何称呼你？" autocomplete="nickname">
+          <div class="auth-error-msg" data-field="registerNickname"></div>
+        </div>
+        <div class="auth-form-group">
+          <label>邮箱</label>
+          <input type="email" class="auth-form-input" id="registerEmail" placeholder="请输入邮箱地址" autocomplete="email">
+          <div class="auth-error-msg" data-field="registerEmail"></div>
+        </div>
+        <div class="auth-form-group">
+          <label>密码</label>
+          <input type="password" class="auth-form-input" id="registerPassword" placeholder="至少 6 位密码" autocomplete="new-password">
+          <div class="auth-error-msg" data-field="registerPassword"></div>
+        </div>
+        <div class="auth-form-group">
+          <label>确认密码</label>
+          <input type="password" class="auth-form-input" id="registerConfirmPassword" placeholder="再次输入密码" autocomplete="new-password">
+          <div class="auth-error-msg" data-field="registerConfirmPassword"></div>
+        </div>
+        <button class="auth-btn-submit auth-btn-register" onclick="handleRegister()">注 册</button>
+        <div class="auth-switch-text">
+          已有账号？<a onclick="switchAuthTab('login')">去登录</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/auth.js"></script>
 </th:block>

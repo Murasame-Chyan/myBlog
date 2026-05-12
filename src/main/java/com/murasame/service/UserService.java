@@ -12,4 +12,10 @@ public interface UserService {
 	int updateLikedBId(Long userId, String likedBId);
 
 	boolean isBlogLiked(Long userId, Long blogId);
+
+	int updateAvatar(Long userId, String avatarUrl);
+
+	Users register(String email, String nickname, String password);
+
+	Users login(String email, String password);
 }
