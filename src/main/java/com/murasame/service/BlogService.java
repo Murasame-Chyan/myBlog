@@ -1,8 +1,14 @@
 package com.murasame.service;
 
+import com.murasame.domain.vo.BlogBriefVO;
+import java.time.LocalDateTime;
+
 import com.murasame.domain.dto.TagWrapper;
+
 import com.murasame.entity.Blogs;
+
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 
@@ -33,4 +39,13 @@ public interface BlogService {
 	int incrementLikeCount(Long blogId);                                // 增加博客点赞量
 
 	int decrementLikeCount(Long blogId);                                // 减少博客点赞量
+
+    List<BlogBriefVO> searchBlogs(String keyword, LocalDateTime dateFrom, LocalDateTime dateTo, String sortBy, int page, int pageSize);
+
+    long countSearchBlogs(String keyword, LocalDateTime dateFrom, LocalDateTime dateTo);
+
+    List<BlogBriefVO> getUserBlogs(Long userId, String keyword, String sortBy, int page, int pageSize);
+
+    long countUserBlogs(Long userId, String keyword);
+
 }
