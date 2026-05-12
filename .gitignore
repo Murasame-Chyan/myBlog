@@ -40,3 +40,12 @@ build/
 
 ### context ###
 src/main/resources/agent
+
+### yml ###
+src/main/resources/*.yml
+
+### Superpowers ###
+.superpowers/
+
+### Claude ###
+.claude/
