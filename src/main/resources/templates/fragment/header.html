@@ -1,10 +1,13 @@
 <!-- 可替换首部 -->
 <th:block th:fragment="nav(currentPage)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <style>
   .navbar-custom {
     background-color: rgba(135, 206, 235, 0.8) !important;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 100;
   }
   .navbar-brand {
     color: #ffffff !important;
@@ -23,20 +26,20 @@
     font-weight: bold;
     border-bottom: 2px solid #ffffff;
   }
-  .btn-publish {
-    background: linear-gradient(135deg, #DA70D6 0%, #FF69B4 100%);
+  .btn-write {
+    background: linear-gradient(135deg, #87CEEB 0%, #5BA4CF 100%);
     border: none;
     color: #ffffff !important;
     font-weight: bold;
     padding: 0.5rem 1.5rem;
     border-radius: 20px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(218, 112, 214, 0.4);
+    box-shadow: 0 2px 8px rgba(135, 206, 235, 0.4);
   }
-  .btn-publish:hover {
-    background: linear-gradient(135deg, #FF69B4 0%, #DA70D6 100%);
+  .btn-write:hover {
+    background: linear-gradient(135deg, #5BA4CF 0%, #87CEEB 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(218, 112, 214, 0.6);
+    box-shadow: 0 4px 12px rgba(135, 206, 235, 0.6);
     color: #ffffff !important;
   }
 </style>
@@ -46,18 +49,38 @@
 
     <!-- 居中头像 -->
     <div class="navbar-avatar mx-auto">
-      <!-- 已登录：显示用户头像 -->
-      <img th:if="${session.currentUser != null and session.currentUser.avatar != null}"
-           th:src="${session.currentUser.avatar}"
-           alt="用户头像"
-           class="rounded-circle avatar-img"
-           style="width: 40px; height: 40px; object-fit: cover;">
-      <!-- 已登录但无头像：显示默认头像 -->
-      <img th:if="${session.currentUser != null and session.currentUser.avatar == null}"
-           src="/images/default-avatar.png"
-           alt="默认头像"
-           class="rounded-circle avatar-img"
-           style="width: 40px; height: 40px; object-fit: cover;">
+      <!-- 已登录：头像 + 悬浮下拉菜单 -->
+      <th:block th:if="${session.currentUser != null}">
+        <div class="avatar-dropdown">
+          <a th:href="@{/user/profile}">
+            <img th:if="${session.currentUser.avatar != null}"
+                 th:src="${session.currentUser.avatar}"
+                 alt="用户头像"
+                 class="rounded-circle avatar-img"
+                 style="width: 40px; height: 40px; object-fit: cover;">
+            <img th:if="${session.currentUser.avatar == null}"
+                 src="/images/default-avatar.png"
+                 alt="默认头像"
+                 class="rounded-circle avatar-img"
+                 style="width: 40px; height: 40px; object-fit: cover;">
+          </a>
+          <div class="avatar-dropdown-menu">
+            <a th:href="@{/user/profile}" class="dropdown-item">
+              <i class="bi bi-person"></i> 个人主页
+            </a>
+            <a class="dropdown-item" onclick="openEditProfileModal()" style="cursor: pointer;">
+              <i class="bi bi-pencil-square"></i> 编辑资料
+            </a>
+            <a th:href="@{/archives}" class="dropdown-item">
+              <i class="bi bi-archive"></i> 我的归档
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" onclick="handleLogout()" style="cursor: pointer;">
+              <i class="bi bi-box-arrow-right"></i> 退出登录
+            </a>
+          </div>
+        </div>
+      </th:block>
       <!-- 未登录：显示登录入口 -->
       <img th:if="${session.currentUser == null}"
            src="/images/default-avatar.png"
@@ -74,16 +97,106 @@
     <div class="collapse navbar-collapse" id="navMain">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'index' ? 'active' : ''}" th:href="@{/}">首页</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'archives' ? 'active' : ''}" th:href="@{/archives}">归档</a></li>
         <li class="nav-item ms-lg-3">
-          <a th:href="@{/blogs/write}" class="btn btn-publish">
-            <i class="bi bi-pencil-square"></i> 发布
+          <a th:href="@{/blogs/write}" class="btn btn-write">
+            <i class="bi bi-pencil-square"></i> 写作
           </a>
         </li>
       </ul>
     </div>
   </div>
 </nav>
+<!-- 编辑资料模态框 -->
+<div class="edit-profile-overlay" id="editProfileOverlay">
+    <div class="edit-profile-modal">
+        <div class="edit-profile-header">
+            <h5>编辑资料</h5>
+            <button class="edit-profile-close" onclick="closeEditProfileModal()">&#10005;</button>
+        </div>
+        <div class="edit-profile-body">
+            <!-- 头像 -->
+            <div class="edit-profile-field">
+                <div class="edit-profile-label">头像</div>
+                <div class="edit-avatar-area">
+                    <img id="editAvatarPreview"
+                         th:src="${session.currentUser.avatar != null ? session.currentUser.avatar : '/images/default-avatar.png'}"
+                         class="edit-avatar-preview" alt="头像">
+                    <div>
+                        <input type="file" id="editAvatarFile" accept="image/*" style="display: none;" onchange="initEditCrop(this.files[0])">
+                        <button type="button" class="edit-avatar-upload-btn" onclick="document.getElementById('editAvatarFile').click()">
+                            <i class="bi bi-upload"></i> 上传新头像
+                        </button>
+                        <div id="editAvatarMsg" style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:4px;"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- 昵称 -->
+            <div class="edit-profile-field">
+                <div class="edit-profile-label">昵称</div>
+                <input type="text" class="edit-profile-input" id="editNickname" th:value="${session.currentUser.nickname}" maxlength="32" placeholder="输入昵称">
+            </div>
+            <!-- 简介 -->
+            <div class="edit-profile-field">
+                <div class="edit-profile-label">简介</div>
+                <input type="text" class="edit-profile-input" id="editIntro" th:value="${session.currentUser.intro}" maxlength="255" placeholder="介绍一下自己">
+            </div>
+            <!-- 邮箱 -->
+            <div class="edit-profile-field">
+                <div class="edit-profile-label">邮箱</div>
+                <input type="email" class="edit-profile-input" id="editEmail" th:value="${session.currentUser.email}" maxlength="255" placeholder="输入邮箱">
+            </div>
+            <!-- 性别 -->
+            <div class="edit-profile-field">
+                <div class="edit-profile-label">性别</div>
+                <select class="edit-profile-select" id="editGender">
+                    <option value="0" th:selected="${session.currentUser.gender == null or session.currentUser.gender == 0}">未设置</option>
+                    <option value="1" th:selected="${session.currentUser.gender == 1}">男</option>
+                    <option value="2" th:selected="${session.currentUser.gender == 2}">女</option>
+                </select>
+            </div>
+            <!-- GitHub -->
+            <div class="edit-profile-field">
+                <div class="edit-profile-label">GitHub 用户名</div>
+                <input type="text" class="edit-profile-input" id="editGithub" th:value="${session.currentUser.githubUsername}" maxlength="255" placeholder="输入 GitHub 用户名">
+            </div>
+            <button class="edit-profile-save-btn" onclick="saveEditProfile()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 头像裁剪弹窗 -->
+<div class="crop-overlay" id="editCropOverlay">
+    <div class="crop-modal">
+        <div class="crop-header">
+            <span>裁剪头像</span>
+            <button type="button" class="crop-close" onclick="closeEditCrop()">&#10005;</button>
+        </div>
+        <div class="crop-body">
+            <div class="crop-area">
+                <img id="editCropImage" draggable="false">
+            </div>
+            <div class="crop-preview-side">
+                <div class="preview-label">预览</div>
+                <div class="preview-circle" id="editPreviewCircle"></div>
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);">80 × 80</div>
+            </div>
+        </div>
+        <div class="crop-footer">
+            <div class="crop-tools">
+                <button type="button" onclick="editCropperRotate(-45)"><i class="bi bi-arrow-counterclockwise"></i></button>
+                <button type="button" onclick="editCropperZoom(0.1)"><i class="bi bi-zoom-in"></i></button>
+                <button type="button" onclick="editCropperZoom(-0.1)"><i class="bi bi-zoom-out"></i></button>
+                <button type="button" onclick="editCropperRotate(45)"><i class="bi bi-arrow-clockwise"></i></button>
+                <button type="button" onclick="editCropperReset()"><i class="bi bi-arrow-repeat"></i></button>
+            </div>
+            <div class="crop-actions">
+                <button type="button" class="crop-btn crop-btn-cancel" onclick="closeEditCrop()">取消</button>
+                <button type="button" class="crop-btn crop-btn-confirm" onclick="confirmEditCrop()">确认上传</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 登录/注册模态窗 -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-modal">
@@ -100,12 +213,12 @@
       <div class="auth-form-panel active" id="loginPanel">
         <div class="auth-form-group">
           <label>邮箱</label>
-          <input type="text" class="auth-form-input" id="loginEmail" placeholder="请输入邮箱地址" autocomplete="email">
+          <input type="text" class="auth-form-input" id="loginEmail" placeholder="请输入邮箱地址" autocomplete="email" maxlength="255">
           <div class="auth-error-msg" data-field="loginEmail"></div>
         </div>
         <div class="auth-form-group">
           <label>密码</label>
-          <input type="password" class="auth-form-input" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+          <input type="password" class="auth-form-input" id="loginPassword" placeholder="请输入密码" autocomplete="current-password" maxlength="255">
           <div class="auth-error-msg" data-field="loginPassword"></div>
         </div>
         <button class="auth-btn-submit auth-btn-login" onclick="handleLogin()">登 录</button>
@@ -117,22 +230,22 @@
       <div class="auth-form-panel" id="registerPanel">
         <div class="auth-form-group">
           <label>昵称</label>
-          <input type="text" class="auth-form-input" id="registerNickname" placeholder="如何称呼你？" autocomplete="nickname">
+          <input type="text" class="auth-form-input" id="registerNickname" placeholder="如何称呼你？" autocomplete="nickname" maxlength="32">
           <div class="auth-error-msg" data-field="registerNickname"></div>
         </div>
         <div class="auth-form-group">
           <label>邮箱</label>
-          <input type="email" class="auth-form-input" id="registerEmail" placeholder="请输入邮箱地址" autocomplete="email">
+          <input type="email" class="auth-form-input" id="registerEmail" placeholder="请输入邮箱地址" autocomplete="email" maxlength="255">
           <div class="auth-error-msg" data-field="registerEmail"></div>
         </div>
         <div class="auth-form-group">
           <label>密码</label>
-          <input type="password" class="auth-form-input" id="registerPassword" placeholder="至少 6 位密码" autocomplete="new-password">
+          <input type="password" class="auth-form-input" id="registerPassword" placeholder="至少 6 位密码" autocomplete="new-password" maxlength="255">
           <div class="auth-error-msg" data-field="registerPassword"></div>
         </div>
         <div class="auth-form-group">
           <label>确认密码</label>
-          <input type="password" class="auth-form-input" id="registerConfirmPassword" placeholder="再次输入密码" autocomplete="new-password">
+          <input type="password" class="auth-form-input" id="registerConfirmPassword" placeholder="再次输入密码" autocomplete="new-password" maxlength="255">
           <div class="auth-error-msg" data-field="registerConfirmPassword"></div>
         </div>
         <button class="auth-btn-submit auth-btn-register" onclick="handleRegister()">注 册</button>
@@ -144,4 +257,127 @@
   </div>
 </div>
 <script src="/js/auth.js"></script>
+<script src="/js/backgroundFix.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+    // ===== 编辑资料模态框 =====
+    function openEditProfileModal() {
+        document.getElementById('editProfileOverlay').classList.add('active');
+    }
+    function closeEditProfileModal() {
+        document.getElementById('editProfileOverlay').classList.remove('active');
+    }
+
+    function saveEditProfile() {
+        var btn = document.querySelector('.edit-profile-save-btn');
+        btn.disabled = true;
+        btn.textContent = '保存中...';
+
+        var formData = new URLSearchParams();
+        formData.append('nickname', document.getElementById('editNickname').value.trim());
+        formData.append('intro', document.getElementById('editIntro').value.trim());
+        formData.append('email', document.getElementById('editEmail').value.trim());
+        formData.append('gender', document.getElementById('editGender').value);
+        formData.append('githubUsername', document.getElementById('editGithub').value.trim());
+
+        fetch('/user/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.code === 200) {
+                closeEditProfileModal();
+                location.reload();
+            } else {
+                alert(data.msg || '保存失败');
+            }
+        })
+        .catch(function() { alert('网络错误'); })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = '保存';
+        });
+    }
+
+    // ===== 头像裁剪 =====
+    var editCropper = null;
+    var editCropFileName = 'avatar.jpg';
+
+    function initEditCrop(file) {
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) {
+            document.getElementById('editAvatarMsg').textContent = '图片不能超过10MB';
+            document.getElementById('editAvatarMsg').style.color = '#ff6b6b';
+            document.getElementById('editAvatarFile').value = '';
+            return;
+        }
+        editCropFileName = file.name;
+        var url = URL.createObjectURL(file);
+        document.getElementById('editCropImage').src = url;
+        document.getElementById('editCropOverlay').classList.add('active');
+        if (editCropper) editCropper.destroy();
+        editCropper = new Cropper(document.getElementById('editCropImage'), {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            preview: '#editPreviewCircle',
+            background: false,
+            rotatable: true,
+            scalable: true,
+            zoomable: true,
+            zoomOnWheel: true,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false
+        });
+    }
+
+    function editCropperRotate(deg) { if (editCropper) editCropper.rotate(deg); }
+    function editCropperZoom(delta) { if (editCropper) editCropper.zoom(delta); }
+    function editCropperReset() { if (editCropper) editCropper.reset(); }
+
+    function closeEditCrop() {
+        document.getElementById('editCropOverlay').classList.remove('active');
+        document.getElementById('editAvatarFile').value = '';
+        if (editCropper) { editCropper.destroy(); editCropper = null; }
+        var img = document.getElementById('editCropImage');
+        if (img.src && img.src.startsWith('blob:')) { URL.revokeObjectURL(img.src); img.src = ''; }
+    }
+
+    function confirmEditCrop() {
+        if (!editCropper) return;
+        var canvas = editCropper.getCroppedCanvas({ width: 256, height: 256, imageSmoothingQuality: 'high' });
+        if (!canvas) return;
+        canvas.toBlob(function(blob) {
+            if (!blob) return;
+            var msgEl = document.getElementById('editAvatarMsg');
+            msgEl.textContent = '上传中...';
+            msgEl.style.color = 'rgba(255,255,255,0.5)';
+            var formData = new FormData();
+            formData.append('file', blob, editCropFileName);
+            fetch('/user/avatar/upload', { method: 'POST', body: formData })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200) {
+                    document.getElementById('editAvatarPreview').src = data.data + '?t=' + Date.now();
+                    msgEl.textContent = '头像已更新';
+                    msgEl.style.color = '#6bd9a0';
+                    closeEditCrop();
+                } else {
+                    msgEl.textContent = data.msg || '上传失败';
+                    msgEl.style.color = '#ff6b6b';
+                    closeEditCrop();
+                }
+            })
+            .catch(function() {
+                msgEl.textContent = '上传失败';
+                msgEl.style.color = '#ff6b6b';
+                closeEditCrop();
+            });
+        }, 'image/jpeg', 0.85);
+    }
+</script>
 </th:block>
