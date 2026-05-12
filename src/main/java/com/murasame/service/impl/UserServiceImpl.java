@@ -10,7 +10,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import com.murasame.domain.vo.BlogBriefVO;
+import com.murasame.mapper.BlogMapper;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -22,6 +25,9 @@ public class UserServiceImpl implements UserService {
 
 	@Resource
 	private BCryptPasswordEncoder passwordEncoder;
+
+	@Resource
+	private BlogMapper blogMapper;
 
 	@Override
 	public Users getUserById(Long id) {
@@ -132,6 +138,15 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public Users updateProfile(Users user) {
+		if (user.getNickname() == null || user.getNickname().isBlank()) {
+			throw new IllegalArgumentException("昵称不能为空");
+		}
+		userMapper.updateUser(user);
+		return userMapper.getUserById(user.getId());
+	}
+
+	@Override
 	public Users login(String email, String password) {
 		if (email == null || email.isBlank() || password == null || password.isBlank()) {
 			return null;
@@ -144,5 +159,43 @@ public class UserServiceImpl implements UserService {
 			return null;
 		}
 		return user;
+	}
+
+	private static final long[] LEVEL_THRESHOLDS = {
+		0, 200, 1500, 4500, 10800, 28800, 65000, 140000, 300000, 600000
+	};
+
+	@Override
+	public int calculateLevel(int exp) {
+		int level = 1;
+		for (int i = 1; i < LEVEL_THRESHOLDS.length; i++) {
+			if (exp >= LEVEL_THRESHOLDS[i]) {
+				level = i + 1;
+			} else {
+				break;
+			}
+		}
+		return level;
+	}
+
+	@Override
+	public List<BlogBriefVO> getLikedBlogs(Long userId, int limit) {
+		if (userId == null) return Collections.emptyList();
+		Users user = userMapper.getUserById(userId);
+		if (user == null || user.getLiked_b_id() == null || user.getLiked_b_id().isEmpty()) {
+			return Collections.emptyList();
+		}
+		try {
+			List<Long> likedIds = objectMapper.readValue(user.getLiked_b_id(), new TypeReference<>() {});
+			List<Long> recent = new ArrayList<>();
+			for (int i = Math.max(0, likedIds.size() - limit); i < likedIds.size(); i++) {
+				recent.add(likedIds.get(i));
+			}
+			Collections.reverse(recent);
+			if (recent.isEmpty()) return Collections.emptyList();
+			return blogMapper.getBlogsByIds(recent);
+		} catch (Exception e) {
+			return Collections.emptyList();
+		}
 	}
 }
