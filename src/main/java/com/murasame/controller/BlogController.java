@@ -8,13 +8,18 @@ import com.murasame.entity.Blogs;
 import com.murasame.entity.Tag;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
+import com.murasame.service.LikesService;
 import com.murasame.service.TagService;
 import com.murasame.service.UserService;
 import com.murasame.util.BlogHtmlUtil;
 import com.murasame.util.ReturnUtil;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -23,6 +28,7 @@ import java.util.Map;
 
 @RequestMapping("/blogs")
 @Controller
+@Validated
 @io.swagger.v3.oas.annotations.tags.Tag(name="博客接口", description = "博客相关CRUD")
 public class BlogController {
 	@Resource
@@ -33,6 +39,8 @@ public class BlogController {
 	private TagService tagService;
 	@Resource
 	private UserService userService;
+	@Resource
+	private LikesService likesService;
 
 	// From index 点击跳转文章正文 RESTful跟随文章id
 	@GetMapping("read/{id}")
@@ -43,12 +51,16 @@ public class BlogController {
 			model.addAttribute("errorInf", errorInf);
 			return "error";
 		}
-		
+
+		// 将 Markdown 转为安全的 HTML
+		String htmlContent = BlogHtmlUtil.toHtml(blog.getContent());
+		blog.setContent(htmlContent);
+
 		List<CommentVO> comments = commentService.getCommentTree(id);
 		List<Tag> allTags = tagService.getAllTags();
 		int commentCount = commentService.getCommentCountByBlogId(id);
 		String authorName = userService.getNicknameById(blog.getU_id());
-		
+
 		model.addAttribute("blog", blog);
 		model.addAttribute("comments", comments);
 		model.addAttribute("allTags", allTags);
@@ -67,7 +79,10 @@ public class BlogController {
 	@ResponseBody
 	@PostMapping("/publish")
 	public Map<String, Object> publishBlog(
+			@NotBlank(message = "标题不能为空")
+			@Size(max = 255, message = "标题不能超过255个字符")
 			@RequestParam String title,
+			@NotBlank(message = "内容不能为空")
 			@RequestParam String content,
 			@RequestParam(value = "authorId", defaultValue = "1") Long authorId,
 			@RequestParam(value = "tagIds", required = false) String tagIds) {
@@ -107,7 +122,10 @@ public class BlogController {
 	@ResponseBody
 	@PostMapping("/update")
 	public Map<String, Object> updateBlog(
+			@NotBlank(message = "标题不能为空")
+			@Size(max = 255, message = "标题不能超过255个字符")
 			@RequestParam String title,
+			@NotBlank(message = "内容不能为空")
 			@RequestParam String content,
 			@RequestParam Long id,
 			@RequestParam(value = "tagIds", required = false) String tagIds,
@@ -187,17 +205,15 @@ public class BlogController {
 	// 点赞博客
 	@ResponseBody
 	@PostMapping("/like/{id}")
-	public Map<String, Object> likeBlog(@PathVariable Long id, @RequestParam(value = "userId", required = false, defaultValue = "1") Long userId) {
-		if (userService.isBlogLiked(userId, id)) {
+	public Map<String, Object> likeBlog(@PathVariable Long id, HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		if (likesService.isLiked(currentUser.getId(), id)) {
 			return ReturnUtil.error("已经点赞过了");
 		}
-		
-		com.murasame.service.impl.UserServiceImpl userServiceImpl = (com.murasame.service.impl.UserServiceImpl) userService;
-		boolean addResult = userServiceImpl.addBlogToLiked(userId, id);
-		if (!addResult) {
-			return ReturnUtil.error("点赞失败");
-		}
-		
+		likesService.like(currentUser.getId(), id);
 		int result = blogService.incrementLikeCount(id);
 		if (result > 0) {
 			Blogs blog = blogService.getBlogById(id);
@@ -210,17 +226,15 @@ public class BlogController {
 	// 取消点赞
 	@ResponseBody
 	@PostMapping("/unlike/{id}")
-	public Map<String, Object> unlikeBlog(@PathVariable Long id, @RequestParam(value = "userId", required = false, defaultValue = "1") Long userId) {
-		if (!userService.isBlogLiked(userId, id)) {
+	public Map<String, Object> unlikeBlog(@PathVariable Long id, HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		if (!likesService.isLiked(currentUser.getId(), id)) {
 			return ReturnUtil.error("尚未点赞");
 		}
-		
-		com.murasame.service.impl.UserServiceImpl userServiceImpl = (com.murasame.service.impl.UserServiceImpl) userService;
-		boolean removeResult = userServiceImpl.removeBlogFromLiked(userId, id);
-		if (!removeResult) {
-			return ReturnUtil.error("取消点赞失败");
-		}
-		
+		likesService.unlike(currentUser.getId(), id);
 		int result = blogService.decrementLikeCount(id);
 		if (result > 0) {
 			Blogs blog = blogService.getBlogById(id);
@@ -233,8 +247,12 @@ public class BlogController {
 	// 检查是否已点赞
 	@ResponseBody
 	@GetMapping("/isLiked/{id}")
-	public Map<String, Object> isLiked(@PathVariable Long id, @RequestParam(value = "userId", required = false, defaultValue = "1") Long userId) {
-		boolean liked = userService.isBlogLiked(userId, id);
+	public Map<String, Object> isLiked(@PathVariable Long id, HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.success("未点赞", false);
+		}
+		boolean liked = likesService.isLiked(currentUser.getId(), id);
 		return ReturnUtil.success(liked ? "已点赞" : "未点赞", liked);
 	}
 

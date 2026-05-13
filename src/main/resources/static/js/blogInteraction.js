@@ -17,8 +17,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function checkLikeStatus(blogId) {
-    fetch(`/blogs/isLiked/${blogId}?userId=1`)
-        .then(response => response.json())
+    fetch(`/blogs/isLiked/${blogId}`)
+        .then(function(response) {
+        if (response.status === 401) {
+            openAuthModal('login');
+            alert('请先登录后再操作');
+            throw new Error('unauthorized');
+        }
+        return response.json();
+    })
         .then(data => {
             if (data.code === 200) {
                 isLiked = data.data;
@@ -32,7 +39,14 @@ function incrementReadCount(blogId) {
     fetch(`/blogs/incrementRead/${blogId}`, {
         method: 'POST'
     })
-    .then(response => response.json())
+    .then(function(response) {
+        if (response.status === 401) {
+            openAuthModal('login');
+            alert('请先登录后再操作');
+            throw new Error('unauthorized');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.code === 200) {
             console.log('阅读量已更新');
@@ -59,13 +73,16 @@ function handleLike() {
     const url = isLiked ? `/blogs/unlike/${blogId}` : `/blogs/like/${blogId}`;
     
     fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `userId=1`
+        method: 'POST'
     })
-    .then(response => response.json())
+    .then(function(response) {
+        if (response.status === 401) {
+            openAuthModal('login');
+            alert('请先登录后再操作');
+            throw new Error('unauthorized');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.code === 200) {
             isLiked = !isLiked;
