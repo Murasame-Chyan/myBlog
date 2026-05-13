@@ -6,6 +6,7 @@ import com.murasame.entity.Users;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
 import com.murasame.service.CosUploadService;
+import com.murasame.service.LikesService;
 import com.murasame.service.UserService;
 import com.murasame.util.ReturnUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +42,8 @@ public class UserController {
 
 	@Resource
 	private UserService userService;
+	@Resource
+	private LikesService likesService;
 
 	@ResponseBody
 	@PostMapping("/comment/add")
@@ -186,7 +189,7 @@ public class UserController {
 		if (currentUser == null || !currentUser.getId().equals(userId)) {
 			return ReturnUtil.success("获取成功", Collections.emptyList());
 		}
-		List<BlogBriefVO> likedBlogs = userService.getLikedBlogs(userId, 10);
+		List<BlogBriefVO> likedBlogs = likesService.getLikedBlogs(userId, 10);
 		return ReturnUtil.success("获取成功", likedBlogs);
 	}
 }

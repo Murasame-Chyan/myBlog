@@ -16,9 +16,6 @@ public interface UserMapper {
 	@Select("SELECT nickname FROM users WHERE id=#{id}")
 	String getNicknameById(@Param("id") Long id);
 
-	@Update("UPDATE users SET liked_b_id = #{likedBId} WHERE id = #{userId}")
-	int updateLikedBId(@Param("userId") Long userId, @Param("likedBId") String likedBId);
-
 	@Update("UPDATE users SET avatar = #{avatarUrl} WHERE id = #{userId}")
 	int updateAvatar(@Param("userId") Long userId, @Param("avatarUrl") String avatarUrl);
 
@@ -28,4 +25,7 @@ public interface UserMapper {
 	@Insert("INSERT INTO users (nickname, email, password) VALUES (#{nickname}, #{email}, #{password})")
 	@Options(useGeneratedKeys = true, keyProperty = "id")
 	int insertUser(Users user);
+
+	@Update("UPDATE users SET nickname=#{nickname}, intro=#{intro}, email=#{email}, gender=#{gender}, github_username=#{githubUsername} WHERE id=#{id}")
+	int updateUser(Users user);
 }
