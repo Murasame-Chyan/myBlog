@@ -55,8 +55,8 @@ public class UserController {
 	@ResponseBody
 	@PostMapping("/comment/add")
 	public Map<String, Object> addComment(
-			@RequestParam Long blogId,
-			@RequestParam(required = false) Long parentCid,
+			@RequestParam("bId") Long blogId,
+			@RequestParam(value = "parentId", required = false) Long parentCid,
 			@Size(max = 65535, message = "评论内容过长")
 			@RequestParam String content,
 			HttpServletRequest request) {
