@@ -9,12 +9,14 @@ import com.murasame.service.TagService;
 import com.murasame.service.UserService;
 import com.murasame.util.BlogHtmlUtil;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.murasame.util.AuthHelper;
 
 import java.util.List;
 
@@ -22,7 +24,10 @@ import java.util.List;
 @io.swagger.v3.oas.annotations.tags.Tag(name="归档接口", description = "归档相关操作")
 public class ArchiveController {
 	@Resource
-	ArchiveService archiveService;
+	private AuthHelper authHelper;
+
+	@Resource
+	private ArchiveService archiveService;
 	@Resource
 	TagService tagService;
 
@@ -33,8 +38,8 @@ public class ArchiveController {
 	public String archives(Model model,
 	                       @RequestParam(defaultValue = "1") int page,
 	                       @RequestParam(defaultValue = "5") int pageSize,
-	                       HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	                       HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return "redirect:/";
 		}
@@ -55,8 +60,8 @@ public class ArchiveController {
 	}
 
 	@GetMapping("/archives/read/{id}")
-	public String readArchive(@PathVariable Long id, Model model, HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	public String readArchive(@PathVariable Long id, Model model, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return "redirect:/";
 		}
@@ -79,8 +84,8 @@ public class ArchiveController {
 
 	@GetMapping("/archives/tag/{id}")
 	public String getArchivesByTag(@PathVariable Integer id, Model model,
-	                                HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	                                HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return "redirect:/";
 		}
