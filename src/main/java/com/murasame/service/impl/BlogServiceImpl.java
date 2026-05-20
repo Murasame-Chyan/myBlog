@@ -36,6 +36,11 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
+	public Blogs getBlogFromBinById(Long id) {
+		return blogMapper.getBlogFromBinById(id);
+	}
+
+	@Override
 	public int publishBlog(Long authorId, String title, String content){ // 发布博文，成功返回博文id，否则返回0
 		Blogs blog = new Blogs();
 		blog.setU_id(authorId);

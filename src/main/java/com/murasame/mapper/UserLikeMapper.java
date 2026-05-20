@@ -11,7 +11,7 @@ import java.util.List;
 @Mapper
 public interface UserLikeMapper {
 
-    @Insert("INSERT IGNORE INTO user_likes (user_id, blog_id) VALUES (#{userId}, #{blogId})")
+    @Insert("INSERT IGNORE INTO user_likes (user_id, blog_id, created_at) VALUES (#{userId}, #{blogId}, NOW())")
     int insert(@Param("userId") Long userId, @Param("blogId") Long blogId);
 
     @Delete("DELETE FROM user_likes WHERE user_id = #{userId} AND blog_id = #{blogId}")
@@ -23,6 +23,7 @@ public interface UserLikeMapper {
     @Select("SELECT blog_id FROM user_likes WHERE user_id = #{userId} ORDER BY created_at DESC")
     List<Long> findBlogIdsByUserId(@Param("userId") Long userId);
 
+    // 全量查询用于缓存预热，返回SimpleEntry避免为(user_id, blog_id)对创建额外VO类
     @Select("SELECT user_id, blog_id FROM user_likes ORDER BY user_id")
     List<java.util.AbstractMap.SimpleEntry<Long, Long>> findAllForWarmup();
 }

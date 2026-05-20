@@ -6,6 +6,7 @@ import com.murasame.entity.Users;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
 import com.murasame.service.CosUploadService;
+import com.murasame.service.FollowService;
 import com.murasame.service.LikesService;
 import com.murasame.service.UserService;
 import com.murasame.util.ReturnUtil;
@@ -45,6 +46,9 @@ public class UserController {
 	@Resource
 	private LikesService likesService;
 
+	@Resource
+	private FollowService followService;
+
 	@ResponseBody
 	@PostMapping("/comment/add")
 	public Map<String, Object> addComment(
@@ -80,6 +84,7 @@ public class UserController {
 		return ReturnUtil.success("获取成功", comments);
 	}
 
+	// 头像上传三步流程：1. COS云端上传 → 2. 数据库URL更新 → 3. Session同步刷新
 	@ResponseBody
 	@PostMapping("/avatar/upload")
 	public Map<String, Object> uploadAvatar(
@@ -111,7 +116,8 @@ public class UserController {
 	public String profile(@RequestParam(required = false) Long id,
 	                      HttpSession session, Model model) {
 		Users currentUser = (Users) session.getAttribute("currentUser");
-		if (currentUser == null) {
+		// 未登录且未指定用户id时无法查看"我的主页"，重定向到首页
+		if (currentUser == null && id == null) {
 			return "redirect:/";
 		}
 		Long profileUserId = (id != null) ? id : currentUser.getId();
@@ -119,9 +125,17 @@ public class UserController {
 		if (profileUser == null) {
 			return "redirect:/";
 		}
+		boolean isOwner = currentUser != null && currentUser.getId().equals(profileUserId);
 		model.addAttribute("profileUser", profileUser);
-		model.addAttribute("isOwner", currentUser.getId().equals(profileUserId));
+		model.addAttribute("isOwner", isOwner);
+		model.addAttribute("isLoggedIn", currentUser != null);
 		model.addAttribute("githubUsername", profileUser.getGithubUsername());
+		// 关注状态（仅登录用户查看他人主页时查询）
+		if (currentUser != null && !isOwner) {
+			model.addAttribute("isFollowing", followService.isFollowing(currentUser.getId(), profileUserId));
+		}
+		model.addAttribute("followerCount", followService.countFollowers(profileUserId));
+		model.addAttribute("followingCount", followService.countFollowing(profileUserId));
 		return "profile";
 	}
 
@@ -140,11 +154,13 @@ public class UserController {
 			@RequestParam Integer gender,
 			@Size(max = 255, message = "GitHub用户名不能超过255个字符")
 			@RequestParam(required = false) String githubUsername,
+			@RequestParam(required = false) String githubToken,
 			HttpSession session) {
 		Users currentUser = (Users) session.getAttribute("currentUser");
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized("请先登录");
 		}
+		// 将分散的请求参数组装为Users对象，便于Service层统一处理
 		try {
 			Users user = new Users();
 			user.setId(currentUser.getId());
@@ -153,7 +169,12 @@ public class UserController {
 			user.setEmail(email);
 			user.setGender(gender);
 			user.setGithubUsername(githubUsername);
+			if (githubToken != null && !githubToken.isBlank()) {
+				user.setGithubToken(githubToken.trim());
+			}
 			Users updated = userService.updateProfile(user);
+			// 更新 session 时清除 githubToken（不解出到前端 session）
+			updated.setGithubToken(null);
 			session.setAttribute("currentUser", updated);
 			return ReturnUtil.success("保存成功");
 		} catch (IllegalArgumentException e) {
@@ -191,5 +212,134 @@ public class UserController {
 		}
 		List<BlogBriefVO> likedBlogs = likesService.getLikedBlogs(userId, 10);
 		return ReturnUtil.success("获取成功", likedBlogs);
+	}
+
+	@ResponseBody
+	@PostMapping("/follow/{followeeId}")
+	public Map<String, Object> follow(@PathVariable Long followeeId, HttpSession session) {
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		if (currentUser.getId().equals(followeeId)) {
+			return ReturnUtil.error("不能关注自己");
+		}
+		followService.follow(currentUser.getId(), followeeId);
+		return ReturnUtil.success("关注成功");
+	}
+
+	@ResponseBody
+	@PostMapping("/unfollow/{followeeId}")
+	public Map<String, Object> unfollow(@PathVariable Long followeeId, HttpSession session) {
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		followService.unfollow(currentUser.getId(), followeeId);
+		return ReturnUtil.success("已取消关注");
+	}
+
+	@ResponseBody
+	@GetMapping("/follow/status")
+	public Map<String, Object> followStatus(@RequestParam Long followeeId, HttpSession session) {
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.success("获取成功", false);
+		}
+		boolean following = followService.isFollowing(currentUser.getId(), followeeId);
+		return ReturnUtil.success("获取成功", following);
+	}
+
+	@ResponseBody
+	@GetMapping("/follow/counts")
+	public Map<String, Object> followCounts(@RequestParam Long userId) {
+		Map<String, Integer> data = new HashMap<>();
+		data.put("followerCount", followService.countFollowers(userId));
+		data.put("followingCount", followService.countFollowing(userId));
+		return ReturnUtil.success("获取成功", data);
+	}
+
+	// 粉丝列表页
+	@GetMapping("/{userId}/followers")
+	public String followersPage(@PathVariable Long userId, Model model, HttpSession session) {
+		Users profileUser = userService.getUserById(userId);
+		if (profileUser == null) return "redirect:/";
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		model.addAttribute("profileUser", profileUser);
+		model.addAttribute("isLoggedIn", currentUser != null);
+		model.addAttribute("listType", "followers");
+		model.addAttribute("pageTitle", "粉丝");
+		return "follow-list";
+	}
+
+	// 关注列表页
+	@GetMapping("/{userId}/following")
+	public String followingPage(@PathVariable Long userId, Model model, HttpSession session) {
+		Users profileUser = userService.getUserById(userId);
+		if (profileUser == null) return "redirect:/";
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		model.addAttribute("profileUser", profileUser);
+		model.addAttribute("isLoggedIn", currentUser != null);
+		model.addAttribute("listType", "following");
+		model.addAttribute("pageTitle", "关注");
+		return "follow-list";
+	}
+
+	// 粉丝列表 JSON（附带当前用户对各粉丝的回关状态）
+	@ResponseBody
+	@GetMapping("/follow/followers")
+	public Map<String, Object> listFollowers(@RequestParam Long userId,
+	                                          @RequestParam(defaultValue = "1") int page,
+	                                          @RequestParam(defaultValue = "20") int pageSize,
+	                                          HttpSession session) {
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		List<Users> list = followService.getFollowers(userId, page, pageSize);
+		int total = followService.countFollowers(userId);
+		List<Map<String, Object>> items = list.stream().map(u -> {
+			Map<String, Object> m = new HashMap<>();
+			m.put("user", u);
+			m.put("isFollowing", currentUser != null && followService.isFollowing(currentUser.getId(), u.getId()));
+			return m;
+		}).toList();
+		Map<String, Object> data = new HashMap<>();
+		data.put("list", items);
+		data.put("total", total);
+		data.put("page", page);
+		data.put("pageSize", pageSize);
+		return ReturnUtil.success("获取成功", data);
+	}
+
+	// 关注列表 JSON（附带当前用户对各用户的关注状态）
+	@ResponseBody
+	@GetMapping("/follow/following")
+	public Map<String, Object> listFollowing(@RequestParam Long userId,
+	                                          @RequestParam(defaultValue = "1") int page,
+	                                          @RequestParam(defaultValue = "20") int pageSize,
+	                                          HttpSession session) {
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		List<Users> list = followService.getFollowing(userId, page, pageSize);
+		int total = followService.countFollowing(userId);
+		List<Map<String, Object>> items = list.stream().map(u -> {
+			Map<String, Object> m = new HashMap<>();
+			m.put("user", u);
+			m.put("isFollowing", currentUser != null && followService.isFollowing(currentUser.getId(), u.getId()));
+			return m;
+		}).toList();
+		Map<String, Object> data = new HashMap<>();
+		data.put("list", items);
+		data.put("total", total);
+		data.put("page", page);
+		data.put("pageSize", pageSize);
+		return ReturnUtil.success("获取成功", data);
+	}
+
+	// 移除粉丝（被我方删除关注关系：对方不再关注我）
+	@ResponseBody
+	@PostMapping("/follow/remove-follower/{followerId}")
+	public Map<String, Object> removeFollower(@PathVariable Long followerId, HttpSession session) {
+		Users currentUser = (Users) session.getAttribute("currentUser");
+		if (currentUser == null) return ReturnUtil.unauthorized("请先登录");
+		followService.unfollow(followerId, currentUser.getId());
+		return ReturnUtil.success("已移除");
 	}
 }

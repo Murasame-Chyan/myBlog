@@ -59,13 +59,16 @@ public class BlogController {
 		List<CommentVO> comments = commentService.getCommentTree(id);
 		List<Tag> allTags = tagService.getAllTags();
 		int commentCount = commentService.getCommentCountByBlogId(id);
-		String authorName = userService.getNicknameById(blog.getU_id());
+		com.murasame.entity.Users authorUser = userService.getUserById(blog.getU_id());
+		String authorName = authorUser != null ? authorUser.getNickname() : "未知用户";
+		String authorAvatar = authorUser != null ? authorUser.getAvatar() : null;
 
 		model.addAttribute("blog", blog);
 		model.addAttribute("comments", comments);
 		model.addAttribute("allTags", allTags);
 		model.addAttribute("commentCount", commentCount);
 		model.addAttribute("authorName", authorName);
+		model.addAttribute("authorAvatar", authorAvatar);
 		return "readBlog";
 	}
 
@@ -76,6 +79,7 @@ public class BlogController {
 		model.addAttribute("allTags", allTags);
 		return "writeBlog";
 	}
+
 	@ResponseBody
 	@PostMapping("/publish")
 	public Map<String, Object> publishBlog(
@@ -84,22 +88,21 @@ public class BlogController {
 			@RequestParam String title,
 			@NotBlank(message = "内容不能为空")
 			@RequestParam String content,
-			@RequestParam(value = "authorId", defaultValue = "1") Long authorId,
-			@RequestParam(value = "tagIds", required = false) String tagIds) {
-		int newId;
-		if (tagIds != null && !tagIds.isEmpty()) {
-			TagWrapper tagWrapper = new TagWrapper();
-			List<Integer> tagList = new ArrayList<>();
-			for (String tagId : tagIds.split(",")) {
-				if (!tagId.trim().isEmpty()) {
-					tagList.add(Integer.parseInt(tagId.trim()));
-				}
-			}
-			tagWrapper.setTagList(tagList);
-			newId = blogService.publishBlogWithTags(authorId, title, content, tagWrapper);
-		} else {
-			newId = blogService.publishBlog(authorId, title, content);
+			@RequestParam(value = "tagIds", required = false) String tagIds,
+			@RequestParam(value = "newTagNames", required = false) String newTagNames,
+			HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized();
 		}
+		Long authorId = currentUser.getId();
+		List<Integer> tagList = resolveTagIds(tagIds, newTagNames);
+		if (tagList.size() > 10) {
+			return ReturnUtil.error("标签最多选择10个");
+		}
+		TagWrapper tagWrapper = new TagWrapper();
+		tagWrapper.setTagList(tagList);
+		int newId = blogService.publishBlogWithTags(authorId, title, content, tagWrapper);
 		if (newId > 0) {
 			return ReturnUtil.custom(200, "发布成功", newId);
 		} else {
@@ -109,16 +112,21 @@ public class BlogController {
 
 	// From readBlog 点击修改文章按钮
 	@GetMapping("/edit/{id}")
-	public String editBlog(@PathVariable Long id, Model model) {
-		Blogs blog = blogService.getBlogById(id);
-		if (blog != null) {
-			List<Tag> allTags = tagService.getAllTags();
-			model.addAttribute("blog", blog);
-			model.addAttribute("allTags", allTags);
-			return "writeBlog";
+	public String editBlog(@PathVariable Long id, Model model, HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return "redirect:/";
 		}
-		return "redirect:/read/{id}";
+		Blogs blog = blogService.getBlogById(id);
+		if (blog == null || !blog.getU_id().equals(currentUser.getId())) {
+			return "redirect:/";
+		}
+		List<Tag> allTags = tagService.getAllTags();
+		model.addAttribute("blog", blog);
+		model.addAttribute("allTags", allTags);
+		return "writeBlog";
 	}
+
 	@ResponseBody
 	@PostMapping("/update")
 	public Map<String, Object> updateBlog(
@@ -129,23 +137,26 @@ public class BlogController {
 			@RequestParam String content,
 			@RequestParam Long id,
 			@RequestParam(value = "tagIds", required = false) String tagIds,
-			Model model) {
-		if (!model.containsAttribute("id"))
-			model.addAttribute("id", id);
-		int result;
-		if (tagIds != null && !tagIds.isEmpty()) {
-			TagWrapper tagWrapper = new TagWrapper();
-			List<Integer> tagList = new ArrayList<>();
-			for (String tagId : tagIds.split(",")) {
-				if (!tagId.trim().isEmpty()) {
-					tagList.add(Integer.parseInt(tagId.trim()));
-				}
-			}
-			tagWrapper.setTagList(tagList);
-			result = blogService.updateBlogWithTags(id, title, content, tagWrapper);
-		} else {
-			result = blogService.updateBlog(id, title, content);
+			@RequestParam(value = "newTagNames", required = false) String newTagNames,
+			HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized();
 		}
+		Blogs existing = blogService.getBlogById(id);
+		if (existing == null) {
+			return ReturnUtil.error("博客不存在");
+		}
+		if (!existing.getU_id().equals(currentUser.getId())) {
+			return ReturnUtil.unauthorized("无权修改此文章");
+		}
+		List<Integer> tagList = resolveTagIds(tagIds, newTagNames);
+		if (tagList.size() > 10) {
+			return ReturnUtil.error("标签最多选择10个");
+		}
+		TagWrapper tagWrapper = new TagWrapper();
+		tagWrapper.setTagList(tagList);
+		int result = blogService.updateBlogWithTags(id, title, content, tagWrapper);
 		if (result > 0) {
 			return ReturnUtil.success("成功更新");
 		} else {
@@ -153,24 +164,42 @@ public class BlogController {
 		}
 	}
 
-	// From noWhere（testing in swagger）
+	// From readBlog 删除文章（软删除移入回收箱）
 	@ResponseBody
 	@PostMapping("/delete/{id}")
-	public String deleteBlog(@PathVariable Long id){
+	public Map<String, Object> deleteBlog(@PathVariable Long id, HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized();
+		}
+		Blogs existing = blogService.getBlogById(id);
+		if (existing == null) {
+			return ReturnUtil.error("博客不存在");
+		}
+		if (!existing.getU_id().equals(currentUser.getId())) {
+			return ReturnUtil.unauthorized("无权删除此文章");
+		}
 		int dropStatus = blogService.dropBlogToBin(id);
-		return dropStatus == 1 ? "已移入回收箱。" : "博客不存在！";
+		return dropStatus == 1 ? ReturnUtil.success("已移入回收箱") : ReturnUtil.error("博客不存在");
 	}
-	@ResponseBody
-	@PostMapping("/deleteAll")
-	public String deleteBlog(){
-		int dropStatus = blogService.moveAllBlogsToBin();
-		return dropStatus != 0 ? "已全体移入回收箱。" : "全体移除失败！";
-	}
+
+	// 恢复博客：校验登录态与所有权，仅作者本人可恢复
 	@ResponseBody
 	@PostMapping("/recover/{id}")
-	public String recoverBlog(@PathVariable Long id){
+	public Map<String, Object> recoverBlog(@PathVariable Long id, HttpSession session) {
+		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized();
+		}
+		Blogs binEntry = blogService.getBlogFromBinById(id);
+		if (binEntry == null) {
+			return ReturnUtil.error("回收站中不存在此博客");
+		}
+		if (!binEntry.getU_id().equals(currentUser.getId())) {
+			return ReturnUtil.unauthorized("无权恢复此文章");
+		}
 		int recoverStatus = blogService.recoverBlogFromBin(id);
-		return recoverStatus == 1 ? "博客已重新发布！" : "博客不存在！";
+		return recoverStatus == 1 ? ReturnUtil.success("博客已重新发布") : ReturnUtil.error("博客不存在");
 	}
 
 	@GetMapping("/tag/{id}")
@@ -181,9 +210,9 @@ public class BlogController {
 		for (Blogs blog : blogs) {
 			BlogBriefVO vo = new BlogBriefVO();
 			vo.setId(blog.getId());
+			vo.setU_id(blog.getU_id());
 			vo.setTitle(blog.getTitle());
 			vo.setBrief(BlogHtmlUtil.extractBrief(blog.getContent()));
-			vo.setAuthor(blog.getU_id().toString());
 			vo.setCreated_at(blog.getCreated_at());
 			vo.setUpdated_at(blog.getUpdated_at());
 			vo.setAuthor(userService.getNicknameById(blog.getU_id()));
@@ -266,5 +295,30 @@ public class BlogController {
 		} else {
 			return ReturnUtil.error("更新失败");
 		}
+	}
+
+	// 将已有标签ID和新标签名合并为标签ID列表，不存在的标签自动创建
+	private List<Integer> resolveTagIds(String tagIds, String newTagNames) {
+		List<Integer> tagList = new ArrayList<>();
+		if (tagIds != null && !tagIds.isEmpty()) {
+			for (String s : tagIds.split(",")) {
+				String trimmed = s.trim();
+				if (!trimmed.isEmpty()) {
+					tagList.add(Integer.parseInt(trimmed));
+				}
+			}
+		}
+		if (newTagNames != null && !newTagNames.isEmpty()) {
+			for (String name : newTagNames.split(",")) {
+				String trimmed = name.trim();
+				if (!trimmed.isEmpty() && trimmed.length() <= 255) {
+					Tag tag = tagService.createOrGetTag(trimmed);
+					if (!tagList.contains(tag.getId())) {
+						tagList.add(tag.getId());
+					}
+				}
+			}
+		}
+		return tagList;
 	}
 }

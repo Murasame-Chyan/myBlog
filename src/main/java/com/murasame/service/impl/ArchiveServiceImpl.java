@@ -15,19 +15,19 @@ public class ArchiveServiceImpl implements ArchiveService {
 	ArchiveMapper archiveMapper;
 
 	@Override
-	public List<BlogBriefVO> getRecent5ArchivesBrief(){
-		return archiveMapper.getRecent5ArchivesBrief();
+	public List<BlogBriefVO> getRecent5ArchivesBrief(Long uId){
+		return archiveMapper.getRecent5ArchivesBrief(uId);
 	}
 
 	@Override
-	public long getTotalArchiveCount(){
-		return archiveMapper.getTotalArchiveCount();
+	public long getTotalArchiveCount(Long uId){
+		return archiveMapper.getTotalArchiveCount(uId);
 	}
 
 	@Override
-	public List<BlogBriefVO> getArchivesByPage(int page, int pageSize){
+	public List<BlogBriefVO> getArchivesByPage(int page, int pageSize, Long uId){
 		int offset = (page - 1) * pageSize;
-		return archiveMapper.getArchivesByPage(pageSize, offset);
+		return archiveMapper.getArchivesByPage(uId, pageSize, offset);
 	}
 
 	@Override
@@ -36,7 +36,7 @@ public class ArchiveServiceImpl implements ArchiveService {
 	}
 
 	@Override
-	public List<BlogBriefVO> getArchivesByTagId(Integer tagId){
-		return archiveMapper.getArchivesByTagId(tagId);
+	public List<BlogBriefVO> getArchivesByTagId(Integer tagId, Long uId){
+		return archiveMapper.getArchivesByTagId(uId, tagId);
 	}
 }
