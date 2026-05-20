@@ -186,4 +186,7 @@ public interface BlogMapper {
         " ORDER BY b.created_at DESC" +
         "</script>")
     List<BlogBriefVO> getBlogsByIds(@Param("ids") java.util.List<Long> ids);
+
+    @Select("SELECT * FROM blogsBin WHERE u_id=#{userId} ORDER BY deleted_at DESC")
+    java.util.List<com.murasame.entity.BlogsBin> getUserBins(@Param("userId") Long userId);
 }

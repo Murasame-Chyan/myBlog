@@ -14,7 +14,7 @@ import com.murasame.service.UserService;
 import com.murasame.util.BlogHtmlUtil;
 import com.murasame.util.ReturnUtil;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.stereotype.Controller;
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import com.murasame.util.AuthHelper;
 
 @RequestMapping("/blogs")
 @Controller
@@ -32,6 +33,9 @@ import java.util.Map;
 @io.swagger.v3.oas.annotations.tags.Tag(name="博客接口", description = "博客相关CRUD")
 public class BlogController {
 	@Resource
+	private AuthHelper authHelper;
+
+
 	private BlogService blogService;
 	@Resource
 	private CommentService commentService;
@@ -90,8 +94,8 @@ public class BlogController {
 			@RequestParam String content,
 			@RequestParam(value = "tagIds", required = false) String tagIds,
 			@RequestParam(value = "newTagNames", required = false) String newTagNames,
-			HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+			HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized();
 		}
@@ -112,8 +116,8 @@ public class BlogController {
 
 	// From readBlog 点击修改文章按钮
 	@GetMapping("/edit/{id}")
-	public String editBlog(@PathVariable Long id, Model model, HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+	public String editBlog(@PathVariable Long id, Model model, HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return "redirect:/";
 		}
@@ -138,8 +142,8 @@ public class BlogController {
 			@RequestParam Long id,
 			@RequestParam(value = "tagIds", required = false) String tagIds,
 			@RequestParam(value = "newTagNames", required = false) String newTagNames,
-			HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+			HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized();
 		}
@@ -167,8 +171,8 @@ public class BlogController {
 	// From readBlog 删除文章（软删除移入回收箱）
 	@ResponseBody
 	@PostMapping("/delete/{id}")
-	public Map<String, Object> deleteBlog(@PathVariable Long id, HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+	public Map<String, Object> deleteBlog(@PathVariable Long id, HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized();
 		}
@@ -186,8 +190,8 @@ public class BlogController {
 	// 恢复博客：校验登录态与所有权，仅作者本人可恢复
 	@ResponseBody
 	@PostMapping("/recover/{id}")
-	public Map<String, Object> recoverBlog(@PathVariable Long id, HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+	public Map<String, Object> recoverBlog(@PathVariable Long id, HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized();
 		}
@@ -234,8 +238,8 @@ public class BlogController {
 	// 点赞博客
 	@ResponseBody
 	@PostMapping("/like/{id}")
-	public Map<String, Object> likeBlog(@PathVariable Long id, HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+	public Map<String, Object> likeBlog(@PathVariable Long id, HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized("请先登录");
 		}
@@ -255,8 +259,8 @@ public class BlogController {
 	// 取消点赞
 	@ResponseBody
 	@PostMapping("/unlike/{id}")
-	public Map<String, Object> unlikeBlog(@PathVariable Long id, HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+	public Map<String, Object> unlikeBlog(@PathVariable Long id, HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized("请先登录");
 		}
@@ -276,8 +280,8 @@ public class BlogController {
 	// 检查是否已点赞
 	@ResponseBody
 	@GetMapping("/isLiked/{id}")
-	public Map<String, Object> isLiked(@PathVariable Long id, HttpSession session) {
-		com.murasame.entity.Users currentUser = (com.murasame.entity.Users) session.getAttribute("currentUser");
+	public Map<String, Object> isLiked(@PathVariable Long id, HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.success("未点赞", false);
 		}

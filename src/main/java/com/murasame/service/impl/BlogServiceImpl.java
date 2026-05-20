@@ -162,4 +162,8 @@ public class BlogServiceImpl implements BlogService {
         return blogMapper.countBlogsByUserId(userId, keyword);
     }
 
+    @Override
+    public java.util.List<com.murasame.entity.BlogsBin> getUserBins(Long userId) {
+        return blogMapper.getUserBins(userId);
+    }
 }

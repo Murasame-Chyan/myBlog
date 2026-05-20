@@ -50,4 +50,5 @@ public interface BlogService {
 
     long countUserBlogs(Long userId, String keyword);
 
+    java.util.List<com.murasame.entity.BlogsBin> getUserBins(Long userId);
 }
