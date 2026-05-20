@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -91,14 +92,14 @@ public class ApiController {
         return ReturnUtil.success(comments);
     }
 
-    // ===== 博客详情 =====
+    // ===== 博客详情（content 为 HTML 渲染后，rawContent 为 Markdown 原文供编辑） =====
     @GetMapping("/blogs/{id}")
     public Map<String, Object> blogDetail(@PathVariable Long id, HttpServletRequest request) {
         Blogs blog = blogService.getBlogById(id);
         if (blog == null) return ReturnUtil.error("博客不存在");
 
-        String htmlContent = BlogHtmlUtil.toHtml(blog.getContent());
-        blog.setContent(htmlContent);
+        String rawContent = blog.getContent();
+        blog.setContent(BlogHtmlUtil.toHtml(rawContent));
 
         List<CommentVO> comments = commentService.getCommentTree(id);
         int commentCount = commentService.getCommentCountByBlogId(id);
@@ -114,6 +115,7 @@ public class ApiController {
 
         return ReturnUtil.success(Map.of(
                 "blog", blog,
+                "rawContent", rawContent,
                 "comments", comments,
                 "commentCount", commentCount,
                 "authorName", authorName,
@@ -128,12 +130,20 @@ public class ApiController {
         Users user = userService.getUserById(id);
         if (user == null) return ReturnUtil.error("用户不存在");
 
+        int level = userService.calculateLevel(
+                user.getExp() != null ? user.getExp() : 0);
+        List<BlogBriefVO> articles = blogService.getUserBlogs(id, "", "newest", 1, 100);
+        List<BlogBriefVO> likedBlogs = likesService.getLikedBlogs(id, 50);
+
         return ReturnUtil.success(Map.of(
-                "user", user
+                "user", user,
+                "level", level,
+                "articles", articles != null ? articles : List.of(),
+                "likedBlogs", likedBlogs
         ));
     }
 
-    // ===== 当前用户资料（用于编辑） =====
+    // ===== 当前用户资料（编辑弹窗） =====
     @GetMapping("/user/profile-data")
     public Map<String, Object> currentUserProfileData(HttpServletRequest request) {
         Users currentUser = authHelper.getCurrentUser(request);
@@ -141,6 +151,36 @@ public class ApiController {
         Users user = userService.getUserById(currentUser.getId());
         if (user == null) return ReturnUtil.error("用户不存在");
         return ReturnUtil.success(user);
+    }
+
+    // ===== 归档列表 =====
+    @GetMapping("/archives")
+    public Map<String, Object> archives(HttpServletRequest request) {
+        Users currentUser = authHelper.getCurrentUser(request);
+        if (currentUser == null) return ReturnUtil.unauthorized("请先登录");
+        List<BlogsBin> bins = blogService.getUserBins(currentUser.getId());
+        return ReturnUtil.success(bins != null ? bins : List.of());
+    }
+
+    // ===== 归档详情 =====
+    @GetMapping("/archives/{id}")
+    public Map<String, Object> archiveDetail(@PathVariable Long id, HttpServletRequest request) {
+        Blogs bin = blogService.getBlogFromBinById(id);
+        if (bin == null) return ReturnUtil.error("归档文章不存在");
+
+        String rawContent = bin.getContent();
+        bin.setContent(BlogHtmlUtil.toHtml(rawContent));
+
+        Users authorUser = userService.getUserById(bin.getU_id());
+        String authorName = authorUser != null ? authorUser.getNickname() : "未知用户";
+        String authorAvatar = authorUser != null ? authorUser.getAvatar() : null;
+
+        return ReturnUtil.success(Map.of(
+                "archive", bin,
+                "rawContent", rawContent,
+                "authorName", authorName,
+                "authorAvatar", authorAvatar
+        ));
     }
 
     private LocalDateTime parseDate(String dateStr, boolean startOfDay) {
