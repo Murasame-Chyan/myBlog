@@ -2,6 +2,28 @@
 
 > 后端 JWT API 已就绪。此文档供 Cursor 逐任务执行前端部分。
 
+## ⚠️ 文件边界（必读）
+
+**只能修改以下目录/文件：**
+
+| 允许 | 路径 |
+|------|------|
+| 前端源码 | `src/main/frontend/**`（所有 Vue/JS/CSS/HTML） |
+| Thymeleaf 模板 | `src/main/resources/templates/*.html`（仅 Task 5，替换为 Vue 壳） |
+| 构建输出 | `src/main/resources/static/dist/**`（Vite 自动输出，不要手动改） |
+
+**绝对禁止修改：**
+
+| 禁止 | 路径 |
+|------|------|
+| ❌ Java 源码 | `src/main/java/**` |
+| ❌ 配置文件 | `src/main/resources/application*.yml`, `application*.properties` |
+| ❌ Maven 配置 | `pom.xml` |
+| ❌ 静态资源 | `src/main/resources/static/css/**`, `src/main/resources/static/js/**`, `src/main/resources/static/images/**`, `src/main/resources/static/pics/**` |
+| ❌ Git 配置 | `.gitignore` 等 |
+
+**如果遇到需要修改后端才能继续的问题，报告给我，不要擅自改 Java 文件。**
+
 ## 环境
 
 - 工作目录：`src/main/frontend/`（项目根目录下的子目录）
@@ -1018,11 +1040,34 @@ cd src/main/frontend && npm run build
 
 ### 5.2 更新 Thymeleaf 模板为 Vue 壳
 
-构建完成后，`npm run build` 为每个页面生成带哈希的 JS/CSS 文件和一个入口 HTML。将每个页面的构建输出 HTML 复制到对应 Thymeleaf 模板位置：
+> ⚠️ 这是唯一需要修改 `src/main/resources/templates/` 的步骤。**只替换模板内容，不改 Java 代码。**
 
-例如 index 页：Vite 输出 `dist/index.html`（包含正确的 `<script>` 和 `<link>` 标签）→ 复制到 `templates/index.html`，调整资源路径为绝对路径（`/dist/...`）。
+构建完成后（`npm run build`），Vite 为每个页面输出：
+- 一个 HTML 文件（如 `dist/index.html`）—— 已经包含正确的 `<script>` 和 `<link>` 标签
+- 带哈希的 JS/CSS 文件（如 `dist/assets/index-abc123.js`）
 
-每个模板最终形态：
+**操作方式（每个模板一样）：**
+
+1. 打开 Vite 输出的 HTML 文件（如 `src/main/resources/static/dist/index.html`）
+2. 复制全部内容
+3. 贴到对应的 Thymeleaf 模板（如 `src/main/resources/templates/index.html`），替换全部原有内容
+4. 如果 HTML 里的 CSS/JS 引用是相对路径（`./assets/`），改为绝对路径（`/dist/assets/`）
+
+**需要替换的模板清单：**
+
+| Thymeleaf 模板 | Vite 构建输出 |
+|---------------|--------------|
+| `templates/index.html` | `static/dist/index.html` |
+| `templates/readBlog.html` | `static/dist/readBlog.html` |
+| `templates/writeBlog.html` | `static/dist/writeBlog.html` |
+| `templates/profile.html` | `static/dist/profile.html` |
+| `templates/archives.html` | `static/dist/archives.html` |
+| `templates/readArchive.html` | `static/dist/readArchive.html` |
+| `templates/follow-list.html` | `static/dist/followList.html` |
+| `templates/error.html` | `static/dist/error.html` |
+
+**最终每个模板长这样：**
+
 ```html
 <!DOCTYPE html>
 <html lang="zh">
@@ -1037,6 +1082,9 @@ cd src/main/frontend && npm run build
 </body>
 </html>
 ```
+
+> 注意：`<hash>` 部分每次构建都不同，直接复制 Vite 输出 HTML 里的实际值即可。
+> 注意：不要在模板里保留任何 Thymeleaf 语法（`th:*`、`${...}`），全部删掉。
 
 ### 5.3 验证
 
