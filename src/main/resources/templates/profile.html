@@ -51,10 +51,29 @@
                             暂无经验值数据
                         </div>
                     </div>
-                    <!-- 右：关注按钮 -->
-                    <div class="profile-follow-btn" th:if="${!isOwner}">
-                        <button class="btn-follow" onclick="alert('功能开发中')">+ 关注</button>
+                    <!-- 右：关注按钮 + 关注/粉丝数 -->
+                    <div class="profile-follow-area">
+                        <div class="profile-follow-btn" th:if="${isLoggedIn && !isOwner}">
+                            <button class="btn-follow" id="followBtn"
+                                    th:classappend="${isFollowing ? 'followed' : ''}"
+                                    th:text="${isFollowing ? '✓ 已关注' : '+ 关注'}"
+                                    onclick="toggleFollow()">+ 关注</button>
+                        </div>
+                        <div class="profile-follow-counts">
+                            <a th:href="@{/user/{id}/following(id=${profileUser.id})}">
+                                <span th:text="${followingCount != null ? followingCount : 0}">0</span> 关注
+                            </a>
+                            <span class="follow-count-divider">|</span>
+                            <a th:href="@{/user/{id}/followers(id=${profileUser.id})}">
+                                <span th:text="${followerCount != null ? followerCount : 0}">0</span> 粉丝
+                            </a>
+                        </div>
                     </div>
+                </div>
+
+                <!-- 个人简介 -->
+                <div class="profile-intro" th:if="${profileUser.intro != null and !profileUser.intro.isEmpty()}">
+                    「<span th:text="${profileUser.intro}">用户简介</span>」
                 </div>
 
                 <!-- 我的文章 -->
@@ -117,17 +136,8 @@
                             <div class="skeleton-grid"></div>
                         </div>
                         <div id="heatmap-content">
-                            <p class="text-muted" style="font-size: 0.85rem;" id="github-total-contributions"></p>
+                            <p class="text-muted" style="font-size: 0.85rem; display: none;" id="github-total-contributions"></p>
                             <div class="heatmap-container" id="heatmap-grid"></div>
-                            <div class="heatmap-legend">
-                                <span style="font-size: 0.72rem; color: rgba(255,255,255,0.4);">Less</span>
-                                <span class="heatmap-cell" style="background: rgba(255,255,255,0.06);"></span>
-                                <span class="heatmap-cell" style="background: #9be9a8;"></span>
-                                <span class="heatmap-cell" style="background: #40c463;"></span>
-                                <span class="heatmap-cell" style="background: #30a14e;"></span>
-                                <span class="heatmap-cell" style="background: #216e39;"></span>
-                                <span style="font-size: 0.72rem; color: rgba(255,255,255,0.4);">More</span>
-                            </div>
                         </div>
                         <div class="section-error" id="heatmap-error" style="display: none;">
                             <i class="bi bi-exclamation-circle" style="color: #ff6b6b;"></i>
@@ -171,6 +181,7 @@
                         <div class="section-empty" id="repos-empty" style="display: none;">
                             <p class="text-muted">暂无公开仓库</p>
                         </div>
+                        <div class="repos-pagination" id="repos-pagination"></div>
                     </div>
                 </div>
             </div>
@@ -182,6 +193,7 @@
     <script th:inline="javascript">
         var profileUserId = /*[[${profileUser.id}]]*/ 0;
         var isOwner = /*[[${isOwner}]]*/ false;
+        var isFollowing = /*[[${isFollowing != null ? isFollowing : false}]]*/ false;
         var currentSort = 'newest';
         var currentPage = 1;
         var totalPages = 1;
@@ -277,6 +289,51 @@
                 })
                 .catch(function() {
                     document.getElementById('likedList').innerHTML = '<p class="text-muted">加载失败</p>';
+                });
+        }
+
+        function toggleFollow() {
+            var url = isFollowing ? '/user/unfollow/' + profileUserId : '/user/follow/' + profileUserId;
+            fetch(url, { method: 'POST' })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code === 200) {
+                        isFollowing = !isFollowing;
+                        updateFollowButton();
+                        loadFollowCounts();
+                    } else if (data.code === 401) {
+                        openAuthModal('login');
+                    } else {
+                        showToast(data.msg, 'error');
+                    }
+                })
+                .catch(function() {
+                    showToast('操作失败', 'error');
+                });
+        }
+
+        function updateFollowButton() {
+            var btn = document.getElementById('followBtn');
+            if (!btn) return;
+            if (isFollowing) {
+                btn.textContent = '✓ 已关注';
+                btn.classList.add('followed');
+            } else {
+                btn.textContent = '+ 关注';
+                btn.classList.remove('followed');
+            }
+        }
+
+        function loadFollowCounts() {
+            fetch('/user/follow/counts?userId=' + profileUserId)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code === 200 && data.data) {
+                        var countsEl = document.querySelector('.profile-follow-counts');
+                        if (countsEl) {
+                            countsEl.innerHTML = data.data.followingCount + ' 关注 <span class="follow-count-divider">|</span> ' + data.data.followerCount + ' 粉丝';
+                        }
+                    }
                 });
         }
 

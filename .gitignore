@@ -1,6 +1,7 @@
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
+node_modules/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -41,8 +42,9 @@ build/
 ### context ###
 src/main/resources/agent
 
-### yml ###
-src/main/resources/*.yml
+### External config (contains real secrets, never commit) ###
+config/application.properties
+application.properties
 
 ### Superpowers ###
 .superpowers/

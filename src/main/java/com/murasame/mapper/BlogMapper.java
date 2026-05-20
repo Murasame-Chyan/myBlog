@@ -98,8 +98,8 @@ public interface BlogMapper {
     @ResultMap("com.murasame.mapper.IndexMapper.blogBriefResultMap")
     // 搜索博客（关键词 + 时间范围 + 排序 + 分页）
     @Select("<script>" +
-        "SELECT b.id, b.title, LEFT(b.content,30) AS brief, b.created_at, b.updated_at, " +
-        "u.nickname AS author, b.t_id, b.read_count, b.like_count, " +
+        "SELECT b.id, b.u_id, b.title, LEFT(b.content,30) AS brief, b.created_at, b.updated_at, " +
+        "u.nickname AS author, u.avatar AS author_avatar, b.t_id, b.read_count, b.like_count, " +
         "COALESCE(c.comment_count,0) AS comment_count " +
         "FROM blogs b " +
         "LEFT JOIN users u ON b.u_id=u.id " +
@@ -142,8 +142,8 @@ public interface BlogMapper {
 
     @ResultMap("com.murasame.mapper.IndexMapper.blogBriefResultMap")
     @Select("<script>" +
-        "SELECT b.id, b.title, LEFT(b.content,30) AS brief, b.created_at, b.updated_at, " +
-        "u.nickname AS author, b.t_id, b.read_count, b.like_count, " +
+        "SELECT b.id, b.u_id, b.title, LEFT(b.content,30) AS brief, b.created_at, b.updated_at, " +
+        "u.nickname AS author, u.avatar AS author_avatar, b.t_id, b.read_count, b.like_count, " +
         "COALESCE(c.comment_count,0) AS comment_count " +
         "FROM blogs b " +
         "LEFT JOIN users u ON b.u_id=u.id " +
@@ -175,8 +175,8 @@ public interface BlogMapper {
 
     @ResultMap("com.murasame.mapper.IndexMapper.blogBriefResultMap")
     @Select("<script>" +
-        "SELECT b.id, b.title, LEFT(b.content,30) AS brief, b.created_at, b.updated_at, " +
-        "u.nickname AS author, b.t_id, b.read_count, b.like_count, " +
+        "SELECT b.id, b.u_id, b.title, LEFT(b.content,30) AS brief, b.created_at, b.updated_at, " +
+        "u.nickname AS author, u.avatar AS author_avatar, b.t_id, b.read_count, b.like_count, " +
         "COALESCE(c.comment_count,0) AS comment_count " +
         "FROM blogs b " +
         "LEFT JOIN users u ON b.u_id=u.id " +

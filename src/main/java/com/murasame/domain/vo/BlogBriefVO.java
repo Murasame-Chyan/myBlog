@@ -10,11 +10,13 @@ import java.time.LocalDateTime;
 @Data
 public class BlogBriefVO {
 	private Long id;              // blogs.id
+	private Long u_id;             // blogs.u_id
 	private String title;               // blogs.title
 	private String brief;               // top 30 char of blogs.content
 	private LocalDateTime created_at;   // same
 	private LocalDateTime updated_at;
 	private String author;              // users.nickname
+	private String author_avatar;       // users.avatar
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	TagWrapper t_id;              // 标签列表
 	private Long read_count;       // 阅读量

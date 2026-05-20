@@ -24,8 +24,16 @@ public class LikesServiceImpl implements LikesService {
     private static final Logger log = LoggerFactory.getLogger(LikesServiceImpl.class);
     private static final String KEY_PREFIX = "user:likes:";
 
+    /**
+     * 点赞采用 Redis Set + MySQL 双写策略：
+     * - Redis 作为热数据层，提供低延迟查询和写入
+     * - MySQL 作为持久化层，异步写入（@Async），失败不影响 Redis 操作
+     * - 启动时通过 warmup() 从 MySQL 回灌到 Redis，防止重启丢数据
+     * - isLiked / getLikedBlogs 优先查 Redis，miss 时 fallback 到 DB 并回灌
+     */
+
     @Resource
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     @Resource
     private UserLikeMapper userLikeMapper;
@@ -33,6 +41,7 @@ public class LikesServiceImpl implements LikesService {
     @Resource
     private BlogMapper blogMapper;
 
+    // 启动时将 MySQL 中的所有点赞记录回灌到 Redis，防止重启后 Redis 为空
     @PostConstruct
     public void warmup() {
         try {
@@ -40,7 +49,7 @@ public class LikesServiceImpl implements LikesService {
             if (all != null && !all.isEmpty()) {
                 for (var entry : all) {
                     String key = KEY_PREFIX + entry.getKey();
-                    redisTemplate.opsForSet().add(key, entry.getValue().toString());
+                    stringRedisTemplate.opsForSet().add(key, entry.getValue().toString());
                 }
                 log.info("Redis likes warmup completed: {} records", all.size());
             }
@@ -52,14 +61,14 @@ public class LikesServiceImpl implements LikesService {
     @Override
     public void like(Long userId, Long blogId) {
         String key = KEY_PREFIX + userId;
-        redisTemplate.opsForSet().add(key, blogId.toString());
+        stringRedisTemplate.opsForSet().add(key, blogId.toString());
         persistLike(userId, blogId);
     }
 
     @Override
     public void unlike(Long userId, Long blogId) {
         String key = KEY_PREFIX + userId;
-        redisTemplate.opsForSet().remove(key, blogId.toString());
+        stringRedisTemplate.opsForSet().remove(key, blogId.toString());
         persistUnlike(userId, blogId);
     }
 
@@ -67,7 +76,7 @@ public class LikesServiceImpl implements LikesService {
     public boolean isLiked(Long userId, Long blogId) {
         if (userId == null) return false;
         String key = KEY_PREFIX + userId;
-        Boolean exists = redisTemplate.opsForSet().isMember(key, blogId.toString());
+        Boolean exists = stringRedisTemplate.opsForSet().isMember(key, blogId.toString());
         if (Boolean.TRUE.equals(exists)) return true;
         // fallback to DB
         return userLikeMapper.exists(userId, blogId) > 0;
@@ -77,22 +86,22 @@ public class LikesServiceImpl implements LikesService {
     public List<BlogBriefVO> getLikedBlogs(Long userId, int limit) {
         if (userId == null) return Collections.emptyList();
         String key = KEY_PREFIX + userId;
-        Set<String> members = redisTemplate.opsForSet().members(key);
+        Set<String> members = stringRedisTemplate.opsForSet().members(key);
         if (members == null || members.isEmpty()) {
             // fallback to DB
             List<Long> dbIds = userLikeMapper.findBlogIdsByUserId(userId);
             if (dbIds.isEmpty()) return Collections.emptyList();
             // restore Redis
             for (Long id : dbIds) {
-                redisTemplate.opsForSet().add(key, id.toString());
+                stringRedisTemplate.opsForSet().add(key, id.toString());
             }
             return fetchBlogsByIds(dbIds, limit);
         }
         List<Long> ids = members.stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toCollection(ArrayList::new));
-        Collections.reverse(ids); // most recent first (Redis Set doesn't guarantee order, fallback to DB for proper ordering)
-        // Use DB ordering since Redis Set is unordered
+        Collections.reverse(ids);
+        // Redis Set 不保证顺序，用 DB 的 created_at DESC 保证排序
         List<Long> dbOrdered = userLikeMapper.findBlogIdsByUserId(userId);
         if (!dbOrdered.isEmpty()) {
             return fetchBlogsByIds(dbOrdered, limit);

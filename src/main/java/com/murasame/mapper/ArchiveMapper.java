@@ -19,24 +19,25 @@ public interface ArchiveMapper {
 		@Result(property = "read_count", column = "read_count"),
 		@Result(property = "like_count", column = "like_count")
 	})
-	@Select("SELECT b.id, b.title, LEFT(b.content, 30) AS brief, b.created_at AS created_at, b.updated_at AS updated_at, u.nickname AS author, b.t_id" +
-			" FROM blogsBin b LEFT JOIN users u ON b.u_id=u.id ORDER BY deleted_at DESC LIMIT 5")
-	List<BlogBriefVO> getRecent5ArchivesBrief();
+	@Select("SELECT b.id, b.u_id, b.title, LEFT(b.content, 30) AS brief, b.created_at AS created_at, b.updated_at AS updated_at, u.nickname AS author, u.avatar AS author_avatar, b.t_id" +
+			" FROM blogsBin b LEFT JOIN users u ON b.u_id=u.id WHERE b.u_id=#{uId} ORDER BY deleted_at DESC LIMIT 5")
+	List<BlogBriefVO> getRecent5ArchivesBrief(@Param("uId") Long uId);
 
-	@Select("SELECT COUNT(*) FROM blogsBin")
-	long getTotalArchiveCount();
+	@Select("SELECT COUNT(*) FROM blogsBin WHERE u_id=#{uId}")
+	long getTotalArchiveCount(@Param("uId") Long uId);
 
 	@ResultMap("archiveResultMap")
-	@Select("SELECT b.id, b.title, LEFT(b.content, 30) AS brief, b.created_at AS created_at, b.updated_at AS updated_at, u.nickname AS author, b.t_id" +
-			" FROM blogsBin b LEFT JOIN users u ON b.u_id=u.id ORDER BY deleted_at DESC LIMIT #{pageSize} OFFSET #{offset}")
-	List<BlogBriefVO> getArchivesByPage(int pageSize, int offset);
+	@Select("SELECT b.id, b.u_id, b.title, LEFT(b.content, 30) AS brief, b.created_at AS created_at, b.updated_at AS updated_at, u.nickname AS author, u.avatar AS author_avatar, b.t_id" +
+			" FROM blogsBin b LEFT JOIN users u ON b.u_id=u.id WHERE b.u_id=#{uId} ORDER BY deleted_at DESC LIMIT #{pageSize} OFFSET #{offset}")
+	List<BlogBriefVO> getArchivesByPage(@Param("uId") Long uId, int pageSize, int offset);
 
 	@Select("SELECT * FROM blogsBin WHERE id=#{id}")
 	com.murasame.entity.BlogsBin getArchiveById(@Param("id") Long id);
 
+	// 利用MySQL JSON_CONTAINS在tagList数组中查找指定tagId，路径 $.tagList 对应 TagWrapper 结构
 	@ResultMap("archiveResultMap")
-	@Select("SELECT b.id, b.title, LEFT(b.content, 30) AS brief, b.created_at AS created_at, b.updated_at AS updated_at, u.nickname AS author" +
+	@Select("SELECT b.id, b.u_id, b.title, LEFT(b.content, 30) AS brief, b.created_at AS created_at, b.updated_at AS updated_at, u.nickname AS author, u.avatar AS author_avatar" +
 			" FROM blogsBin b LEFT JOIN users u ON b.u_id=u.id" +
-			" WHERE JSON_CONTAINS(b.t_id, CAST(#{tagId} AS JSON), '$.tagList')")
-	List<BlogBriefVO> getArchivesByTagId(@Param("tagId") Integer tagId);
+			" WHERE b.u_id=#{uId} AND JSON_CONTAINS(b.t_id, CAST(#{tagId} AS JSON), '$.tagList')")
+	List<BlogBriefVO> getArchivesByTagId(@Param("uId") Long uId, @Param("tagId") Integer tagId);
 }

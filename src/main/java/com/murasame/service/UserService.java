@@ -15,7 +15,17 @@ public interface UserService {
 
 	Users login(String email, String password);
 
+	Users getUserByEmail(String email);
+
 	Users updateProfile(Users user);
 
 	int calculateLevel(int exp);
+
+    void resetPassword(String email, String newPassword);
+
+    /** 获取用户解密后的 GitHub Token，用于个人 API 调用；无 token 时返回 null */
+    String getDecryptedGithubToken(Long userId);
+
+    /** 根据 GitHub 用户名查找已绑定 token 的用户，取第一个匹配者的解密 token */
+    String findGithubTokenByGithubUsername(String githubUsername);
 }
