@@ -5,7 +5,9 @@ import com.murasame.entity.Tag;
 import java.util.List;
 
 public interface TagService {
-	List<Tag> getAllTags();
+    List<Tag> getAllTags();
 
-	Tag getTagById(Integer id);
+    Tag getTagById(Integer id);
+
+    Tag createOrGetTag(String tagName);
 }

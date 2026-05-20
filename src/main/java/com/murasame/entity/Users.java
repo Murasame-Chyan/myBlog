@@ -24,4 +24,8 @@ public class Users {
 	String password;
 	@Size(max = 255, message = "GitHub用户名不能超过255个字符")
 	String githubUsername;
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+	String githubToken;     // AES-256-GCM 加密存储，仅写入不解出到前端
+	Integer followerCount;
+	Integer followingCount;
 }

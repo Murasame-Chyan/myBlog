@@ -18,8 +18,20 @@ public class TagServiceImpl implements TagService {
 		return tagMapper.getAllTags();
 	}
 
-	@Override
-	public Tag getTagById(Integer id) {
-		return tagMapper.getTagById(id);
-	}
+    @Override
+    public Tag getTagById(Integer id) {
+        return tagMapper.getTagById(id);
+    }
+
+    @Override
+    public Tag createOrGetTag(String tagName) {
+        Tag existing = tagMapper.getTagByName(tagName.trim());
+        if (existing != null) {
+            return existing;
+        }
+        Tag tag = new Tag();
+        tag.setTagName(tagName.trim());
+        tagMapper.insertTag(tag);
+        return tag;
+    }
 }

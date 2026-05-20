@@ -2,6 +2,7 @@ package com.murasame.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.murasame.domain.dto.TagWrapper;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ public class Blogs {
 	Long u_id;
 	LocalDateTime created_at;
 	LocalDateTime updated_at;
+	@Size(max = 255, message = "标题不能超过255个字符")
 	String title;
 	String content;
 	@JsonInclude(JsonInclude.Include.NON_NULL)
