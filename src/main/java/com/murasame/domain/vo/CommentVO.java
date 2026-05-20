@@ -12,6 +12,7 @@ public class CommentVO {
 	Long parent_cid;
 	Long u_id;
 	String author_name;
+	String author_avatar;
 	String content;
 	LocalDateTime created_at;
 	List<CommentVO> children;

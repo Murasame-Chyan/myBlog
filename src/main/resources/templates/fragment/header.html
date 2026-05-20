@@ -51,19 +51,19 @@
     <div class="navbar-avatar mx-auto">
       <!-- 已登录：头像 + 悬浮下拉菜单 -->
       <th:block th:if="${session.currentUser != null}">
-        <div class="avatar-dropdown">
-          <a th:href="@{/user/profile}">
-            <img th:if="${session.currentUser.avatar != null}"
-                 th:src="${session.currentUser.avatar}"
-                 alt="用户头像"
-                 class="rounded-circle avatar-img"
-                 style="width: 40px; height: 40px; object-fit: cover;">
-            <img th:if="${session.currentUser.avatar == null}"
-                 src="/images/default-avatar.png"
-                 alt="默认头像"
-                 class="rounded-circle avatar-img"
-                 style="width: 40px; height: 40px; object-fit: cover;">
-          </a>
+        <div class="avatar-dropdown" id="avatarDropdown">
+          <img th:if="${session.currentUser.avatar != null}"
+               th:src="${session.currentUser.avatar}"
+               alt="用户头像"
+               class="rounded-circle avatar-img"
+               style="width: 40px; height: 40px; object-fit: cover;"
+               onclick="toggleAvatarMenu(event)">
+          <img th:if="${session.currentUser.avatar == null}"
+               src="/images/default-avatar.png"
+               alt="默认头像"
+               class="rounded-circle avatar-img"
+               style="width: 40px; height: 40px; object-fit: cover;"
+               onclick="toggleAvatarMenu(event)">
           <div class="avatar-dropdown-menu">
             <a th:href="@{/user/profile}" class="dropdown-item">
               <i class="bi bi-person"></i> 个人主页
@@ -160,6 +160,13 @@
                 <div class="edit-profile-label">GitHub 用户名</div>
                 <input type="text" class="edit-profile-input" id="editGithub" th:value="${session.currentUser.githubUsername}" maxlength="255" placeholder="输入 GitHub 用户名">
             </div>
+            <div class="edit-profile-field">
+                <div class="edit-profile-label">
+                    GitHub Token
+                    <span style="font-size:0.68rem;color:rgba(255,255,255,0.25);font-weight:400;">（<a href="https://github.com/settings/tokens" target="_blank" style="color:#87CEEB;">获取方式</a>，需勾选 read:user，仅自己可见）</span>
+                </div>
+                <input type="password" class="edit-profile-input" id="editGithubToken" maxlength="255" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+            </div>
             <button class="edit-profile-save-btn" onclick="saveEditProfile()">保存</button>
         </div>
     </div>
@@ -209,6 +216,7 @@
     <div class="auth-modal-tabs">
       <div class="auth-tab active" id="authTabLogin" onclick="switchAuthTab('login')">登录</div>
       <div class="auth-tab" id="authTabRegister" onclick="switchAuthTab('register')">注册</div>
+      <div class="auth-tab" id="authTabReset" onclick="switchAuthTab('reset')">忘记密码</div>
     </div>
     <div class="auth-modal-body">
       <!-- 登录面板 -->
@@ -223,9 +231,49 @@
           <input type="password" class="auth-form-input" id="loginPassword" placeholder="请输入密码" autocomplete="current-password" maxlength="255">
           <div class="auth-error-msg" data-field="loginPassword"></div>
         </div>
+        <div class="auth-form-group">
+          <label>图形验证码</label>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input type="text" class="auth-form-input" id="loginCaptcha" placeholder="不区分大小写" maxlength="4" autocomplete="off" style="flex:1;">
+            <img id="captchaImg" src="" alt="验证码" onclick="refreshCaptcha()" style="height:40px; cursor:pointer; border-radius:6px; border:1px solid rgba(135,206,235,0.3);" title="点击刷新">
+            <a onclick="refreshCaptcha()" style="color:#87CEEB; font-size:0.78rem; cursor:pointer; white-space:nowrap;">换一张</a>
+          </div>
+          <div class="auth-error-msg" data-field="loginCaptcha"></div>
+        </div>
         <button class="auth-btn-submit auth-btn-login" onclick="handleLogin()">登 录</button>
         <div class="auth-switch-text">
+          <a onclick="switchAuthTab('reset')" style="float:left;">忘记密码？</a>
           还没有账号？<a onclick="switchAuthTab('register')">立即注册</a>
+        </div>
+      </div>
+      <!-- 重置密码面板 -->
+      <div class="auth-form-panel" id="resetPanel">
+        <div class="auth-form-group">
+          <label>邮箱</label>
+          <input type="email" class="auth-form-input" id="resetEmail" placeholder="请输入注册邮箱" autocomplete="email" maxlength="255">
+          <div class="auth-error-msg" data-field="resetEmail"></div>
+        </div>
+        <div class="auth-form-group">
+          <label>邮箱验证码</label>
+          <div style="display:flex; gap:10px;">
+            <input type="text" class="auth-form-input" id="resetEmailCode" placeholder="6位数字验证码" maxlength="6" autocomplete="off" style="flex:1;">
+            <button type="button" id="resetSendCodeBtn" class="auth-send-code-btn" onclick="sendResetCode()">发送验证码</button>
+          </div>
+          <div class="auth-error-msg" data-field="resetEmailCode"></div>
+        </div>
+        <div class="auth-form-group">
+          <label>新密码</label>
+          <input type="password" class="auth-form-input" id="resetNewPassword" placeholder="至少 6 位新密码" autocomplete="new-password" maxlength="255">
+          <div class="auth-error-msg" data-field="resetNewPassword"></div>
+        </div>
+        <div class="auth-form-group">
+          <label>确认新密码</label>
+          <input type="password" class="auth-form-input" id="resetConfirmPassword" placeholder="再次输入新密码" autocomplete="new-password" maxlength="255">
+          <div class="auth-error-msg" data-field="resetConfirmPassword"></div>
+        </div>
+        <button class="auth-btn-submit auth-btn-login" onclick="handleResetPassword()">重置密码</button>
+        <div class="auth-switch-text">
+          <a onclick="switchAuthTab('login')">返回登录</a>
         </div>
       </div>
       <!-- 注册面板 -->
@@ -250,6 +298,14 @@
           <input type="password" class="auth-form-input" id="registerConfirmPassword" placeholder="再次输入密码" autocomplete="new-password" maxlength="255">
           <div class="auth-error-msg" data-field="registerConfirmPassword"></div>
         </div>
+        <div class="auth-form-group">
+          <label>邮箱验证码</label>
+          <div style="display:flex; gap:10px;">
+            <input type="text" class="auth-form-input" id="registerEmailCode" placeholder="6位数字验证码" maxlength="6" autocomplete="off" style="flex:1;">
+            <button type="button" id="sendCodeBtn" class="auth-send-code-btn" onclick="sendVerificationCode()">发送验证码</button>
+          </div>
+          <div class="auth-error-msg" data-field="registerEmailCode"></div>
+        </div>
         <button class="auth-btn-submit auth-btn-register" onclick="handleRegister()">注 册</button>
         <div class="auth-switch-text">
           已有账号？<a onclick="switchAuthTab('login')">去登录</a>
@@ -258,6 +314,7 @@
     </div>
   </div>
 </div>
+<script src="/js/toast.js"></script>
 <script src="/js/auth.js"></script>
 <script src="/js/backgroundFix.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
@@ -281,6 +338,10 @@
         formData.append('email', document.getElementById('editEmail').value.trim());
         formData.append('gender', document.getElementById('editGender').value);
         formData.append('githubUsername', document.getElementById('editGithub').value.trim());
+        var githubToken = document.getElementById('editGithubToken').value.trim();
+        if (githubToken) {
+            formData.append('githubToken', githubToken);
+        }
 
         fetch('/user/profile/update', {
             method: 'POST',
@@ -293,10 +354,10 @@
                 closeEditProfileModal();
                 location.reload();
             } else {
-                alert(data.msg || '保存失败');
+                showToast(data.msg || '保存失败', 'error');
             }
         })
-        .catch(function() { alert('网络错误'); })
+        .catch(function() { showToast('网络错误', 'error'); })
         .finally(function() {
             btn.disabled = false;
             btn.textContent = '保存';
@@ -381,5 +442,17 @@
             });
         }, 'image/jpeg', 0.85);
     }
+
+    // ===== 头像下拉菜单：点击切换 =====
+    function toggleAvatarMenu(e) {
+        e.stopPropagation();
+        document.getElementById('avatarDropdown').classList.toggle('show');
+    }
+    document.addEventListener('click', function(e) {
+        var dd = document.getElementById('avatarDropdown');
+        if (dd && dd.classList.contains('show') && !dd.contains(e.target)) {
+            dd.classList.remove('show');
+        }
+    });
 </script>
 </th:block>

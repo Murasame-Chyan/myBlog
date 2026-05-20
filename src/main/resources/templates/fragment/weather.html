@@ -2,35 +2,30 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div id="weather-component" class="weather-component" th:fragment="weather">
-    <div class="weather-header">
-        <span class="weather-date" id="weather-date">--/--</span>
-        <span class="weather-location" id="weather-location">加载中...</span>
+    <div class="weather-location" id="weather-location">
+        <i class="bi bi-geo-alt"></i><span>加载中...</span>
     </div>
-    <div class="weather-greeting" id="weather-greeting">
-        <span id="weather-time">--:--</span>
-        <span id="weather-greeting-text"></span>
+    <div class="weather-greeting" id="weather-greeting">--</div>
+    <div class="weather-icon-row">
+        <span id="weather-icon" class="weather-icon">⏳</span>
     </div>
-    <div class="weather-body">
-        <div class="weather-icon-container">
-            <img id="weather-icon" src="/pics/weather/loading.svg" alt="天气图标" class="weather-icon">
+    <div class="weather-temp" id="weather-temp">--°</div>
+    <div class="weather-desc" id="weather-desc">--</div>
+    <div class="weather-divider"></div>
+    <div class="weather-forecast">
+        <div class="weather-day">
+            <div class="weather-day-label">今日</div>
+            <div class="weather-day-range" id="weather-today-range">--° ~ --°</div>
         </div>
-        <div class="weather-info">
-            <div class="weather-temp" id="weather-temp">--°C</div>
-            <div class="weather-desc" id="weather-desc">--</div>
-        </div>
-    </div>
-    <div class="weather-footer">
-        <div class="weather-today">
-            <span class="weather-label">今日</span>
-            <span class="weather-range" id="weather-today-range">--°C ~ --°C</span>
-        </div>
-        <div class="weather-tomorrow">
-            <span class="weather-label">明日</span>
-            <span class="weather-range" id="weather-tomorrow-range">--°C ~ --°C</span>
-            <span class="weather-desc" id="weather-tomorrow-desc">--</span>
+        <div class="weather-day">
+            <div class="weather-day-label">明日</div>
+            <div class="weather-day-range" id="weather-tomorrow-range">--° ~ --°</div>
+            <div class="weather-day-desc" id="weather-tomorrow-desc">--</div>
         </div>
     </div>
-    <div><a href="https://www.seniverse.com/">技术支持 | 心知天气</a></div>
+    <div class="weather-attribution">
+        <a href="https://www.seniverse.com/" target="_blank" rel="noopener">心知天气</a>
+    </div>
 </div>
 </body>
 </html>

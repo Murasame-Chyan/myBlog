@@ -36,8 +36,7 @@ public class SeniverseApiClient {
 	 * 构建请求URL（支持签名）
 	 */
 	private String buildUrl(String apiPath, String location, Object... uriVars) {
-		UriComponentsBuilder builder = UriComponentsBuilder
-				.fromHttpUrl(BASE_URL + apiPath)
+		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(BASE_URL + apiPath)
 				.queryParam("key", config.getKey())
 				.queryParam("location", location)
 				.queryParam("language", "zh-Hans")

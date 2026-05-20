@@ -18,6 +18,8 @@ public interface BlogService {
 
 	Blogs getBlogById(Long id);                                         // 按id拉取博客 return Blog
 
+	Blogs getBlogFromBinById(Long id);                                  // 按id从回收站取博客
+
 	int publishBlog(Long authorId, String title, String content);    // 撰写-发布文章 return BlogId or 0
 
 	int publishBlogWithTags(Long authorId, String title, String content, TagWrapper tags); // 撰写-发布文章带标签

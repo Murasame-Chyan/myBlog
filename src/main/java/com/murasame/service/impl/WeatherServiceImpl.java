@@ -13,16 +13,40 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 public class WeatherServiceImpl implements WeatherService {
 	private final SeniverseApiClient apiClient;
+
+	// 进程级内存缓存：天气 API 有调用频率限制，按 location 分组缓存 1 小时
 	private static final long CACHE_DURATION = 60 * 60 * 1000;
-	private static String cachedLocation;
-	private static WeatherNowDTO cachedNowData;
-	private static WeatherDailyDTO cachedDailyData;
-	private static long cacheTime;
+	private static final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
+
+	private static class CacheEntry {
+		final WeatherNowDTO nowData;
+		final WeatherDailyDTO dailyData;
+		final long cacheTime;
+		final boolean failed;
+
+		// API 正常返回
+		CacheEntry(WeatherNowDTO nowData, WeatherDailyDTO dailyData, long cacheTime) {
+			this.nowData = nowData;
+			this.dailyData = dailyData;
+			this.cacheTime = cacheTime;
+			this.failed = false;
+		}
+
+		// API 查询失败（如境外IP无法定位），也缓存避免短时间重复请求
+		CacheEntry(long cacheTime) {
+			this.nowData = null;
+			this.dailyData = null;
+			this.cacheTime = cacheTime;
+			this.failed = true;
+		}
+	}
 
 	@Override
 	public WeatherNowDTO getWeatherNow(String location) {
@@ -69,38 +93,48 @@ public class WeatherServiceImpl implements WeatherService {
 	@Override
 	public WeatherComponentVO getWeatherComponent(String location) {
 		long currentTime = System.currentTimeMillis();
+		CacheEntry entry = cache.get(location);
 
-		if (cachedLocation != null && cachedLocation.equals(location)
-				&& cachedNowData != null && cachedDailyData != null
-				&& (currentTime - cacheTime) < CACHE_DURATION) {
-			WeatherComponentVO vo = new WeatherComponentVO();
-
-			vo.setCurrentDate(LocalDate.now().getMonthValue() + "/" + LocalDate.now().getDayOfMonth());
-			vo.setLocation(cachedNowData.getCity());
-			vo.setWeatherIcon(mapWeatherToIcon(cachedNowData.getText()));
-			vo.setTodayWeatherDesc(cachedNowData.getText());
-			vo.setCurrentTemp(cachedNowData.getTemperature() + "°C");
-
-			if (cachedDailyData.getDailyList() != null && !cachedDailyData.getDailyList().isEmpty()) {
-				vo.setTodayHighTemp(cachedDailyData.getDailyList().get(0).getHigh() + "°C");
-				vo.setTodayLowTemp(cachedDailyData.getDailyList().get(0).getLow() + "°C");
+		if (entry != null && (currentTime - entry.cacheTime) < CACHE_DURATION) {
+			if (entry.failed) {
+				return buildFallbackVO();
 			}
-
-			if (cachedDailyData.getDailyList() != null && cachedDailyData.getDailyList().size() > 1) {
-				vo.setTomorrowWeatherDesc(cachedDailyData.getDailyList().get(1).getTextDay());
-				vo.setTomorrowHighTemp(cachedDailyData.getDailyList().get(1).getHigh() + "°C");
-				vo.setTomorrowLowTemp(cachedDailyData.getDailyList().get(1).getLow() + "°C");
-			}
-
-			vo.setGreeting(generateGreeting());
-			vo.setTimePoint(generateTimePoint());
-
-			return vo;
+			return buildComponentVO(entry.nowData, entry.dailyData);
 		}
 
-		WeatherNowDTO now = getWeatherNow(location);
-		WeatherDailyDTO daily = getWeatherDaily(location, 2);
+		try {
+			WeatherNowDTO now = getWeatherNow(location);
+			WeatherDailyDTO daily = getWeatherDaily(location, 2);
+			WeatherComponentVO vo = buildComponentVO(now, daily);
+			cache.put(location, new CacheEntry(now, daily, currentTime));
+			return vo;
+		} catch (Exception e) {
+			cache.put(location, new CacheEntry(currentTime));
+			return buildFallbackVO();
+		}
+	}
 
+	// 境外地区或API查询失败时的友好提示
+	private WeatherComponentVO buildFallbackVO() {
+		WeatherComponentVO vo = new WeatherComponentVO();
+		LocalDate today = LocalDate.now();
+		vo.setCurrentDate(today.getMonthValue() + "/" + today.getDayOfMonth());
+		vo.setLocation("暂不可用");
+		vo.setWeatherIcon("🌐");
+		vo.setTodayWeatherDesc("您所在地区暂无天气数据，请检查网络或代理工具");
+		vo.setTomorrowWeatherDesc("Unavailable");
+		vo.setCurrentTemp("--°");
+		vo.setTodayHighTemp("--°");
+		vo.setTodayLowTemp("--°");
+		vo.setTomorrowHighTemp("--°");
+		vo.setTomorrowLowTemp("--°");
+		vo.setGreeting(generateGreeting());
+		vo.setTimePoint(generateTimePoint());
+		return vo;
+	}
+
+	// 从缓存或API结果组装 WeatherComponentVO
+	private WeatherComponentVO buildComponentVO(WeatherNowDTO now, WeatherDailyDTO daily) {
 		WeatherComponentVO vo = new WeatherComponentVO();
 
 		LocalDate today = LocalDate.now();
@@ -131,33 +165,34 @@ public class WeatherServiceImpl implements WeatherService {
 		vo.setGreeting(generateGreeting());
 		vo.setTimePoint(generateTimePoint());
 
-		cachedNowData = now;
-		cachedDailyData = daily;
-		cachedLocation = location;
-		cacheTime = currentTime;
-
 		return vo;
 	}
 
+	// 将心知天气的中/英文天气描述映射为 emoji 图标
 	private String mapWeatherToIcon(String weatherText) {
-		if (weatherText == null) return "/pics/weather/unknown.svg";
+		if (weatherText == null) return "☀️";
 
 		String text = weatherText.toLowerCase();
 		if (text.contains("晴") || text.contains("sunny")) {
-			return "/pics/weather/sunny.svg";
-		} else if (text.contains("阴") || text.contains("overcast") || text.contains("多云") || text.contains("cloudy")) {
-			return "/pics/weather/cloudy.svg";
-		} else if (text.contains("雨") || text.contains("rain")) {
-			return "/pics/weather/rainy.svg";
+			return "☀️";
+		} else if (text.contains("多云") || text.contains("cloudy") || text.contains("partly")) {
+			return "⛅";
+		} else if (text.contains("阴") || text.contains("overcast")) {
+			return "☁️";
+		} else if (text.contains("雨") || text.contains("rain") || text.contains("shower")) {
+			return "🌧️";
 		} else if (text.contains("雪") || text.contains("snow")) {
-			return "/pics/weather/snowy.svg";
-		} else if (text.contains("雾") || text.contains("fog")) {
-			return "/pics/weather/foggy.svg";
+			return "🌨️";
+		} else if (text.contains("雾") || text.contains("fog") || text.contains("霾") || text.contains("haze")) {
+			return "🌫️";
+		} else if (text.contains("风") || text.contains("wind")) {
+			return "💨";
 		} else {
-			return "/pics/weather/unknown.svg";
+			return "🌤️";
 		}
 	}
 
+	// 根据当前小时生成时段中文问候语（与 WeatherController.getTimePeriod() 逻辑相同）
 	private String generateGreeting() {
 		int hour = LocalTime.now().getHour();
 		String timePeriod;
@@ -183,6 +218,6 @@ public class WeatherServiceImpl implements WeatherService {
 		int hour = LocalTime.now().getHour();
 		int minute = LocalTime.now().getMinute();
 		String period = hour >= 12 ? "p.m." : "a.m.";
-		return String.format("现在是%d:%02d %s", hour, minute, period);
+		return String.format("现在是%d:%02d %s (UTC+8)", hour, minute, period);
 	}
 }

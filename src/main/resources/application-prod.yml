@@ -1,11 +1,9 @@
-spring:
-  application:
-   name: myBlog
-
-  profiles:
-    active: dev
+# prod profile — 生产环境会激活此配置
 
 springdoc:
   api-docs:
     enabled: false
 
+logging:
+  level:
+    com.murasame: WARN
