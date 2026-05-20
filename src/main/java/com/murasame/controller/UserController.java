@@ -12,7 +12,7 @@ import com.murasame.service.UserService;
 import com.murasame.util.ReturnUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
+import com.murasame.util.AuthHelper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,8 @@ import java.util.Map;
 @Tag(name="用户接口", description = "用户评论、头像等相关接口")
 public class UserController {
 	@Resource
+	private AuthHelper authHelper;
+
 	private CommentService commentService;
 
 	@Resource
@@ -56,8 +59,8 @@ public class UserController {
 			@RequestParam(required = false) Long parentCid,
 			@Size(max = 65535, message = "评论内容过长")
 			@RequestParam String content,
-			HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+			HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized("请先登录");
 		}
@@ -89,9 +92,9 @@ public class UserController {
 	@PostMapping("/avatar/upload")
 	public Map<String, Object> uploadAvatar(
 			@RequestParam("file") MultipartFile file,
-			HttpSession session) {
+			HttpServletRequest request) {
 
-		Users currentUser = (Users) session.getAttribute("currentUser");
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.error("请先登录");
 		}
@@ -102,7 +105,7 @@ public class UserController {
 			int result = userService.updateAvatar(userId, avatarUrl);
 			if (result > 0) {
 				currentUser.setAvatar(avatarUrl);
-				session.setAttribute("currentUser", currentUser);
+				request.getSession().setAttribute("currentUser", currentUser);
 				return ReturnUtil.success("头像上传成功", avatarUrl);
 			} else {
 				return ReturnUtil.error("数据库更新失败");
@@ -114,8 +117,8 @@ public class UserController {
 
 	@GetMapping("/profile")
 	public String profile(@RequestParam(required = false) Long id,
-	                      HttpSession session, Model model) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	                      HttpServletRequest request, Model model) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		// 未登录且未指定用户id时无法查看"我的主页"，重定向到首页
 		if (currentUser == null && id == null) {
 			return "redirect:/";
@@ -155,8 +158,8 @@ public class UserController {
 			@Size(max = 255, message = "GitHub用户名不能超过255个字符")
 			@RequestParam(required = false) String githubUsername,
 			@RequestParam(required = false) String githubToken,
-			HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+			HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized("请先登录");
 		}
@@ -175,7 +178,7 @@ public class UserController {
 			Users updated = userService.updateProfile(user);
 			// 更新 session 时清除 githubToken（不解出到前端 session）
 			updated.setGithubToken(null);
-			session.setAttribute("currentUser", updated);
+			request.getSession().setAttribute("currentUser", updated);
 			return ReturnUtil.success("保存成功");
 		} catch (IllegalArgumentException e) {
 			return ReturnUtil.error(e.getMessage());
@@ -205,8 +208,8 @@ public class UserController {
 
 	@ResponseBody
 	@GetMapping("/profile/likes")
-	public Map<String, Object> getLikedBlogs(@RequestParam Long userId, HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	public Map<String, Object> getLikedBlogs(@RequestParam Long userId, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null || !currentUser.getId().equals(userId)) {
 			return ReturnUtil.success("获取成功", Collections.emptyList());
 		}
@@ -216,8 +219,8 @@ public class UserController {
 
 	@ResponseBody
 	@PostMapping("/follow/{followeeId}")
-	public Map<String, Object> follow(@PathVariable Long followeeId, HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	public Map<String, Object> follow(@PathVariable Long followeeId, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized("请先登录");
 		}
@@ -230,8 +233,8 @@ public class UserController {
 
 	@ResponseBody
 	@PostMapping("/unfollow/{followeeId}")
-	public Map<String, Object> unfollow(@PathVariable Long followeeId, HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	public Map<String, Object> unfollow(@PathVariable Long followeeId, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.unauthorized("请先登录");
 		}
@@ -241,8 +244,8 @@ public class UserController {
 
 	@ResponseBody
 	@GetMapping("/follow/status")
-	public Map<String, Object> followStatus(@RequestParam Long followeeId, HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	public Map<String, Object> followStatus(@RequestParam Long followeeId, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
 			return ReturnUtil.success("获取成功", false);
 		}
@@ -261,10 +264,10 @@ public class UserController {
 
 	// 粉丝列表页
 	@GetMapping("/{userId}/followers")
-	public String followersPage(@PathVariable Long userId, Model model, HttpSession session) {
+	public String followersPage(@PathVariable Long userId, Model model, HttpServletRequest request) {
 		Users profileUser = userService.getUserById(userId);
 		if (profileUser == null) return "redirect:/";
-		Users currentUser = (Users) session.getAttribute("currentUser");
+		Users currentUser = authHelper.getCurrentUser(request);
 		model.addAttribute("profileUser", profileUser);
 		model.addAttribute("isLoggedIn", currentUser != null);
 		model.addAttribute("listType", "followers");
@@ -274,10 +277,10 @@ public class UserController {
 
 	// 关注列表页
 	@GetMapping("/{userId}/following")
-	public String followingPage(@PathVariable Long userId, Model model, HttpSession session) {
+	public String followingPage(@PathVariable Long userId, Model model, HttpServletRequest request) {
 		Users profileUser = userService.getUserById(userId);
 		if (profileUser == null) return "redirect:/";
-		Users currentUser = (Users) session.getAttribute("currentUser");
+		Users currentUser = authHelper.getCurrentUser(request);
 		model.addAttribute("profileUser", profileUser);
 		model.addAttribute("isLoggedIn", currentUser != null);
 		model.addAttribute("listType", "following");
@@ -291,8 +294,8 @@ public class UserController {
 	public Map<String, Object> listFollowers(@RequestParam Long userId,
 	                                          @RequestParam(defaultValue = "1") int page,
 	                                          @RequestParam(defaultValue = "20") int pageSize,
-	                                          HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	                                          HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		List<Users> list = followService.getFollowers(userId, page, pageSize);
 		int total = followService.countFollowers(userId);
 		List<Map<String, Object>> items = list.stream().map(u -> {
@@ -315,8 +318,8 @@ public class UserController {
 	public Map<String, Object> listFollowing(@RequestParam Long userId,
 	                                          @RequestParam(defaultValue = "1") int page,
 	                                          @RequestParam(defaultValue = "20") int pageSize,
-	                                          HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	                                          HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		List<Users> list = followService.getFollowing(userId, page, pageSize);
 		int total = followService.countFollowing(userId);
 		List<Map<String, Object>> items = list.stream().map(u -> {
@@ -336,8 +339,8 @@ public class UserController {
 	// 移除粉丝（被我方删除关注关系：对方不再关注我）
 	@ResponseBody
 	@PostMapping("/follow/remove-follower/{followerId}")
-	public Map<String, Object> removeFollower(@PathVariable Long followerId, HttpSession session) {
-		Users currentUser = (Users) session.getAttribute("currentUser");
+	public Map<String, Object> removeFollower(@PathVariable Long followerId, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) return ReturnUtil.unauthorized("请先登录");
 		followService.unfollow(followerId, currentUser.getId());
 		return ReturnUtil.success("已移除");
