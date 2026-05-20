@@ -4,18 +4,22 @@ import com.murasame.entity.Users;
 import com.murasame.service.CosUploadService;
 import com.murasame.util.ReturnUtil;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.murasame.util.AuthHelper;
 
 @Controller
 @RequestMapping("/api/upload")
 @io.swagger.v3.oas.annotations.tags.Tag(name="文件上传接口", description = "图片上传相关功能")
 public class FileUploadController {
+
+    @Resource
+    private AuthHelper authHelper;
 
     @Resource
     private CosUploadService cosUploadService;
@@ -24,8 +28,8 @@ public class FileUploadController {
     @PostMapping("/image")
     @ResponseBody
     public Map<String, Object> uploadImage(@RequestParam("editormd-image-file") MultipartFile file,
-                                           HttpSession session) {
-        Users currentUser = (Users) session.getAttribute("currentUser");
+                                           HttpServletRequest request) {
+        Users currentUser = authHelper.getCurrentUser(request);
         if (currentUser == null) {
             Map<String, Object> result = new HashMap<>();
             result.put("success", 0);
