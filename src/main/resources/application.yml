@@ -46,3 +46,8 @@ tencent:
     bucket-name: ${COS_BUCKET_NAME:}
     base-url: ${COS_BASE_URL:}
     folder: ${COS_IMAGE_FOLDER:blog/images}
+
+jwt:
+  secret: ${JWT_SECRET:}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
