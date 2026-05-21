@@ -55,3 +55,14 @@ src/main/resources/static/dist/
 
 ### Claude ###
 .claude/
+
+### Temporary backups ###
+*.bak
+docs/backups/
+
+### AI-generated planning docs (ephemeral) ###
+docs/cursor/
+docs/superpowers/
+
+### External sub-projects (should live in own repo) ###
+docs/githubchart-api/
