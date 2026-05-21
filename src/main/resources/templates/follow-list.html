@@ -1,9 +1,151 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
-<head><meta charset="UTF-8"><title>关注列表</title>  <script type="module" crossorigin src="/dist/assets/followList-DwLkrLRh.js"></script>
-  <link rel="modulepreload" crossorigin href="/dist/assets/AppHeader-BPDvtxAb.js">
-  <link rel="stylesheet" crossorigin href="/dist/assets/AppHeader-CoBytP7z.css">
-  <link rel="stylesheet" crossorigin href="/dist/assets/followList-CB_eqLcc.css">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle} + ' - MyBlog'">关注列表</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/common.css">
 </head>
-<body><div id="app"></div></body>
+<body>
+    <header th:replace="~{fragment/header :: nav('index')}"></header>
+
+    <main class="container-fluid my-4">
+        <div class="row main-container">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <a th:href="@{/user/profile(id=${profileUser.id})}" class="btn btn-link mb-3">
+                    <i class="bi bi-arrow-left"></i> 返回用户主页
+                </a>
+                <h4 class="mb-3" th:text="${pageTitle} + '列表'">列表</h4>
+
+                <div id="followListContainer">
+                    <div class="skeleton-block" id="followSkeleton">
+                        <div class="skeleton-line skeleton-line-lg" style="width:60%"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line" style="width:40%"></div>
+                    </div>
+                </div>
+
+                <div id="followPagination" class="pagination-container mt-4" style="display:none;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/backgroundFix.js"></script>
+    <script th:inline="javascript">
+        var profileUserId = /*[[${profileUser.id}]]*/ 0;
+        var listType = /*[[${listType}]]*/ 'followers';
+        var isLoggedIn = /*[[${isLoggedIn}]]*/ false;
+        var currentPage = 1;
+        var pageSize = 20;
+        var totalPages = 0;
+
+        function apiUrl() {
+            return '/user/follow/' + listType + '?userId=' + profileUserId + '&page=' + currentPage + '&pageSize=' + pageSize;
+        }
+
+        function loadList() {
+            document.getElementById('followSkeleton').style.display = 'block';
+            document.getElementById('followPagination').style.display = 'none';
+            fetch(apiUrl())
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    document.getElementById('followSkeleton').style.display = 'none';
+                    if (d.code !== 200) { showToast(d.msg || '加载失败', 'error'); return; }
+                    var list = d.data.list || [];
+                    totalPages = Math.ceil((d.data.total || 0) / pageSize) || 1;
+                    renderList(list);
+                    renderPagination();
+                })
+                .catch(function() { showToast('网络错误', 'error'); });
+        }
+
+        function renderList(list) {
+            var html = '';
+            if (!list.length) {
+                html = '<div class="text-muted text-center py-4">暂无数据</div>';
+            }
+            for (var i = 0; i < list.length; i++) {
+                var item = list[i];
+                var u = item.user;
+                html += '<div class="follow-item">' +
+                    '<a href="/user/profile?id=' + u.id + '">' +
+                    '<img src="' + (u.avatar || '/images/default-avatar.png') + '" class="follow-item-avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">' +
+                    '</a>' +
+                    '<div class="follow-item-info">' +
+                    '<span class="follow-item-name">' +
+                    '<a href="/user/profile?id=' + u.id + '" class="author-link">' + escapeHtml(u.nickname) + '</a>' +
+                    '</span>' +
+                    '<span class="follow-item-lv">LV.' + (u.level || 1) + '</span>' +
+                    (u.intro ? '<p class="follow-item-intro">' + escapeHtml(u.intro) + '</p>' : '') +
+                    '</div>' +
+                    '<div class="follow-item-actions">';
+                if (isLoggedIn) {
+                    if (listType === 'followers') {
+                        if (item.isFollowing) {
+                            html += '<button class="follow-action-btn followed" onclick="toggleFollow(' + u.id + ', true)">&#x2713; 已关注</button>';
+                        } else {
+                            html += '<button class="follow-action-btn follow-back" onclick="toggleFollow(' + u.id + ', false)">+ 回关</button>';
+                        }
+                        html += '<button class="follow-action-btn remove" onclick="removeFollower(' + u.id + ')">移除</button>';
+                    } else {
+                        html += '<button class="follow-action-btn followed" onclick="toggleFollow(' + u.id + ', true)">&#x2713; 已关注</button>';
+                    }
+                }
+                html += '</div></div>';
+            }
+            document.getElementById('followListContainer').innerHTML = html;
+        }
+
+        function renderPagination() {
+            if (totalPages <= 1) return;
+            var container = document.getElementById('followPagination');
+            container.style.display = 'flex';
+            var html = '<nav><ul class="pagination justify-content-center">';
+            html += '<li class="page-item' + (currentPage <= 1 ? ' disabled' : '') + '"><a class="page-link" href="javascript:void(0)" onclick="goPage(' + (currentPage-1) + ')">上一页</a></li>';
+            for (var p = 1; p <= totalPages; p++) {
+                html += '<li class="page-item' + (p === currentPage ? ' active' : '') + '"><a class="page-link" href="javascript:void(0)" onclick="goPage(' + p + ')">' + p + '</a></li>';
+            }
+            html += '<li class="page-item' + (currentPage >= totalPages ? ' disabled' : '') + '"><a class="page-link" href="javascript:void(0)" onclick="goPage(' + (currentPage+1) + ')">下一页</a></li>';
+            html += '</ul></nav>';
+            container.innerHTML = html;
+        }
+
+        function goPage(p) {
+            if (p < 1 || p > totalPages || p === currentPage) return;
+            currentPage = p;
+            loadList();
+            window.scrollTo(0, 0);
+        }
+
+        function toggleFollow(targetId, isFollowing) {
+            if (!isLoggedIn) { showToast('请先登录', 'warning'); return; }
+            var url = isFollowing ? '/user/unfollow/' + targetId : '/user/follow/' + targetId;
+            fetch(url, { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.code === 200) { loadList(); }
+                    else if (d.code === 401) { showToast('请先登录', 'warning'); }
+                    else { showToast(d.msg || '操作失败', 'error'); }
+                })
+                .catch(function() { showToast('网络错误', 'error'); });
+        }
+
+        function removeFollower(targetId) {
+            if (!confirm('确定移除该粉丝？')) return;
+            fetch('/user/follow/remove-follower/' + targetId, { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.code === 200) { showToast('已移除', 'success'); loadList(); }
+                    else { showToast(d.msg || '操作失败', 'error'); }
+                })
+                .catch(function() { showToast('网络错误', 'error'); });
+        }
+
+        function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        loadList();
+    </script>
+</body>
 </html>

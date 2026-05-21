@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Critical rules
+
+- **Never delete or overwrite user-configured config files** (e.g. `application.properties`, `application.yml`, `.env`, any file containing user credentials or secrets). These files may contain irrecoverable user configuration and secrets. Before deleting or overwriting any such file, always:
+  1. Ask the user for explicit confirmation first
+  2. Create a backup copy in a safe location and inform the user where the backup is saved
+  3. Proceed only after the user has confirmed
+
 ## Build, run, and test commands
 
 - Build project (skip tests):
