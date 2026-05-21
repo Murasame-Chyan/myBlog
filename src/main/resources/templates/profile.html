@@ -1,9 +1,352 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
-<head><meta charset="UTF-8"><title>个人主页</title>  <script type="module" crossorigin src="/dist/assets/profile-GGwT4uT3.js"></script>
-  <link rel="modulepreload" crossorigin href="/dist/assets/AppHeader-BPDvtxAb.js">
-  <link rel="stylesheet" crossorigin href="/dist/assets/AppHeader-CoBytP7z.css">
-  <link rel="stylesheet" crossorigin href="/dist/assets/profile-4OR9HKTC.css">
+<head>
+    <meta charset="UTF-8">
+    <title>个人主页</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/common.css">
 </head>
-<body><div id="app"></div></body>
+<body>
+    <header th:replace="~{fragment/header :: nav('index')}"></header>
+
+    <main class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+
+                <!-- 个人信息卡片 -->
+                <div class="profile-card">
+                    <!-- 左：头像 + UID -->
+                    <div class="profile-avatar-section">
+                        <img th:if="${profileUser.avatar != null}"
+                             th:src="${profileUser.avatar}"
+                             alt="头像" class="profile-avatar-img">
+                        <img th:if="${profileUser.avatar == null}"
+                             src="/images/default-avatar.png"
+                             alt="默认头像" class="profile-avatar-img">
+                        <div class="profile-uid" th:text="'UID：' + ${profileUser.id}">UID：10001</div>
+                    </div>
+                    <!-- 中：昵称 + LV + 性别 + 经验条 -->
+                    <div class="profile-info">
+                        <div class="profile-nickname-row">
+                            <span class="profile-nickname" th:text="${profileUser.nickname}">用户昵称</span>
+                            <span class="profile-lv-badge" th:text="'LV.' + ${profileUser.level != null ? profileUser.level : 1}">LV.6</span>
+                        </div>
+                        <div class="profile-meta">
+                            <span th:if="${profileUser.gender == 1}">♂ 男</span>
+                            <span th:if="${profileUser.gender == 2}">♀ 女</span>
+                            <span th:if="${profileUser.gender == null or profileUser.gender == 0}">⚥ 未设置</span>
+                            <span th:if="${profileUser.exp != null}">
+                                &nbsp;·&nbsp; 经验 <span th:text="${profileUser.exp}">35000</span> / 100000
+                            </span>
+                        </div>
+                        <div class="profile-exp-bar-wrap" th:if="${profileUser.exp != null}">
+                            <div class="profile-exp-bar-fill"
+                                 th:style="'width:' + (${profileUser.exp} > 100000 ? 100 : ${profileUser.exp} / 1000.0) + '%'"></div>
+                        </div>
+                        <div class="profile-exp-text" th:if="${profileUser.exp != null}">
+                            距下一级还需 <span th:text="${100000 - profileUser.exp > 0 ? 100000 - profileUser.exp : 0}">65000</span> 经验
+                        </div>
+                        <div class="profile-exp-text" th:if="${profileUser.exp == null}">
+                            暂无经验值数据
+                        </div>
+                    </div>
+                    <!-- 右：关注按钮 + 关注/粉丝数 -->
+                    <div class="profile-follow-area">
+                        <div class="profile-follow-btn" th:if="${isLoggedIn && !isOwner}">
+                            <button class="btn-follow" id="followBtn"
+                                    th:classappend="${isFollowing ? 'followed' : ''}"
+                                    th:text="${isFollowing ? '✓ 已关注' : '+ 关注'}"
+                                    onclick="toggleFollow()">+ 关注</button>
+                        </div>
+                        <div class="profile-follow-counts">
+                            <a th:href="@{/user/{id}/following(id=${profileUser.id})}">
+                                <span th:text="${followingCount != null ? followingCount : 0}">0</span> 关注
+                            </a>
+                            <span class="follow-count-divider">|</span>
+                            <a th:href="@{/user/{id}/followers(id=${profileUser.id})}">
+                                <span th:text="${followerCount != null ? followerCount : 0}">0</span> 粉丝
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 个人简介 -->
+                <div class="profile-intro" th:if="${profileUser.intro != null and !profileUser.intro.isEmpty()}">
+                    「<span th:text="${profileUser.intro}">用户简介</span>」
+                </div>
+
+                <!-- 我的文章 -->
+                <div class="profile-section">
+                    <div class="profile-section-title">
+                        <i class="bi bi-file-text"></i> 我的文章
+                    </div>
+                    <!-- 搜索 + 排序 -->
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 180px; position: relative;">
+                            <i class="bi bi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.35); font-size: 0.85rem; pointer-events: none; z-index: 2;"></i>
+                            <input type="text" id="articleSearch"
+                                   placeholder="搜索文章标题..."
+                                   style="width: 100%; padding: 8px 14px 8px 36px; background: rgba(255,255,255,0.06); border: 1px solid rgba(135,206,235,0.18); border-radius: 20px; color: #fff; font-size: 0.85rem; outline: none; box-sizing: border-box;"
+                                   onkeydown="if(event.key==='Enter') loadArticles(1)">
+                        </div>
+                        <div class="sort-btn-group">
+                            <button class="sort-btn active" data-sort="newest" onclick="switchSort('newest', this)">最新发布</button>
+                            <button class="sort-btn" data-sort="reads" onclick="switchSort('reads', this)">最多阅读</button>
+                            <button class="sort-btn" data-sort="likes" onclick="switchSort('likes', this)">最多点赞</button>
+                        </div>
+                    </div>
+                    <!-- 文章列表 -->
+                    <div id="articleList"></div>
+                    <!-- 分页 -->
+                    <div class="profile-pagination" id="articlePagination"></div>
+                </div>
+
+                <!-- 最近点赞（仅自己可见） -->
+                <div class="profile-section liked-section" id="likedSection" style="display: none;">
+                    <div class="profile-section-title">
+                        <i class="bi bi-heart-fill" style="color: #FF6B9D;"></i> 最近点赞的文章
+                        <span style="font-size: 0.7rem; color: #FF6B9D; font-weight: 400; margin-left: 4px;">（仅自己可见）</span>
+                    </div>
+                    <div id="likedList"></div>
+                </div>
+
+                <!-- GitHub 展示区块 -->
+                <div class="my-4" id="github-section">
+                    <div class="github-card text-center py-4" id="github-unlinked" style="display: none;">
+                        <i class="bi bi-github" style="font-size: 2.5rem; color: rgba(255,255,255,0.2);"></i>
+                        <p class="mt-3 text-muted">未绑定 GitHub 账号</p>
+                        <p style="font-size: 0.82rem; color: rgba(255,255,255,0.3);">在编辑资料中绑定 GitHub 用户名即可展示贡献热力图、仓库和成就</p>
+                    </div>
+                    <div class="text-center py-4" id="github-loading" style="display: none;">
+                        <div class="spinner-border" role="status" style="color: #87CEEB; width: 2rem; height: 2rem;"></div>
+                        <p class="mt-2 text-muted">正在获取 GitHub 数据...</p>
+                    </div>
+                    <div class="text-center py-4" id="github-error" style="display: none;">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #ff6b6b;"></i>
+                        <p class="mt-2" style="color: #ff6b6b;" id="github-error-msg"></p>
+                        <button class="btn btn-sm mt-2" onclick="retryGitHub()" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;">
+                            <i class="bi bi-arrow-clockwise"></i> 重试
+                        </button>
+                    </div>
+                    <div class="github-card" id="github-heatmap-card" style="display: none;">
+                        <h5 class="github-section-title"><i class="bi bi-grid-3x3-gap-fill"></i> 贡献热力图</h5>
+                        <div class="skeleton-block" id="heatmap-skeleton">
+                            <div class="skeleton-line skeleton-line-lg" style="width: 60%;"></div>
+                            <div class="skeleton-grid"></div>
+                        </div>
+                        <div id="heatmap-content">
+                            <p class="text-muted" style="font-size: 0.85rem; display: none;" id="github-total-contributions"></p>
+                            <div class="heatmap-container" id="heatmap-grid"></div>
+                        </div>
+                        <div class="section-error" id="heatmap-error" style="display: none;">
+                            <i class="bi bi-exclamation-circle" style="color: #ff6b6b;"></i>
+                            <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">热力图加载失败</span>
+                        </div>
+                        <div class="section-empty" id="heatmap-empty" style="display: none;">
+                            <p class="text-muted" style="font-size: 0.85rem;">暂未获取到贡献数据</p>
+                        </div>
+                    </div>
+                    <div class="github-card" id="github-achievements-card" style="display: none;">
+                        <h5 class="github-section-title"><i class="bi bi-trophy-fill"></i> 成就徽章</h5>
+                        <div class="skeleton-block" id="achievements-skeleton">
+                            <div class="skeleton-row">
+                                <div class="skeleton-avatar"></div>
+                                <div class="skeleton-avatar"></div>
+                                <div class="skeleton-avatar"></div>
+                                <div class="skeleton-avatar"></div>
+                            </div>
+                        </div>
+                        <div class="achievements-grid" id="achievements-grid"></div>
+                        <div class="section-error" id="achievements-error" style="display: none;">
+                            <i class="bi bi-exclamation-circle" style="color: #ff6b6b;"></i>
+                            <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">成就加载失败</span>
+                        </div>
+                        <div class="section-empty" id="achievements-empty" style="display: none;">
+                            <p class="text-muted">暂无成就徽章</p>
+                        </div>
+                    </div>
+                    <div class="github-card" id="github-repos-card" style="display: none;">
+                        <h5 class="github-section-title"><i class="bi bi-journal-code"></i> 仓库列表</h5>
+                        <div class="skeleton-block" id="repos-skeleton">
+                            <div class="skeleton-line" style="width: 40%;"></div>
+                            <div class="skeleton-line" style="width: 70%;"></div>
+                            <div class="skeleton-line" style="width: 55%;"></div>
+                        </div>
+                        <div id="repos-list"></div>
+                        <div class="section-error" id="repos-error" style="display: none;">
+                            <i class="bi bi-exclamation-circle" style="color: #ff6b6b;"></i>
+                            <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">仓库列表加载失败</span>
+                        </div>
+                        <div class="section-empty" id="repos-empty" style="display: none;">
+                            <p class="text-muted">暂无公开仓库</p>
+                        </div>
+                        <div class="repos-pagination" id="repos-pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/github.js"></script>
+    <script th:inline="javascript">
+        var profileUserId = /*[[${profileUser.id}]]*/ 0;
+        var isOwner = /*[[${isOwner}]]*/ false;
+        var isFollowing = /*[[${isFollowing != null ? isFollowing : false}]]*/ false;
+        var currentSort = 'newest';
+        var currentPage = 1;
+        var totalPages = 1;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadArticles(1);
+            if (isOwner) {
+                document.getElementById('likedSection').style.display = 'block';
+                loadLiked();
+            }
+            // GitHub
+            var githubUsername = /*[[${githubUsername}]]*/ '';
+            if (githubUsername != null && githubUsername.trim() !== '') {
+                document.getElementById('github-heatmap-card').style.display = 'block';
+                document.getElementById('github-achievements-card').style.display = 'block';
+                document.getElementById('github-repos-card').style.display = 'block';
+                document.getElementById('heatmap-skeleton').style.display = 'block';
+                document.getElementById('achievements-skeleton').style.display = 'block';
+                document.getElementById('repos-skeleton').style.display = 'block';
+                loadGitHubProfile(githubUsername);
+            } else {
+                document.getElementById('github-unlinked').style.display = 'block';
+            }
+        });
+
+        function switchSort(sort, btn) {
+            currentSort = sort;
+            document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            loadArticles(1);
+        }
+
+        function loadArticles(page) {
+            currentPage = page;
+            var keyword = document.getElementById('articleSearch').value.trim();
+            var params = 'userId=' + profileUserId + '&sortBy=' + currentSort + '&page=' + page + '&pageSize=10';
+            if (keyword) params += '&keyword=' + encodeURIComponent(keyword);
+
+            fetch('/user/profile/blogs?' + params)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code !== 200) { document.getElementById('articleList').innerHTML = '<p class="text-muted">加载失败</p>'; return; }
+                    var list = data.data.list;
+                    totalPages = Math.ceil(data.data.total / data.data.pageSize) || 1;
+                    var html = '';
+                    if (list.length === 0) {
+                        html = '<p class="text-muted" style="text-align:center;padding:20px 0;">暂无文章</p>';
+                    } else {
+                        list.forEach(function(blog) {
+                            html += '<div class="article-item">' +
+                                '<a class="article-title-link" href="/blogs/read/' + blog.id + '">' + escapeHtml(blog.title) + '</a>' +
+                                '<span class="article-meta-inline">' +
+                                ' 📖 ' + (blog.read_count || 0) +
+                                ' &nbsp; 👍 ' + (blog.like_count || 0) +
+                                ' &nbsp; ' + formatDate(blog.created_at) +
+                                '</span></div>';
+                        });
+                    }
+                    document.getElementById('articleList').innerHTML = html;
+                    renderPagination();
+                })
+                .catch(function() {
+                    document.getElementById('articleList').innerHTML = '<p class="text-muted">加载失败</p>';
+                });
+        }
+
+        function renderPagination() {
+            var html = '';
+            html += '<button class="profile-page-btn' + (currentPage <= 1 ? ' disabled' : '') + '" onclick="if(' + currentPage + '>1)loadArticles(' + (currentPage - 1) + ')">‹</button>';
+            for (var i = 1; i <= totalPages; i++) {
+                html += '<button class="profile-page-btn' + (i === currentPage ? ' active' : '') + '" onclick="loadArticles(' + i + ')">' + i + '</button>';
+            }
+            html += '<button class="profile-page-btn' + (currentPage >= totalPages ? ' disabled' : '') + '" onclick="if(' + currentPage + '<' + totalPages + ')loadArticles(' + (currentPage + 1) + ')">›</button>';
+            document.getElementById('articlePagination').innerHTML = html;
+        }
+
+        function loadLiked() {
+            fetch('/user/profile/likes?userId=' + profileUserId)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    var list = data.data || [];
+                    var html = '';
+                    if (list.length === 0) {
+                        html = '<p class="text-muted" style="text-align:center;padding:12px 0;">暂无点赞记录</p>';
+                    } else {
+                        list.forEach(function(blog) {
+                            html += '<div class="liked-item">' +
+                                '<a class="article-title-link" href="/blogs/read/' + blog.id + '">' + escapeHtml(blog.title) + '</a>' +
+                                '<span style="color:rgba(255,255,255,0.25);font-size:0.7rem;">' + formatDate(blog.created_at) + '</span></div>';
+                        });
+                    }
+                    document.getElementById('likedList').innerHTML = html;
+                })
+                .catch(function() {
+                    document.getElementById('likedList').innerHTML = '<p class="text-muted">加载失败</p>';
+                });
+        }
+
+        function toggleFollow() {
+            var url = isFollowing ? '/user/unfollow/' + profileUserId : '/user/follow/' + profileUserId;
+            fetch(url, { method: 'POST' })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code === 200) {
+                        isFollowing = !isFollowing;
+                        updateFollowButton();
+                        loadFollowCounts();
+                    } else if (data.code === 401) {
+                        openAuthModal('login');
+                    } else {
+                        showToast(data.msg, 'error');
+                    }
+                })
+                .catch(function() {
+                    showToast('操作失败', 'error');
+                });
+        }
+
+        function updateFollowButton() {
+            var btn = document.getElementById('followBtn');
+            if (!btn) return;
+            if (isFollowing) {
+                btn.textContent = '✓ 已关注';
+                btn.classList.add('followed');
+            } else {
+                btn.textContent = '+ 关注';
+                btn.classList.remove('followed');
+            }
+        }
+
+        function loadFollowCounts() {
+            fetch('/user/follow/counts?userId=' + profileUserId)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code === 200 && data.data) {
+                        var countsEl = document.querySelector('.profile-follow-counts');
+                        if (countsEl) {
+                            countsEl.innerHTML = data.data.followingCount + ' 关注 <span class="follow-count-divider">|</span> ' + data.data.followerCount + ' 粉丝';
+                        }
+                    }
+                });
+        }
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            return dateStr.substring(0, 10);
+        }
+    </script>
+</body>
 </html>

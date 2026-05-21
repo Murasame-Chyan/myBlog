@@ -1,10 +1,58 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
-<head><meta charset="UTF-8"><title>归档详情</title>  <script type="module" crossorigin src="/dist/assets/readArchive-CgVXcuGB.js"></script>
-  <link rel="modulepreload" crossorigin href="/dist/assets/AppHeader-BPDvtxAb.js">
-  <link rel="modulepreload" crossorigin href="/dist/assets/markdown-CDys2AnX.js">
-  <link rel="stylesheet" crossorigin href="/dist/assets/AppHeader-CoBytP7z.css">
-  <link rel="stylesheet" crossorigin href="/dist/assets/readArchive-yMiuonpj.css">
+<head>
+    <meta charset="UTF-8">
+    <title>归档文章</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/readBlog.css">
 </head>
-<body><div id="app"></div></body>
+<body>
+    <header th:replace="~{fragment/header :: nav('archives')}"></header>
+
+    <main class="container my-4">
+        <input type="hidden" th:value="${archive != null ? archive.getId() : 0}" id="getArchiveId">
+        <h2 id="textTitle" th:text="${archive.title}">标题</h2>
+        <div class="text-muted mb-3">
+            <span>作者：
+                <a th:href="@{/user/profile(id=${archive.u_id})}" class="author-link">
+                    <img th:src="${authorAvatar != null ? authorAvatar : '/images/default-avatar.png'}"
+                         class="author-avatar-mini" alt="" style="width:22px;height:22px;object-fit:cover;">
+                    <span th:text="${authorName}">作者姓名</span>
+                </a>
+            </span>
+            <span class="ms-3">发布时间：
+                <span th:text="${#temporals.format(archive.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
+            </span>
+            <span class="ms-3">上次更新：
+                <span th:text="${#temporals.format(archive.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
+            </span>
+            <span class="ms-3">删除时间：
+                <span th:text="${#temporals.format(archive.deleted_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
+            </span>
+        </div>
+
+        <div class="mb-3" th:if="${archive.t_id != null and archive.t_id.tagList != null and !archive.t_id.tagList.isEmpty()}">
+            <th:block th:each="tagId : ${archive.t_id.tagList}">
+                <span th:each="tag : ${allTags}" th:if="${tag.id == tagId}" class="blog-tag" th:text="${tag.tagName}">标签</span>
+            </th:block>
+        </div>
+
+        <hr>
+
+        <div class="blog-content" id="textContent" th:utext="${archive.content}">正文</div>
+
+        <hr>
+
+        <div class="alert alert-info mt-4">
+            <i class="bi bi-info-circle"></i> 此文章已归档，仅支持阅读，不支持评论和编辑。
+        </div>
+
+        <hr>
+
+        <a th:href="@{/archives}" class="btn btn-sm btn-outline-primary">← 返回归档</a>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

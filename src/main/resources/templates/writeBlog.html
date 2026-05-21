@@ -1,9 +1,93 @@
-﻿<!DOCTYPE html>
-<html lang="zh">
-<head><meta charset="UTF-8"><title>写博客</title>  <script type="module" crossorigin src="/dist/assets/writeBlog-BHbzUSdh.js"></script>
-  <link rel="modulepreload" crossorigin href="/dist/assets/AppHeader-BPDvtxAb.js">
-  <link rel="stylesheet" crossorigin href="/dist/assets/AppHeader-CoBytP7z.css">
-  <link rel="stylesheet" crossorigin href="/dist/assets/writeBlog-VP4_m0KD.css">
+<!doctype html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>写博文</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 </head>
-<body><div id="app"></div></body>
+<body>
+    <!-- 1.header -->
+    <header th:replace="~{fragment/header :: nav('index')}"></header>
+
+    <!-- 2.writeBlogArea -->
+    <main class="container my-4">
+        <h4 th:text="${blog} ? '更新文章' : '写新博文'">写新博文</h4>
+        <form id="publishForm"
+              th:action="@{${blog != null ? '/blogs/update' : '/blogs/publish'}}"
+              method="post">
+            <!-- 标题 -->
+            <input type="hidden" th:value="${blog != null ? blog.getId() : 0}" id="getBlogId">
+            <div class="mb-3">
+                <label class="form-label">标题</label>
+                <input th:value="${blog?.getTitle()}" type="text" class="form-control" name="title" id="title" required maxlength="255">
+            </div>
+
+            <!-- 正文（Markdown 编辑器） -->
+            <div class="mb-3">
+                <label class="form-label">
+                    正文
+                    <button type="button" class="btn-emoji-inline" data-target="content" title="插入表情">😊</button>
+                </label>
+                <div id="editormd">
+                    <textarea th:text="${blog?.content}" id="content" name="content" style="display:none;"></textarea>
+                </div>
+            </div>
+
+            <!-- 标签选择 -->
+            <div class="mb-3">
+                <label class="form-label">标签（最多10个）</label>
+                <div class="tag-block">
+                    <div class="tag-block-toolbar">
+                        <div class="tag-search-wrapper">
+                            <input type="text" id="tagSearchInput"
+                                   placeholder="搜索或创建标签..."
+                                   autocomplete="off">
+                            <div class="tag-search-dropdown" id="tagSearchDropdown" style="display:none;">
+                                <div id="tagSearchResults"></div>
+                                <div id="tagCreateHint" class="tag-dropdown-hint" style="display:none;">
+                                    <i class="bi bi-plus-circle"></i> 创建 "<span id="tagNewName"></span>"
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="tagAddBtn" class="tag-add-btn" title="添加标签">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <div class="tag-block-grid" id="tagPool"></div>
+                </div>
+                <div class="tag-selected" id="selectedTags"></div>
+                <input type="hidden" name="tagIds" id="tagIdsHidden">
+            </div>
+
+            <!-- 编辑模式下带上blog.id来update -->
+            <input th:if="${blog}" type="hidden" name="id" th:value="${blog.id}">
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send"></i>
+                <span th:text="${blog} ? '更新文章' : '立即发布'">立即发布</span>
+            </button>
+            <a th:href="@{/}" class="btn btn-link">返回首页</a>
+        </form>
+
+        <!-- 结果提示 -->
+        <div id="result" class="alert alert-dismissible fade show d-none mt-3">
+            <span id="resultMsg"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </main>
+
+    <!-- 99.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/editormd.min.js"></script>
+    <script th:src="@{/js/writeBlog.js}"></script>
+    <script th:inline="javascript">
+        // 将服务端已有标签传给 JS
+        var allTags = /*[[${allTags}]]*/ [];
+        var preSelectedTagIds = /*[[${blog?.t_id?.tagList}]]*/ [];
+    </script>
+</body>
 </html>
