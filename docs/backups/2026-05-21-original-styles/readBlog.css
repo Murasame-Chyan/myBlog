@@ -1,3 +1,0 @@
-#textContent, #textTitle {
-    white-space: pre-wrap;  /* 读取文本时保留空格与换行，自动换行 */
-}
