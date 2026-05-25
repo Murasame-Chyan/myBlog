@@ -46,12 +46,15 @@
         }
 
         function loadList() {
-            document.getElementById('followSkeleton').style.display = 'block';
+            // 首次渲染后 followSkeleton 会被 renderList 的 innerHTML 赋值清掉，访问前需 null 守卫
+            var skeleton = document.getElementById('followSkeleton');
+            if (skeleton) skeleton.style.display = 'block';
             document.getElementById('followPagination').style.display = 'none';
             fetch(apiUrl())
                 .then(function(r) { return r.json(); })
                 .then(function(d) {
-                    document.getElementById('followSkeleton').style.display = 'none';
+                    var sk = document.getElementById('followSkeleton');
+                    if (sk) sk.style.display = 'none';
                     if (d.code !== 200) { showToast(d.msg || '加载失败', 'error'); return; }
                     var list = d.data.list || [];
                     totalPages = Math.ceil((d.data.total || 0) / pageSize) || 1;
