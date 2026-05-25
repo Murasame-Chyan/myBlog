@@ -34,8 +34,7 @@ import com.murasame.util.AuthHelper;
 public class BlogController {
 	@Resource
 	private AuthHelper authHelper;
-
-
+	@Resource
 	private BlogService blogService;
 	@Resource
 	private CommentService commentService;

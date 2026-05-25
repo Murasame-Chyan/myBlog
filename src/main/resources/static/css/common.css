@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    /* LQIP: 先加载 0.7KB 内联占位图，高清 WebP 由 backgroundFix.js 预加载后替换 */
+    /* LQIP: 先加载 0.7KB 内联占位图，高清背景图由 backgroundFix.js 预加载后替换 */
     background-image: url(data:image/jpeg;base64,/9j/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCABLACgDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUBAgME/8QAIRAAAwACAgMBAAMAAAAAAAAAAAECAxEEIRIiMUETMmH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAgD/xAAZEQEBAQEBAQAAAAAAAAAAAAAAARECUTH/2gAMAwEAAhEDEQA/AGV5VNa2RWbX6YZIf8jbOTLku78Z+BpnMMZ5H+l1k32J3eSK09nVxuSt6o0vrdTx2xkbrQE43L7QFIickppnJgxeOV7R2N9kJrfwmqlYcjBLltLsT1Tx5WPstJS9iHl6eV6Moz4OVX+gLeNVzW5YCnD6l7Br9JptMpTY1M+uTl5L+SL7w1rypDV6b7RZxFrWjKtLOJhun0gG+KJh9IDDdaNrZWvgN+xPkkgpjna7JXRFPb6DRtLWK2wIx/2AUaml7kuTVpFWHSuZjDx7L+PRZfQYUxTGvYDWEBWokf/Z);
     background-size: 100% auto;
     background-position: center top;

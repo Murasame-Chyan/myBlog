@@ -14,11 +14,17 @@ public class AuthHelper {
         this.jwtUtil = jwtUtil;
     }
 
-    // 获取当前用户：优先 JWT，回退 Session（过渡期双轨运行）
+    // 获取当前用户：优先 request attribute（JwtFilter 设置），其次 JWT Header，最后回退 Session（过渡期三轨运行）
     public Users getCurrentUser(HttpServletRequest request) {
-        Users user = getCurrentUserFromJwt(request);
+        // 1. request attribute（JwtAuthenticationFilter 设置）
+        Users user = (Users) request.getAttribute("currentUser");
         if (user != null) return user;
 
+        // 2. JWT Authorization header
+        user = getCurrentUserFromJwt(request);
+        if (user != null) return user;
+
+        // 3. HttpSession
         HttpSession session = request.getSession(false);
         if (session != null) {
             return (Users) session.getAttribute("currentUser");

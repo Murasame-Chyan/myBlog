@@ -28,11 +28,12 @@ public class ArchiveController {
 
 	@Resource
 	private ArchiveService archiveService;
-	@Resource
-	TagService tagService;
 
 	@Resource
-	UserService userService;
+	private TagService tagService;
+
+	@Resource
+	private UserService userService;
 
 	@GetMapping("/archives")
 	public String archives(Model model,

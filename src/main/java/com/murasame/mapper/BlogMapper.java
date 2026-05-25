@@ -38,6 +38,17 @@ public interface BlogMapper {
 	int insertBlog(@Param("blog") Blogs blog);
 
 	// 删除与从垃圾箱恢复博文
+	@Results(id = "blogBinResultMap", value = {
+		@Result(property = "id", column = "id"),
+		@Result(property = "u_id", column = "u_id"),
+		@Result(property = "title", column = "title"),
+		@Result(property = "content", column = "content"),
+		@Result(property = "created_at", column = "created_at"),
+		@Result(property = "updated_at", column = "updated_at"),
+		@Result(property = "t_id", column = "t_id", typeHandler = TagWrapperTypeHandler.class),
+		@Result(property = "read_count", column = "read_count"),
+		@Result(property = "like_count", column = "like_count")
+	})
 	@Select("SELECT * FROM blogsBin WHERE id=#{id}")
 	Blogs getBlogFromBinById(@Param("id") Long id);
 
@@ -187,6 +198,16 @@ public interface BlogMapper {
         "</script>")
     List<BlogBriefVO> getBlogsByIds(@Param("ids") java.util.List<Long> ids);
 
+    @Results({
+        @Result(property = "id", column = "id"),
+        @Result(property = "u_id", column = "u_id"),
+        @Result(property = "title", column = "title"),
+        @Result(property = "content", column = "content"),
+        @Result(property = "created_at", column = "created_at"),
+        @Result(property = "updated_at", column = "updated_at"),
+        @Result(property = "deleted_at", column = "deleted_at"),
+        @Result(property = "t_id", column = "t_id", typeHandler = TagWrapperTypeHandler.class)
+    })
     @Select("SELECT * FROM blogsBin WHERE u_id=#{userId} ORDER BY deleted_at DESC")
     java.util.List<com.murasame.entity.BlogsBin> getUserBins(@Param("userId") Long userId);
 }

@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 public class ArchiveServiceImpl implements ArchiveService {
 	@Resource
-	ArchiveMapper archiveMapper;
+	private ArchiveMapper archiveMapper;
 
 	@Override
 	public List<BlogBriefVO> getRecent5ArchivesBrief(Long uId){
