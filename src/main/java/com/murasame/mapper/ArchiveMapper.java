@@ -31,6 +31,16 @@ public interface ArchiveMapper {
 			" FROM blogsBin b LEFT JOIN users u ON b.u_id=u.id WHERE b.u_id=#{uId} ORDER BY deleted_at DESC LIMIT #{pageSize} OFFSET #{offset}")
 	List<BlogBriefVO> getArchivesByPage(@Param("uId") Long uId, int pageSize, int offset);
 
+	@Results({
+		@Result(property = "id", column = "id"),
+		@Result(property = "u_id", column = "u_id"),
+		@Result(property = "title", column = "title"),
+		@Result(property = "content", column = "content"),
+		@Result(property = "created_at", column = "created_at"),
+		@Result(property = "updated_at", column = "updated_at"),
+		@Result(property = "deleted_at", column = "deleted_at"),
+		@Result(property = "t_id", column = "t_id", typeHandler = TagWrapperTypeHandler.class)
+	})
 	@Select("SELECT * FROM blogsBin WHERE id=#{id}")
 	com.murasame.entity.BlogsBin getArchiveById(@Param("id") Long id);
 

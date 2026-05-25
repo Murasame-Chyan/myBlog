@@ -1,6 +1,6 @@
 // 视差背景：延迟加载高清 WebP，避免阻塞首屏渲染
 (function() {
-    var HD_URL = '/pics/background.webp';
+    var HD_URL = '/pics/background.jpg';
 
     function applyBackground() {
         var img = new Image();

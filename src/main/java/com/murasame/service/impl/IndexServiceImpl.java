@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 public class IndexServiceImpl implements IndexService {
 	@Resource
-	IndexMapper indexMapper;
+	private IndexMapper indexMapper;
 
 	@Override
 	public List<BlogBriefVO> getRecent5BlogsBrief(){

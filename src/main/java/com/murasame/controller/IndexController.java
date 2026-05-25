@@ -24,13 +24,13 @@ import java.util.List;
 @io.swagger.v3.oas.annotations.tags.Tag(name="主页接口", description = "主页相关操作")
 public class IndexController {
 	@Resource
-	IndexService indexService;
+	private IndexService indexService;
 	@Resource
-	BlogService blogService;
+	private BlogService blogService;
 	@Resource
-	CommentService commentService;
+	private CommentService commentService;
 	@Resource
-	TagService tagService;
+	private TagService tagService;
 
 	@GetMapping({"/", "/index"})
 	public String index(Model model,
