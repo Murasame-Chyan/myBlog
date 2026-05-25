@@ -116,6 +116,7 @@ function handleLogin() {
     formData.append('email', email);
     formData.append('password', password);
     formData.append('captchaCode', captcha);
+    formData.append('captchaToken', currentCaptchaToken);
 
     fetch('/auth/login', {
         method: 'POST',
@@ -356,11 +357,21 @@ function startResetSendCodeCountdown(seconds) {
 // 注意：以下两套发送验证码/倒计时函数逻辑相同但分别服务于注册(/auth/send-code)和重置密码(/auth/send-reset-code)，无法合并因为它们请求不同 API 端点
 // ===== 图形验证码（登录用） =====
 
+var currentCaptchaToken = '';
+
 function refreshCaptcha() {
     var img = document.getElementById('captchaImg');
-    if (img) {
-        img.src = '/auth/captcha?t=' + Date.now();
-    }
+    if (!img) return;
+    fetch('/auth/captcha?t=' + Date.now())
+    .then(function(res) {
+        currentCaptchaToken = res.headers.get('X-Captcha-Token') || '';
+        return res.blob();
+    })
+    .then(function(blob) {
+        var oldUrl = img.src;
+        img.src = URL.createObjectURL(blob);
+        if (oldUrl && oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+    });
 }
 
 // ===== 邮箱验证码（注册用） =====
@@ -439,6 +450,15 @@ function handleLogout() {
     fetch('/auth/logout', { method: 'POST' })
     .then(function(res) { return res.json(); })
     .then(function() { location.reload(); });
+}
+
+// HttpOnly cookie 自动携带 JWT，authFetch 保留供需要显式传 token 的场景使用
+function authFetch(url, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    var token = localStorage.getItem('accessToken');
+    if (token) options.headers['Authorization'] = 'Bearer ' + token;
+    return fetch(url, options);
 }
 
 // 按 ESC 关闭
