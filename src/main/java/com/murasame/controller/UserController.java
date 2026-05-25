@@ -36,6 +36,7 @@ public class UserController {
 	@Resource
 	private AuthHelper authHelper;
 
+	@Resource
 	private CommentService commentService;
 
 	@Resource
@@ -46,6 +47,7 @@ public class UserController {
 
 	@Resource
 	private UserService userService;
+
 	@Resource
 	private LikesService likesService;
 
@@ -55,7 +57,7 @@ public class UserController {
 	@ResponseBody
 	@PostMapping("/comment/add")
 	public Map<String, Object> addComment(
-			@RequestParam("bId") Long blogId,
+			@RequestParam("blogId") Long blogId,
 			@RequestParam(value = "parentId", required = false) Long parentCid,
 			@Size(max = 65535, message = "评论内容过长")
 			@RequestParam String content,

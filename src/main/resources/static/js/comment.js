@@ -143,7 +143,7 @@ function submitComment() {
 	params.append('blogId', currentBlogId);
 	params.append('content', content);
 	if (replyToCommentId) {
-		params.append('parentCid', replyToCommentId);
+		params.append('parentId', replyToCommentId);
 	}
 
 	fetch('/user/comment/add', {
