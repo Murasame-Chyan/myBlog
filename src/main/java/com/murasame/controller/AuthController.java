@@ -11,6 +11,7 @@ import com.murasame.util.ReturnUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Email;
@@ -52,7 +53,7 @@ public class AuthController {
     @Resource
     private JwtProperties jwtProperties;
 
-    // 登录：验证码校验 → 锁定检查 → 密码验证 → 返回 JWT
+    // 登录：验证码校验 → 锁定检查 → 密码验证 → 写 Session/HttpOnly Cookie → 返回 JWT
     @ResponseBody
     @PostMapping("/login")
     public Map<String, Object> login(
@@ -64,7 +65,9 @@ public class AuthController {
             @NotBlank(message = "验证码不能为空")
             @RequestParam String captchaCode,
             @NotBlank(message = "验证码令牌不能为空")
-            @RequestParam String captchaToken) {
+            @RequestParam String captchaToken,
+            HttpServletRequest request,
+            HttpServletResponse response) {
 
         String lockMsg = loginAttemptService.checkLocked(email);
         if (lockMsg != null) return ReturnUtil.error(lockMsg);
@@ -82,9 +85,15 @@ public class AuthController {
         }
 
         loginAttemptService.resetAttempts(email);
+
+        // 写入 Session，模板侧通过 session.currentUser 判断登录状态
+        request.getSession(true).setAttribute("currentUser", user);
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
         long expiresIn = jwtProperties.getAccessTokenExpiration() / 1000;
+
+        // HttpOnly Cookie：JS 不可读，防 XSS 窃取
+        setTokenCookie(response, accessToken, (int) expiresIn);
 
         return ReturnUtil.success("登录成功", Map.of(
                 "accessToken", accessToken,
@@ -102,7 +111,8 @@ public class AuthController {
             @NotBlank @Email @Size(max = 255) @RequestParam String email,
             @NotBlank @Size(max = 32) @RequestParam String nickname,
             @NotBlank @Size(min = 6, max = 255) @RequestParam String password,
-            @NotBlank @RequestParam String emailCode) {
+            @NotBlank @RequestParam String emailCode,
+            HttpServletResponse response) {
 
         String emailCodeKey = "email:code:" + email;
         String stored = stringRedisTemplate.opsForValue().get(emailCodeKey);
@@ -114,6 +124,9 @@ public class AuthController {
             Users user = userService.register(email, nickname, password);
             String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
             String refreshToken = jwtUtil.generateRefreshToken(user.getId());
+
+            setTokenCookie(response, accessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+
             return ReturnUtil.success("注册成功", Map.of(
                     "accessToken", accessToken,
                     "refreshToken", refreshToken,
@@ -232,13 +245,19 @@ public class AuthController {
         return ReturnUtil.custom(200, "未登录", Map.of("loggedIn", false));
     }
 
-    // 登出：写入 Redis 黑名单，前端删 token
+    // 登出：清除 cookie + 写 Redis 黑名单 + 销毁 Session
     @ResponseBody
     @PostMapping("/logout")
-    public Map<String, Object> logout(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+    public Map<String, Object> logout(HttpServletRequest request, HttpServletResponse response) {
+        // 从 cookie 读取 JWT 写入黑名单
+        String token = extractTokenFromCookie(request);
+        if (token == null) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
+        }
+        if (token != null) {
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId != null) {
                 stringRedisTemplate.opsForValue().set(
@@ -249,7 +268,30 @@ public class AuthController {
         }
         var session = request.getSession(false);
         if (session != null) session.invalidate();
+        setTokenCookie(response, "", 0); // 清除 cookie
         return ReturnUtil.success("已登出");
+    }
+
+    // 从 cookie 中提取 JWT
+    private String extractTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("access_token".equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    // 写 HttpOnly cookie
+    private void setTokenCookie(HttpServletResponse response, String token, int maxAgeSeconds) {
+        Cookie cookie = new Cookie("access_token", token);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAgeSeconds);
+        response.addCookie(cookie);
     }
 
     // 刷新令牌
