@@ -13,7 +13,7 @@ public class SwaggerConfiguration {
 		return new OpenAPI().info(new Info()
 				.title("my博客 - api快速测试")
 				.description("这是 myBlog 项目的快速api测试页")
-				.version("0.1-20251210")
+				.version("1.0-20260526")
 				.license(new License().name("个人主页")
 						.url("/about")));
 	}

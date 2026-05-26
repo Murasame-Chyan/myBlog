@@ -32,6 +32,11 @@ public class IndexController {
 	@Resource
 	private TagService tagService;
 
+	@GetMapping("/game")
+	public String game() {
+		return "easysurvivor";
+	}
+
 	@GetMapping({"/", "/index"})
 	public String index(Model model,
 	                    @RequestParam(required = false) String keyword,
