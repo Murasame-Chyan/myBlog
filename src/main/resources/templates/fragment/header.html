@@ -97,6 +97,7 @@
     <div class="collapse navbar-collapse" id="navMain">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'index' ? 'active' : ''}" th:href="@{/}">首页</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'game' ? 'active' : ''}" th:href="@{/game}">小游戏</a></li>
         <li class="nav-item ms-lg-3">
           <a th:href="@{/blogs/write}" class="btn btn-write">
             <i class="bi bi-pencil-square"></i> 写作
