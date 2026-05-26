@@ -8,7 +8,7 @@ import com.murasame.service.UserService;
 import com.murasame.util.CaptchaUtil;
 import com.murasame.util.JwtUtil;
 import com.murasame.util.ReturnUtil;
-import io.jsonwebtoken.Claims;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.Cookie;
@@ -69,7 +69,6 @@ public class AuthController {
             @RequestParam String captchaCode,
             @NotBlank(message = "验证码令牌不能为空")
             @RequestParam String captchaToken,
-            HttpServletRequest request,  // keep param, used by loginAttemptService internally (no change needed)
             HttpServletResponse response) {
 
         String lockMsg = loginAttemptService.checkLocked(email);
