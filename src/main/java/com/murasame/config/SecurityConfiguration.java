@@ -2,6 +2,8 @@ package com.murasame.config;
 
 import com.murasame.util.JwtUtil;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,6 +13,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.Collections;
 
 @Configuration
 @MapperScan("com.murasame.mapper")
@@ -59,5 +63,11 @@ public class SecurityConfiguration {
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    // 程序化禁用 JSESSIONID Cookie — 比 YAML 配置更可靠
+    @Bean
+    public WebServerFactoryCustomizer<TomcatServletWebServerFactory> disableSessionTracking() {
+        return factory -> factory.setSessionTrackingModes(Collections.emptySet());
     }
 }
