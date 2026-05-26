@@ -9,3 +9,7 @@ spring:
 logging:
   level:
     com.murasame: DEBUG
+
+security:
+  cookie:
+    secure: false
