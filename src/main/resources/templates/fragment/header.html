@@ -50,15 +50,15 @@
     <!-- 居中头像 -->
     <div class="navbar-avatar mx-auto">
       <!-- 已登录：头像 + 悬浮下拉菜单 -->
-      <th:block th:if="${session.currentUser != null}">
+      <th:block th:if="${currentUser != null}">
         <div class="avatar-dropdown" id="avatarDropdown">
-          <img th:if="${session.currentUser.avatar != null}"
-               th:src="${session.currentUser.avatar}"
+          <img th:if="${currentUser.avatar != null}"
+               th:src="${currentUser.avatar}"
                alt="用户头像"
                class="rounded-circle avatar-img"
                style="width: 40px; height: 40px; object-fit: cover;"
                onclick="toggleAvatarMenu(event)">
-          <img th:if="${session.currentUser.avatar == null}"
+          <img th:if="${currentUser.avatar == null}"
                src="/images/default-avatar.png"
                alt="默认头像"
                class="rounded-circle avatar-img"
@@ -82,7 +82,7 @@
         </div>
       </th:block>
       <!-- 未登录：显示登录入口 -->
-      <img th:if="${session.currentUser == null}"
+      <img th:if="${currentUser == null}"
            src="/images/default-avatar.png"
            alt="点击登录"
            class="rounded-circle avatar-img"
@@ -107,7 +107,7 @@
   </div>
 </nav>
 <!-- 编辑资料模态框（仅登录用户可见） -->
-<th:block th:if="${session.currentUser != null}">
+<th:block th:if="${currentUser != null}">
 <div class="edit-profile-overlay" id="editProfileOverlay">
     <div class="edit-profile-modal">
         <div class="edit-profile-header">
@@ -120,7 +120,7 @@
                 <div class="edit-profile-label">头像</div>
                 <div class="edit-avatar-area">
                     <img id="editAvatarPreview"
-                         th:src="${session.currentUser.avatar != null ? session.currentUser.avatar : '/images/default-avatar.png'}"
+                         th:src="${currentUser.avatar != null ? currentUser.avatar : '/images/default-avatar.png'}"
                          class="edit-avatar-preview" alt="头像">
                     <div>
                         <input type="file" id="editAvatarFile" accept="image/*" style="display: none;" onchange="initEditCrop(this.files[0])">
@@ -134,31 +134,31 @@
             <!-- 昵称 -->
             <div class="edit-profile-field">
                 <div class="edit-profile-label">昵称</div>
-                <input type="text" class="edit-profile-input" id="editNickname" th:value="${session.currentUser.nickname}" maxlength="32" placeholder="输入昵称">
+                <input type="text" class="edit-profile-input" id="editNickname" th:value="${currentUser.nickname}" maxlength="32" placeholder="输入昵称">
             </div>
             <!-- 简介 -->
             <div class="edit-profile-field">
                 <div class="edit-profile-label">简介</div>
-                <input type="text" class="edit-profile-input" id="editIntro" th:value="${session.currentUser.intro}" maxlength="255" placeholder="介绍一下自己">
+                <input type="text" class="edit-profile-input" id="editIntro" th:value="${currentUser.intro}" maxlength="255" placeholder="介绍一下自己">
             </div>
             <!-- 邮箱 -->
             <div class="edit-profile-field">
                 <div class="edit-profile-label">邮箱</div>
-                <input type="email" class="edit-profile-input" id="editEmail" th:value="${session.currentUser.email}" maxlength="255" placeholder="输入邮箱">
+                <input type="email" class="edit-profile-input" id="editEmail" th:value="${currentUser.email}" maxlength="255" placeholder="输入邮箱">
             </div>
             <!-- 性别 -->
             <div class="edit-profile-field">
                 <div class="edit-profile-label">性别</div>
                 <select class="edit-profile-select" id="editGender">
-                    <option value="0" th:selected="${session.currentUser.gender == null or session.currentUser.gender == 0}">未设置</option>
-                    <option value="1" th:selected="${session.currentUser.gender == 1}">男</option>
-                    <option value="2" th:selected="${session.currentUser.gender == 2}">女</option>
+                    <option value="0" th:selected="${currentUser.gender == null or currentUser.gender == 0}">未设置</option>
+                    <option value="1" th:selected="${currentUser.gender == 1}">男</option>
+                    <option value="2" th:selected="${currentUser.gender == 2}">女</option>
                 </select>
             </div>
             <!-- GitHub -->
             <div class="edit-profile-field">
                 <div class="edit-profile-label">GitHub 用户名</div>
-                <input type="text" class="edit-profile-input" id="editGithub" th:value="${session.currentUser.githubUsername}" maxlength="255" placeholder="输入 GitHub 用户名">
+                <input type="text" class="edit-profile-input" id="editGithub" th:value="${currentUser.githubUsername}" maxlength="255" placeholder="输入 GitHub 用户名">
             </div>
             <div class="edit-profile-field">
                 <div class="edit-profile-label">
