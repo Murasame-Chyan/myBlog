@@ -2,9 +2,9 @@ package com.murasame.config;
 
 import com.murasame.util.JwtUtil;
 import jakarta.servlet.*;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletResponseWrapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpSession;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -16,8 +16,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import java.io.IOException;
 
 @Configuration
 @MapperScan("com.murasame.mapper")
@@ -68,12 +66,11 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
 
-    // 通过 Filter 拦截 JSESSIONID Cookie，确保不会下发到浏览器
+    // 从源头禁止 HttpSession 创建：拦截 getSession() 返回 null，杜绝 JSESSIONID
     @Bean
-    public FilterRegistrationBean<Filter> disableJsessionIdCookie() {
+    public FilterRegistrationBean<Filter> disableSessionCreation() {
         Filter filter = (req, res, chain) -> {
-            NoJsessionIdWrapper wrapper = new NoJsessionIdWrapper((HttpServletResponse) res);
-            chain.doFilter(req, wrapper);
+            chain.doFilter(new NoSessionRequestWrapper((HttpServletRequest) req), res);
         };
         FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
         registration.setFilter(filter);
@@ -82,16 +79,20 @@ public class SecurityConfiguration {
         return registration;
     }
 
-    private static class NoJsessionIdWrapper extends HttpServletResponseWrapper {
-        public NoJsessionIdWrapper(HttpServletResponse response) {
-            super(response);
+    private static class NoSessionRequestWrapper extends HttpServletRequestWrapper {
+        public NoSessionRequestWrapper(HttpServletRequest request) {
+            super(request);
         }
 
         @Override
-        public void addCookie(Cookie cookie) {
-            if (!"JSESSIONID".equalsIgnoreCase(cookie.getName())) {
-                super.addCookie(cookie);
-            }
+        public HttpSession getSession(boolean create) {
+            if (create) return null;
+            return super.getSession(false);
+        }
+
+        @Override
+        public HttpSession getSession() {
+            return getSession(false);
         }
     }
 }
