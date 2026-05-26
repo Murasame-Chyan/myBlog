@@ -447,18 +447,65 @@ document.addEventListener('click', function(e) {
 });
 
 function handleLogout() {
-    fetch('/auth/logout', { method: 'POST' })
+    fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' })
     .then(function(res) { return res.json(); })
     .then(function() { location.reload(); });
 }
 
-// HttpOnly cookie 自动携带 JWT，authFetch 保留供需要显式传 token 的场景使用
+// 401 自动刷新：access_token 过期时自动调用 /auth/refresh 并重试原请求
+// HttpOnly Cookie 自动携带，无需手动传 token
+var _isRefreshing = false;
+var _pendingRequests = [];
+
 function authFetch(url, options) {
     options = options || {};
-    options.headers = options.headers || {};
-    var token = localStorage.getItem('accessToken');
-    if (token) options.headers['Authorization'] = 'Bearer ' + token;
-    return fetch(url, options);
+    options.credentials = 'same-origin';
+    var isRetry = options._isRetry === true;
+    delete options._isRetry;
+
+    return fetch(url, options).then(function(response) {
+        if (response.status !== 401 || isRetry) {
+            return response;
+        }
+        // 收到 401，触发刷新
+        if (_isRefreshing) {
+            // 已有刷新进行中，加入队列等待
+            return new Promise(function(resolve) {
+                _pendingRequests.push(function(success) {
+                    if (success) {
+                        var retryOpts = Object.assign({}, options, { _isRetry: true });
+                        resolve(authFetch(url, retryOpts));
+                    } else {
+                        resolve(response);
+                    }
+                });
+            });
+        }
+        _isRefreshing = true;
+        return fetch('/auth/refresh', { method: 'POST', credentials: 'same-origin' })
+            .then(function(refreshResp) { return refreshResp.json(); })
+            .then(function(data) {
+                _isRefreshing = false;
+                var success = data && data.code === 200;
+                _pendingRequests.forEach(function(cb) { cb(success); });
+                _pendingRequests = [];
+                if (success) {
+                    var retryOpts = Object.assign({}, options, { _isRetry: true });
+                    return authFetch(url, retryOpts);
+                }
+                // 刷新失败：弹出登录框
+                if (typeof openAuthModal === 'function') {
+                    openAuthModal('login');
+                }
+                return response;
+            })
+            .catch(function() {
+                _isRefreshing = false;
+                _pendingRequests.forEach(function(cb) { cb(false); });
+                _pendingRequests = [];
+                return response;
+            });
+    });
 }
 
 // 按 ESC 关闭
