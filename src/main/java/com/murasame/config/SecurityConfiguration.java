@@ -1,9 +1,12 @@
 package com.murasame.config;
 
 import com.murasame.util.JwtUtil;
+import jakarta.servlet.*;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
-import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,10 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.servlet.SessionTrackingMode;
+import java.io.IOException;
 
 @Configuration
 @MapperScan("com.murasame.mapper")
@@ -68,10 +68,30 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
 
-    // 程序化禁用 JSESSIONID Cookie — 比 YAML 配置更可靠
+    // 通过 Filter 拦截 JSESSIONID Cookie，确保不会下发到浏览器
     @Bean
-    public WebServerFactoryCustomizer<TomcatServletWebServerFactory> disableSessionTracking() {
-        Set<SessionTrackingMode> emptyModes = new HashSet<>();
-        return factory -> factory.setSessionTrackingModes(emptyModes);
+    public FilterRegistrationBean<Filter> disableJsessionIdCookie() {
+        Filter filter = (req, res, chain) -> {
+            NoJsessionIdWrapper wrapper = new NoJsessionIdWrapper((HttpServletResponse) res);
+            chain.doFilter(req, wrapper);
+        };
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(filter);
+        registration.addUrlPatterns("/*");
+        registration.setOrder(Integer.MIN_VALUE);
+        return registration;
+    }
+
+    private static class NoJsessionIdWrapper extends HttpServletResponseWrapper {
+        public NoJsessionIdWrapper(HttpServletResponse response) {
+            super(response);
+        }
+
+        @Override
+        public void addCookie(Cookie cookie) {
+            if (!"JSESSIONID".equalsIgnoreCase(cookie.getName())) {
+                super.addCookie(cookie);
+            }
+        }
     }
 }
