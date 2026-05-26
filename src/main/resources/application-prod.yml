@@ -7,3 +7,7 @@ springdoc:
 logging:
   level:
     com.murasame: WARN
+
+security:
+  cookie:
+    secure: true
