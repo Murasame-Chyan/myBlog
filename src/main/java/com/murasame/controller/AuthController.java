@@ -281,16 +281,21 @@ public class AuthController {
         return null;
     }
 
-    // 刷新令牌
+    // 刷新令牌：从 HttpOnly Cookie 读取 refresh_token，签发新 access_token 写回 Cookie
     @ResponseBody
     @PostMapping("/refresh")
-    public Map<String, Object> refresh(@RequestParam String refreshToken) {
+    public Map<String, Object> refresh(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken == null) {
+            return ReturnUtil.error("缺少刷新令牌");
+        }
         if (!jwtUtil.isValidToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
             return ReturnUtil.error("无效的刷新令牌");
         }
         Long userId = jwtUtil.getUserIdFromToken(refreshToken);
         if (userId == null) return ReturnUtil.error("无效的刷新令牌");
 
+        // 黑名单检查：登出后 refresh token 应失效
         String blackKey = "jwt:blacklist:" + userId;
         String blackTs = stringRedisTemplate.opsForValue().get(blackKey);
         if (blackTs != null) {
@@ -302,9 +307,22 @@ public class AuthController {
         Users user = userService.getUserById(userId);
         if (user == null) return ReturnUtil.error("用户不存在");
 
-        return ReturnUtil.success("令牌已刷新", Map.of(
-                "accessToken", jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname()),
-                "refreshToken", jwtUtil.generateRefreshToken(user.getId())
-        ));
+        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
+        cookieUtil.writeAccessToken(response, newAccessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+
+        return ReturnUtil.success("令牌已刷新");
+    }
+
+    // 从 Cookie 提取 refresh_token（路径限制为 /auth/refresh，仅在该路径下携带）
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("refresh_token".equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
     }
 }
