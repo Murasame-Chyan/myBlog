@@ -53,7 +53,10 @@ public class AuthController {
     @Resource
     private JwtProperties jwtProperties;
 
-    // 登录：验证码校验 → 锁定检查 → 密码验证 → 写 Session/HttpOnly Cookie → 返回 JWT
+    @Resource
+    private com.murasame.util.CookieUtil cookieUtil;
+
+    // 登录：验证码校验 → 锁定检查 → 密码验证 → 写双 HttpOnly Cookie（access_token + refresh_token）
     @ResponseBody
     @PostMapping("/login")
     public Map<String, Object> login(
@@ -66,7 +69,7 @@ public class AuthController {
             @RequestParam String captchaCode,
             @NotBlank(message = "验证码令牌不能为空")
             @RequestParam String captchaToken,
-            HttpServletRequest request,
+            HttpServletRequest request,  // keep param, used by loginAttemptService internally (no change needed)
             HttpServletResponse response) {
 
         String lockMsg = loginAttemptService.checkLocked(email);
@@ -86,19 +89,13 @@ public class AuthController {
 
         loginAttemptService.resetAttempts(email);
 
-        // 写入 Session，模板侧通过 session.currentUser 判断登录状态
-        request.getSession(true).setAttribute("currentUser", user);
+        // 双 Cookie 投递：access_token Path=/，refresh_token Path=/auth/refresh
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
-        long expiresIn = jwtProperties.getAccessTokenExpiration() / 1000;
-
-        // HttpOnly Cookie：JS 不可读，防 XSS 窃取
-        setTokenCookie(response, accessToken, (int) expiresIn);
+        cookieUtil.writeAccessToken(response, accessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+        cookieUtil.writeRefreshToken(response, refreshToken, (int)(jwtProperties.getRefreshTokenExpiration() / 1000));
 
         return ReturnUtil.success("登录成功", Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken,
-                "expiresIn", expiresIn,
                 "nickname", user.getNickname() != null ? user.getNickname() : "",
                 "avatar", user.getAvatar() != null ? user.getAvatar() : ""
         ));
@@ -125,11 +122,10 @@ public class AuthController {
             String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
             String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
-            setTokenCookie(response, accessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+            cookieUtil.writeAccessToken(response, accessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+            cookieUtil.writeRefreshToken(response, refreshToken, (int)(jwtProperties.getRefreshTokenExpiration() / 1000));
 
             return ReturnUtil.success("注册成功", Map.of(
-                    "accessToken", accessToken,
-                    "refreshToken", refreshToken,
                     "nickname", user.getNickname(),
                     "avatar", user.getAvatar() != null ? user.getAvatar() : ""
             ));
@@ -283,15 +279,6 @@ public class AuthController {
             }
         }
         return null;
-    }
-
-    // 写 HttpOnly cookie
-    private void setTokenCookie(HttpServletResponse response, String token, int maxAgeSeconds) {
-        Cookie cookie = new Cookie("access_token", token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAgeSeconds);
-        response.addCookie(cookie);
     }
 
     // 刷新令牌
