@@ -8,7 +8,7 @@ import com.murasame.service.UserService;
 import com.murasame.util.CaptchaUtil;
 import com.murasame.util.JwtUtil;
 import com.murasame.util.ReturnUtil;
-import io.jsonwebtoken.Claims;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.Cookie;
@@ -53,7 +53,10 @@ public class AuthController {
     @Resource
     private JwtProperties jwtProperties;
 
-    // 登录：验证码校验 → 锁定检查 → 密码验证 → 写 Session/HttpOnly Cookie → 返回 JWT
+    @Resource
+    private com.murasame.util.CookieUtil cookieUtil;
+
+    // 登录：验证码校验 → 锁定检查 → 密码验证 → 写双 HttpOnly Cookie（access_token + refresh_token）
     @ResponseBody
     @PostMapping("/login")
     public Map<String, Object> login(
@@ -66,7 +69,6 @@ public class AuthController {
             @RequestParam String captchaCode,
             @NotBlank(message = "验证码令牌不能为空")
             @RequestParam String captchaToken,
-            HttpServletRequest request,
             HttpServletResponse response) {
 
         String lockMsg = loginAttemptService.checkLocked(email);
@@ -86,19 +88,13 @@ public class AuthController {
 
         loginAttemptService.resetAttempts(email);
 
-        // 写入 Session，模板侧通过 session.currentUser 判断登录状态
-        request.getSession(true).setAttribute("currentUser", user);
+        // 双 Cookie 投递：access_token Path=/，refresh_token Path=/auth/refresh
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
-        long expiresIn = jwtProperties.getAccessTokenExpiration() / 1000;
-
-        // HttpOnly Cookie：JS 不可读，防 XSS 窃取
-        setTokenCookie(response, accessToken, (int) expiresIn);
+        cookieUtil.writeAccessToken(response, accessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+        cookieUtil.writeRefreshToken(response, refreshToken, (int)(jwtProperties.getRefreshTokenExpiration() / 1000));
 
         return ReturnUtil.success("登录成功", Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken,
-                "expiresIn", expiresIn,
                 "nickname", user.getNickname() != null ? user.getNickname() : "",
                 "avatar", user.getAvatar() != null ? user.getAvatar() : ""
         ));
@@ -125,11 +121,10 @@ public class AuthController {
             String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
             String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
-            setTokenCookie(response, accessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+            cookieUtil.writeAccessToken(response, accessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+            cookieUtil.writeRefreshToken(response, refreshToken, (int)(jwtProperties.getRefreshTokenExpiration() / 1000));
 
             return ReturnUtil.success("注册成功", Map.of(
-                    "accessToken", accessToken,
-                    "refreshToken", refreshToken,
                     "nickname", user.getNickname(),
                     "avatar", user.getAvatar() != null ? user.getAvatar() : ""
             ));
@@ -215,42 +210,27 @@ public class AuthController {
         return ReturnUtil.success("密码重置成功");
     }
 
-    // 获取当前登录状态：优先 JWT，回退 Session
+    // 获取当前登录状态
     @ResponseBody
     @GetMapping("/status")
     public Map<String, Object> status(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (jwtUtil.isValidToken(token) && jwtUtil.isAccessToken(token)) {
-                Claims claims = jwtUtil.parseToken(token);
-                return ReturnUtil.custom(200, "已登录", Map.of(
-                        "loggedIn", true,
-                        "nickname", claims.get("nickname", String.class),
-                        "avatar", ""
-                ));
-            }
-        }
-        var session = request.getSession(false);
-        if (session != null) {
-            Users user = (Users) session.getAttribute("currentUser");
-            if (user != null) {
-                return ReturnUtil.custom(200, "已登录", Map.of(
-                        "loggedIn", true,
-                        "nickname", user.getNickname() != null ? user.getNickname() : "",
-                        "avatar", user.getAvatar() != null ? user.getAvatar() : ""
-                ));
-            }
+        Users user = (Users) request.getAttribute("currentUser");
+        if (user != null) {
+            return ReturnUtil.custom(200, "已登录", Map.of(
+                    "loggedIn", true,
+                    "nickname", user.getNickname() != null ? user.getNickname() : "",
+                    "avatar", user.getAvatar() != null ? user.getAvatar() : ""
+            ));
         }
         return ReturnUtil.custom(200, "未登录", Map.of("loggedIn", false));
     }
 
-    // 登出：清除 cookie + 写 Redis 黑名单 + 销毁 Session
+    // 登出：清除双 cookie + 写 Redis 黑名单
     @ResponseBody
     @PostMapping("/logout")
     public Map<String, Object> logout(HttpServletRequest request, HttpServletResponse response) {
-        // 从 cookie 读取 JWT 写入黑名单
-        String token = extractTokenFromCookie(request);
+        // 从 access_token cookie 读取 JWT 写入黑名单
+        String token = extractAccessTokenFromCookie(request);
         if (token == null) {
             String authHeader = request.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -266,14 +246,13 @@ public class AuthController {
                         Duration.ofMillis(jwtProperties.getRefreshTokenExpiration()));
             }
         }
-        var session = request.getSession(false);
-        if (session != null) session.invalidate();
-        setTokenCookie(response, "", 0); // 清除 cookie
+        cookieUtil.clearAccessToken(response);
+        cookieUtil.clearRefreshToken(response);
         return ReturnUtil.success("已登出");
     }
 
-    // 从 cookie 中提取 JWT
-    private String extractTokenFromCookie(HttpServletRequest request) {
+    // 从 Cookie 提取 access_token
+    private String extractAccessTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie c : cookies) {
@@ -285,25 +264,21 @@ public class AuthController {
         return null;
     }
 
-    // 写 HttpOnly cookie
-    private void setTokenCookie(HttpServletResponse response, String token, int maxAgeSeconds) {
-        Cookie cookie = new Cookie("access_token", token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAgeSeconds);
-        response.addCookie(cookie);
-    }
-
-    // 刷新令牌
+    // 刷新令牌：从 HttpOnly Cookie 读取 refresh_token，签发新 access_token 写回 Cookie
     @ResponseBody
     @PostMapping("/refresh")
-    public Map<String, Object> refresh(@RequestParam String refreshToken) {
+    public Map<String, Object> refresh(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken == null) {
+            return ReturnUtil.error("缺少刷新令牌");
+        }
         if (!jwtUtil.isValidToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
             return ReturnUtil.error("无效的刷新令牌");
         }
         Long userId = jwtUtil.getUserIdFromToken(refreshToken);
         if (userId == null) return ReturnUtil.error("无效的刷新令牌");
 
+        // 黑名单检查：登出后 refresh token 应失效
         String blackKey = "jwt:blacklist:" + userId;
         String blackTs = stringRedisTemplate.opsForValue().get(blackKey);
         if (blackTs != null) {
@@ -315,9 +290,22 @@ public class AuthController {
         Users user = userService.getUserById(userId);
         if (user == null) return ReturnUtil.error("用户不存在");
 
-        return ReturnUtil.success("令牌已刷新", Map.of(
-                "accessToken", jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname()),
-                "refreshToken", jwtUtil.generateRefreshToken(user.getId())
-        ));
+        String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
+        cookieUtil.writeAccessToken(response, newAccessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+
+        return ReturnUtil.success("令牌已刷新");
+    }
+
+    // 从 Cookie 提取 refresh_token（路径限制为 /auth/refresh，仅在该路径下携带）
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("refresh_token".equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

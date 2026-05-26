@@ -1,39 +1,26 @@
 package com.murasame.config;
 
-import com.murasame.interceptor.UserInterceptor;
 import com.murasame.util.AesEncryptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
+// 拦截器移除：认证由 Spring Security URL 规则统一处理（见 SecurityConfiguration）
 @Configuration
 public class WebConfiguration implements WebMvcConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(WebConfiguration.class);
 
-    @Autowired
-    private UserInterceptor userInterceptor;
-
     @Value("${github.token-encryption-key:}")
     private String encryptionKeyBase64;
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        // 排除 /api/**：API接口在Controller层自行校验登录态；页面路由则依赖拦截器统一检查Session
-        registry.addInterceptor(userInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns("/static/**", "/api/**", "/css/**", "/js/**", "/images/**", "/pics/**");
-    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -46,7 +33,6 @@ public class WebConfiguration implements WebMvcConfigurer {
     @Bean
     public AesEncryptionUtil aesEncryptionUtil() {
         if (encryptionKeyBase64 == null || encryptionKeyBase64.isBlank()) {
-            // 未配置密钥时自动生成，但需警告：重启后旧 token 将无法解密
             String generated = AesEncryptionUtil.generateKey();
             log.warn("============================================================");
             log.warn("github.token-encryption-key 未配置，已自动生成随机密钥。");

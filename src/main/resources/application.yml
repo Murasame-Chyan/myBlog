@@ -22,6 +22,8 @@ spring:
       password:
 
   servlet:
+    session:
+      tracking-modes:    # 禁用 JSESSIONID Cookie；认证由 JWT HttpOnly Cookie 管理
     multipart:
       enabled: true
       max-file-size: 10MB

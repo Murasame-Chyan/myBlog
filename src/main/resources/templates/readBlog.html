@@ -43,7 +43,7 @@
             <span class="me-3">上次更新：
                 <span th:text="${#temporals.format(blog.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
-            <span class="ms-3" th:if="${session.currentUser != null && session.currentUser.id == blog.u_id}">
+            <span class="ms-3" th:if="${currentUser != null && currentUser.id == blog.u_id}">
                 <a th:href="@{/blogs/edit/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary">修改博客</a>
                 <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="deleteBlog()">删除博客</button>
             </span>
