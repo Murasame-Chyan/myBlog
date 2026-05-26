@@ -17,24 +17,40 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfiguration {
 
     private final JwtUtil jwtUtil;
+    private final JwtAuthenticationEntryPoint entryPoint;
 
-    public SecurityConfiguration(JwtUtil jwtUtil) {
+    public SecurityConfiguration(JwtUtil jwtUtil, JwtAuthenticationEntryPoint entryPoint) {
         this.jwtUtil = jwtUtil;
+        this.entryPoint = entryPoint;
     }
 
-    // 鉴权由 JwtFilter + UserInterceptor 双层处理（过渡期双轨运行），故所有请求 permitAll()
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/static/**", "/dist/**").permitAll();
-                    auth.requestMatchers("/css/**", "/js/**", "/images/**", "/pics/**").permitAll();
+                    // 静态资源放行
+                    auth.requestMatchers("/static/**", "/dist/**",
+                            "/css/**", "/js/**", "/images/**", "/pics/**").permitAll();
+                    // 写操作端点必须认证（替代原 UserInterceptor 路径拦截）
+                    auth.requestMatchers(
+                            "/blogs/publish/**",
+                            "/blogs/update/**",
+                            "/blogs/delete/**",
+                            "/blogs/like/**",
+                            "/blogs/unlike/**",
+                            "/blogs/recover/**",
+                            "/user/comment/add",
+                            "/user/avatar/upload",
+                            "/user/settings/**",
+                            "/user/profile/update").authenticated();
+                    // 其余放行（页面渲染、公开 API、登录注册等）
                     auth.anyRequest().permitAll();
                 })
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.NEVER))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(eh -> eh.authenticationEntryPoint(entryPoint))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
                 .build();
