@@ -211,42 +211,27 @@ public class AuthController {
         return ReturnUtil.success("密码重置成功");
     }
 
-    // 获取当前登录状态：优先 JWT，回退 Session
+    // 获取当前登录状态
     @ResponseBody
     @GetMapping("/status")
     public Map<String, Object> status(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (jwtUtil.isValidToken(token) && jwtUtil.isAccessToken(token)) {
-                Claims claims = jwtUtil.parseToken(token);
-                return ReturnUtil.custom(200, "已登录", Map.of(
-                        "loggedIn", true,
-                        "nickname", claims.get("nickname", String.class),
-                        "avatar", ""
-                ));
-            }
-        }
-        var session = request.getSession(false);
-        if (session != null) {
-            Users user = (Users) session.getAttribute("currentUser");
-            if (user != null) {
-                return ReturnUtil.custom(200, "已登录", Map.of(
-                        "loggedIn", true,
-                        "nickname", user.getNickname() != null ? user.getNickname() : "",
-                        "avatar", user.getAvatar() != null ? user.getAvatar() : ""
-                ));
-            }
+        Users user = (Users) request.getAttribute("currentUser");
+        if (user != null) {
+            return ReturnUtil.custom(200, "已登录", Map.of(
+                    "loggedIn", true,
+                    "nickname", user.getNickname() != null ? user.getNickname() : "",
+                    "avatar", user.getAvatar() != null ? user.getAvatar() : ""
+            ));
         }
         return ReturnUtil.custom(200, "未登录", Map.of("loggedIn", false));
     }
 
-    // 登出：清除 cookie + 写 Redis 黑名单 + 销毁 Session
+    // 登出：清除双 cookie + 写 Redis 黑名单
     @ResponseBody
     @PostMapping("/logout")
     public Map<String, Object> logout(HttpServletRequest request, HttpServletResponse response) {
-        // 从 cookie 读取 JWT 写入黑名单
-        String token = extractTokenFromCookie(request);
+        // 从 access_token cookie 读取 JWT 写入黑名单
+        String token = extractAccessTokenFromCookie(request);
         if (token == null) {
             String authHeader = request.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -262,14 +247,13 @@ public class AuthController {
                         Duration.ofMillis(jwtProperties.getRefreshTokenExpiration()));
             }
         }
-        var session = request.getSession(false);
-        if (session != null) session.invalidate();
-        setTokenCookie(response, "", 0); // 清除 cookie
+        cookieUtil.clearAccessToken(response);
+        cookieUtil.clearRefreshToken(response);
         return ReturnUtil.success("已登出");
     }
 
-    // 从 cookie 中提取 JWT
-    private String extractTokenFromCookie(HttpServletRequest request) {
+    // 从 Cookie 提取 access_token
+    private String extractAccessTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie c : cookies) {
