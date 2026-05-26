@@ -107,7 +107,6 @@ public class UserController {
 			int result = userService.updateAvatar(userId, avatarUrl);
 			if (result > 0) {
 				currentUser.setAvatar(avatarUrl);
-				request.getSession().setAttribute("currentUser", currentUser);
 				return ReturnUtil.success("头像上传成功", avatarUrl);
 			} else {
 				return ReturnUtil.error("数据库更新失败");
@@ -178,9 +177,6 @@ public class UserController {
 				user.setGithubToken(githubToken.trim());
 			}
 			Users updated = userService.updateProfile(user);
-			// 更新 session 时清除 githubToken（不解出到前端 session）
-			updated.setGithubToken(null);
-			request.getSession().setAttribute("currentUser", updated);
 			return ReturnUtil.success("保存成功");
 		} catch (IllegalArgumentException e) {
 			return ReturnUtil.error(e.getMessage());
