@@ -14,7 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.Collections;
+import java.util.EnumSet;
+
+import jakarta.servlet.SessionTrackingMode;
 
 @Configuration
 @MapperScan("com.murasame.mapper")
@@ -68,6 +70,6 @@ public class SecurityConfiguration {
     // 程序化禁用 JSESSIONID Cookie — 比 YAML 配置更可靠
     @Bean
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> disableSessionTracking() {
-        return factory -> factory.setSessionTrackingModes(Collections.emptySet());
+        return factory -> factory.setSessionTrackingModes(EnumSet.noneOf(SessionTrackingMode.class));
     }
 }
