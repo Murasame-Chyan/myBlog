@@ -1,4 +1,4 @@
-# prod profile — 生产环境会激活此配置
+# prod profile — 生产环境时激活
 
 springdoc:
   api-docs:
@@ -11,3 +11,6 @@ logging:
 security:
   cookie:
     secure: true
+
+jwt:
+  access-token-expiration: 1800000     # 30 分钟

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasySurvivor - MyBlog</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/games/easysurvivor/game.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+<body>
+    <header th:replace="~{fragment/header :: nav('game')}"></header>
+
+    <div id="gameWrapper">
+        <!-- 菜单覆盖层 -->
+        <div id="menuOverlay">
+            <div class="menu-content">
+                <h1 class="game-title">Easy Survivor</h1>
+                <p class="game-subtitle">在弹幕中生存下去吧!</p>
+                <button id="btnStart" class="game-btn btn-start">开 始 游 戏</button>
+                <button id="btnQuit" class="game-btn btn-quit">返 回 首 页</button>
+            </div>
+        </div>
+
+        <!-- 游戏结束覆盖层 -->
+        <div id="gameoverOverlay" class="hidden">
+            <div class="gameover-panel">
+                <h1 class="gameover-title">游 戏 结 束</h1>
+                <p class="gameover-info">
+                    最终得分: <span id="finalScore">0</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    最终等级: <span id="finalLevel">1</span>
+                </p>
+                <button id="btnRestart" class="game-btn btn-start">重 新 开 始</button>
+                <button id="btnBackMenu" class="game-btn btn-quit">返 回 菜 单</button>
+            </div>
+        </div>
+
+        <!-- 游戏画布 -->
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+    </div>
+
+    <script th:src="@{/games/easysurvivor/easysurvivor.js}"></script>
+</body>
+</html>

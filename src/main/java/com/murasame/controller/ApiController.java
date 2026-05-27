@@ -2,6 +2,7 @@ package com.murasame.controller;
 
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.domain.vo.CommentVO;
+import com.murasame.domain.vo.UserProfileVO;
 import com.murasame.entity.Blogs;
 import com.murasame.entity.BlogsBin;
 import com.murasame.entity.Tag;
@@ -136,7 +137,7 @@ public class ApiController {
         List<BlogBriefVO> likedBlogs = likesService.getLikedBlogs(id, 50);
 
         return ReturnUtil.success(Map.of(
-                "user", user,
+                "user", UserProfileVO.from(user),
                 "level", level,
                 "articles", articles != null ? articles : List.of(),
                 "likedBlogs", likedBlogs
@@ -165,8 +166,15 @@ public class ApiController {
     // ===== 归档详情 =====
     @GetMapping("/archives/{id}")
     public Map<String, Object> archiveDetail(@PathVariable Long id, HttpServletRequest request) {
+        Users currentUser = authHelper.getCurrentUser(request);
+        if (currentUser == null) return ReturnUtil.unauthorized("请先登录");
+
         Blogs bin = blogService.getBlogFromBinById(id);
         if (bin == null) return ReturnUtil.error("归档文章不存在");
+
+        if (!bin.getU_id().equals(currentUser.getId())) {
+            return ReturnUtil.unauthorized("无权查看此归档文章");
+        }
 
         String rawContent = bin.getContent();
         bin.setContent(BlogHtmlUtil.toHtml(rawContent));

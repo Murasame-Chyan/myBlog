@@ -146,7 +146,7 @@ function submitComment() {
 		params.append('parentId', replyToCommentId);
 	}
 
-	fetch('/user/comment/add', {
+	authFetch('/user/comment/add', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
@@ -155,11 +155,6 @@ function submitComment() {
 	})
 	.then(response => response.json())
 	.then(data => {
-		if (data.code === 401) {
-			openAuthModal('login');
-			showToast('请先登录后再评论', 'warning');
-			return;
-		}
 		if (data.code === 200) {
 			showToast('评论成功！', 'success');
 			document.getElementById('commentContent').value = '';
@@ -280,7 +275,7 @@ function deleteBlog() {
 		return;
 	}
 
-	fetch(`/blogs/delete/${currentBlogId}`, {
+	authFetch(`/blogs/delete/${currentBlogId}`, {
 		method: 'POST'
 	})
 	.then(response => response.text())

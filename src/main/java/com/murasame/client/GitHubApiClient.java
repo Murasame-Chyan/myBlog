@@ -17,9 +17,16 @@ import javax.net.ssl.*;
 import java.net.http.HttpClient;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 
 @Component
 public class GitHubApiClient {
+
+    // 单次 GitHub HTTP 调用超时：连接 5s + 读取 10s。
+    // 原先 new RestTemplate() 默认无限超时，GitHub 抖动时请求会一直挂着，
+    // 配合 60s 的 Nginx proxy_read_timeout 必然 502。
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -34,14 +41,26 @@ public class GitHubApiClient {
     private static final String GITHUB_URL = "https://github.com";
 
     public GitHubApiClient() {
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = buildRestTemplate(false);
     }
 
     private RestTemplate getRestTemplate() {
         if (disableSslVerification) {
-            return createTrustAllRestTemplate();
+            return buildRestTemplate(true);
         }
         return restTemplate;
+    }
+
+    // 统一构建带超时的 RestTemplate；trustAll=true 时禁用 SSL 校验
+    private RestTemplate buildRestTemplate(boolean trustAll) {
+        HttpClient.Builder builder = HttpClient.newBuilder()
+                .connectTimeout(CONNECT_TIMEOUT);
+        if (trustAll) {
+            builder.sslContext(createTrustAllSslContext());
+        }
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(builder.build());
+        factory.setReadTimeout(READ_TIMEOUT);
+        return new RestTemplate(factory);
     }
 
     private SSLContext createTrustAllSslContext() {
@@ -59,15 +78,6 @@ public class GitHubApiClient {
         } catch (Exception e) {
             throw new RuntimeException("Failed to create trust-all SSLContext", e);
         }
-    }
-
-    private RestTemplate createTrustAllRestTemplate() {
-        SSLContext sc = createTrustAllSslContext();
-        HttpClient httpClient = HttpClient.newBuilder()
-                .sslContext(sc)
-                .build();
-        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        return new RestTemplate(factory);
     }
 
     // 获取 GitHub Profile 页面 HTML（成就徽章从此页面解析）

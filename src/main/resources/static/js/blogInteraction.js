@@ -19,15 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function checkLikeStatus(blogId) {
-    fetch(`/blogs/isLiked/${blogId}`)
-        .then(function(response) {
-        if (response.status === 401) {
-            openAuthModal('login');
-            showToast('请先登录后再操作', 'warning');
-            throw new Error('unauthorized');
-        }
-        return response.json();
-    })
+    authFetch(`/blogs/isLiked/${blogId}`)
+        .then(function(response) { return response.json(); })
         .then(data => {
             if (data.code === 200) {
                 isLiked = data.data;
@@ -39,16 +32,10 @@ function checkLikeStatus(blogId) {
 
 function incrementReadCount(blogId) {
     fetch(`/blogs/incrementRead/${blogId}`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'same-origin'
     })
-    .then(function(response) {
-        if (response.status === 401) {
-            openAuthModal('login');
-            showToast('请先登录后再操作', 'warning');
-            throw new Error('unauthorized');
-        }
-        return response.json();
-    })
+    .then(function(response) { return response.json(); })
     .then(data => {
         if (data.code === 200) {
             console.log('阅读量已更新');
@@ -75,17 +62,10 @@ function handleLike() {
     
     const url = isLiked ? `/blogs/unlike/${blogId}` : `/blogs/like/${blogId}`;
     
-    fetch(url, {
+    authFetch(url, {
         method: 'POST'
     })
-    .then(function(response) {
-        if (response.status === 401) {
-            openAuthModal('login');
-            showToast('请先登录后再操作', 'warning');
-            throw new Error('unauthorized');
-        }
-        return response.json();
-    })
+    .then(function(response) { return response.json(); })
     .then(data => {
         if (data.code === 200) {
             isLiked = !isLiked;
@@ -99,9 +79,7 @@ function handleLike() {
     })
     .catch(error => {
         console.error('点赞操作失败:', error);
-        if (error.message !== 'unauthorized') {
-            showToast('操作失败，请重试', 'error');
-        }
+        showToast('操作失败，请重试', 'error');
     })
     .finally(() => {
         isProcessing = false;
