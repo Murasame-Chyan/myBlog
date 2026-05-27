@@ -344,7 +344,7 @@
             formData.append('githubToken', githubToken);
         }
 
-        fetch('/user/profile/update', {
+        authFetch('/user/profile/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formData.toString()
@@ -422,7 +422,7 @@
             msgEl.style.color = 'rgba(255,255,255,0.5)';
             var formData = new FormData();
             formData.append('file', blob, editCropFileName);
-            fetch('/user/avatar/upload', { method: 'POST', body: formData })
+            authFetch('/user/avatar/upload', { method: 'POST', body: formData })
             .then(function(res) { return res.json(); })
             .then(function(data) {
                 if (data.code === 200) {

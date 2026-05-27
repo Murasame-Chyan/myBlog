@@ -58,7 +58,7 @@ src/main/resources/static/dist/
 
 ### Temporary backups ###
 *.bak
-docs/backups/
+backups/
 
 ### AI-generated planning docs (ephemeral) ###
 docs/cursor/

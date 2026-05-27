@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -29,6 +30,7 @@ public class JwtUtil {
     public String generateAccessToken(Long userId, String email, String nickname) {
         Date now = new Date();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .claim("userId", userId)
                 .claim("email", email)
                 .claim("nickname", nickname)
@@ -42,6 +44,7 @@ public class JwtUtil {
     public String generateRefreshToken(Long userId) {
         Date now = new Date();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .claim("userId", userId)
                 .claim("type", "refresh")
                 .issuedAt(now)
@@ -94,5 +97,17 @@ public class JwtUtil {
     public Date getIssuedAt(String token) {
         Claims claims = parseToken(token);
         return claims != null ? claims.getIssuedAt() : null;
+    }
+
+    public String getJti(String token) {
+        Claims claims = parseToken(token);
+        return claims != null ? claims.getId() : null;
+    }
+
+    public long getRemainingMillis(String token) {
+        Claims claims = parseToken(token);
+        if (claims == null || claims.getExpiration() == null) return 0;
+        long remaining = claims.getExpiration().getTime() - System.currentTimeMillis();
+        return Math.max(remaining, 0);
     }
 }

@@ -3,14 +3,31 @@ var githubUsername = '';
 var MAX_RETRIES = 3;
 
 // 带重试的 fetch 包装：遇到 502/503/504 等瞬时错误自动重试，含用户友好提示
+// 同时区分两类错误：
+//   1. HTTP 502/503/504：网关层错误，res.json() 会失败 → 走 .catch() 之前先在 then(res) 拦截
+//   2. 业务错误（HTTP 200 + code !== 200）：按 msg 文本判断是否可重试
 function fetchWithRetry(url, maxRetries) {
     return new Promise(function(resolve, reject) {
         var attempt = 0;
         function tryOnce() {
             attempt++;
             fetch(url)
-                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    // HTTP 层错误：网关 502/503/504 时响应体不是 JSON，直接走重试
+                    if (!res.ok) {
+                        var status = res.status;
+                        if ((status === 502 || status === 503 || status === 504) && attempt < maxRetries) {
+                            showToast('服务暂时不可用 (' + status + ')，正在重试 (' + attempt + '/' + maxRetries + ')...', 'info');
+                            setTimeout(tryOnce, 1000 * attempt);
+                            return null;
+                        }
+                        // 其它 HTTP 错误：构造一个错误对象交给 .then 处理
+                        return { code: status, msg: 'HTTP ' + status };
+                    }
+                    return res.json();
+                })
                 .then(function(data) {
+                    if (data === null) return; // 已在重试分支处理
                     if (data.code === 200) {
                         resolve(data);
                         return;
@@ -19,9 +36,6 @@ function fetchWithRetry(url, maxRetries) {
                     if (retryable && attempt < maxRetries) {
                         showToast('获取 GitHub 数据失败，正在重试 (' + attempt + '/' + maxRetries + ')...', 'info');
                         setTimeout(tryOnce, 800 * attempt);
-                    } else if (attempt < maxRetries && !retryable) {
-                        showToast('正在重试...', 'info');
-                        setTimeout(tryOnce, 600);
                     } else {
                         resolve(data);
                     }

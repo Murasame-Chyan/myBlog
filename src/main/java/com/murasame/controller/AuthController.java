@@ -225,30 +225,37 @@ public class AuthController {
         return ReturnUtil.custom(200, "未登录", Map.of("loggedIn", false));
     }
 
-    // 登出：清除双 cookie + 写 Redis 黑名单
+    // 登出：将 access_token 和 refresh_token 的 jti 写入 Redis 黑名单，清除 Cookie
     @ResponseBody
     @PostMapping("/logout")
     public Map<String, Object> logout(HttpServletRequest request, HttpServletResponse response) {
-        // 从 access_token cookie 读取 JWT 写入黑名单
-        String token = extractAccessTokenFromCookie(request);
-        if (token == null) {
+        String accessToken = extractAccessTokenFromCookie(request);
+        if (accessToken == null) {
             String authHeader = request.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7);
+                accessToken = authHeader.substring(7);
             }
         }
-        if (token != null) {
-            Long userId = jwtUtil.getUserIdFromToken(token);
-            if (userId != null) {
-                stringRedisTemplate.opsForValue().set(
-                        "jwt:blacklist:" + userId,
-                        String.valueOf(System.currentTimeMillis()),
-                        Duration.ofMillis(jwtProperties.getRefreshTokenExpiration()));
-            }
+        if (accessToken != null) {
+            blacklistToken(accessToken);
+        }
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken != null) {
+            blacklistToken(refreshToken);
         }
         cookieUtil.clearAccessToken(response);
         cookieUtil.clearRefreshToken(response);
         return ReturnUtil.success("已登出");
+    }
+
+    private void blacklistToken(String token) {
+        String jti = jwtUtil.getJti(token);
+        long remaining = jwtUtil.getRemainingMillis(token);
+        if (jti != null && remaining > 0) {
+            stringRedisTemplate.opsForValue().set(
+                    "jwt:blacklist:" + jti, "1",
+                    Duration.ofMillis(remaining));
+        }
     }
 
     // 从 Cookie 提取 access_token
@@ -264,7 +271,7 @@ public class AuthController {
         return null;
     }
 
-    // 刷新令牌：从 HttpOnly Cookie 读取 refresh_token，签发新 access_token 写回 Cookie
+    // 刷新令牌：验证 refresh_token → 黑名单检查 → 签发新 access_token + 新 refresh_token（轮换）
     @ResponseBody
     @PostMapping("/refresh")
     public Map<String, Object> refresh(HttpServletRequest request, HttpServletResponse response) {
@@ -275,23 +282,24 @@ public class AuthController {
         if (!jwtUtil.isValidToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
             return ReturnUtil.error("无效的刷新令牌");
         }
+        String jti = jwtUtil.getJti(refreshToken);
+        if (jti != null && Boolean.TRUE.equals(stringRedisTemplate.hasKey("jwt:blacklist:" + jti))) {
+            return ReturnUtil.error("令牌已被撤销，请重新登录");
+        }
         Long userId = jwtUtil.getUserIdFromToken(refreshToken);
         if (userId == null) return ReturnUtil.error("无效的刷新令牌");
-
-        // 黑名单检查：登出后 refresh token 应失效
-        String blackKey = "jwt:blacklist:" + userId;
-        String blackTs = stringRedisTemplate.opsForValue().get(blackKey);
-        if (blackTs != null) {
-            long bt = Long.parseLong(blackTs);
-            var iat = jwtUtil.getIssuedAt(refreshToken);
-            if (iat != null && iat.getTime() < bt) return ReturnUtil.error("令牌已被撤销，请重新登录");
-        }
 
         Users user = userService.getUserById(userId);
         if (user == null) return ReturnUtil.error("用户不存在");
 
+        // 旧 refresh token 加入黑名单
+        blacklistToken(refreshToken);
+
+        // 签发新双 token
         String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
+        String newRefreshToken = jwtUtil.generateRefreshToken(user.getId());
         cookieUtil.writeAccessToken(response, newAccessToken, (int)(jwtProperties.getAccessTokenExpiration() / 1000));
+        cookieUtil.writeRefreshToken(response, newRefreshToken, (int)(jwtProperties.getRefreshTokenExpiration() / 1000));
 
         return ReturnUtil.success("令牌已刷新");
     }

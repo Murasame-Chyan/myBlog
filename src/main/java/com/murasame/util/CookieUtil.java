@@ -40,7 +40,7 @@ public class CookieUtil {
         cookie.setSecure(secure);
         cookie.setPath(path);
         cookie.setMaxAge(maxAgeSeconds);
-        cookie.setAttribute("SameSite", path.equals("/") ? "Lax" : "Strict");
+        cookie.setAttribute("SameSite", "Lax");
         response.addCookie(cookie);
     }
 }

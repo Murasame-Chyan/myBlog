@@ -273,16 +273,11 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
         // 不再需要 newTagNames，标签已在前端创建完毕
         body.append('newTagNames', '');
 
-        const res = await fetch(formAction, {
+        const res = await authFetch(formAction, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body
         });
-        if (res.status === 401) {
-            openAuthModal('login');
-            showToast('请先登录后再发布', 'warning');
-            return;
-        }
         if (!res.ok) throw await res.text();
         const json = await res.json();
         if (json.code === 200) {

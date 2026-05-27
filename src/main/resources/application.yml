@@ -46,7 +46,11 @@ weather:
     sign-enabled: false
 
 github:
+  # 全局兜底 PAT：用户没绑定个人 token 时用它调 GraphQL/REST API。可留空，但留空时未绑 token 的访问者只能走慢路径（页面爬虫）
   token:
+  # AES 密钥放在 application.properties.bak 里（已被 .gitignore 排除），此处不要再写 token-encryption-key 否则会以空值覆盖
+  # 是否禁用 SSL 证书校验：仅在内网/调试环境用，生产保持 false
+  disable-ssl-verification: false
 
 tencent:
   cos:
@@ -57,7 +61,9 @@ tencent:
     base-url:
     folder: blog/images
 
+# ─────────────────────────── JWT ───────────────────────────
+# 基准值（生产默认），secret 通过 JWT_SECRET 环境变量注入
 jwt:
-  secret:
-  access-token-expiration: 1800000
-  refresh-token-expiration: 604800000
+  secret: ${JWT_SECRET}
+  access-token-expiration: 1800000       # 30 分钟
+  refresh-token-expiration: 604800000   # 7 天
