@@ -1,5 +1,6 @@
 package com.murasame.config;
 
+import com.murasame.service.UserService;
 import com.murasame.util.JwtUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +10,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
@@ -23,10 +25,15 @@ public class SecurityConfiguration {
 
     private final JwtUtil jwtUtil;
     private final JwtAuthenticationEntryPoint entryPoint;
+    private final StringRedisTemplate redisTemplate;
+    private final UserService userService;
 
-    public SecurityConfiguration(JwtUtil jwtUtil, JwtAuthenticationEntryPoint entryPoint) {
+    public SecurityConfiguration(JwtUtil jwtUtil, JwtAuthenticationEntryPoint entryPoint,
+                                  StringRedisTemplate redisTemplate, UserService userService) {
         this.jwtUtil = jwtUtil;
         this.entryPoint = entryPoint;
+        this.redisTemplate = redisTemplate;
+        this.userService = userService;
     }
 
     @Bean
@@ -57,7 +64,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(eh -> eh.authenticationEntryPoint(entryPoint))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
