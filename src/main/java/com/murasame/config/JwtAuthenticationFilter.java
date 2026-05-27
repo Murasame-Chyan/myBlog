@@ -1,6 +1,7 @@
 package com.murasame.config;
 
 import com.murasame.entity.Users;
+import com.murasame.service.UserService;
 import com.murasame.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,17 +19,20 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
-// 无状态 JWT 认证过滤器：从 Header 或 Cookie 提取 access token，写入 SecurityContext + request attribute
-// Header 优先于 Cookie，便于未来 SPA 跨域场景使用 Bearer Token
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
+    private final UserService userService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, StringRedisTemplate redisTemplate,
+                                   UserService userService) {
         this.jwtUtil = jwtUtil;
+        this.redisTemplate = redisTemplate;
+        this.userService = userService;
     }
 
     @Override
@@ -40,20 +45,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (token != null && jwtUtil.isValidToken(token) && jwtUtil.isAccessToken(token)) {
+            String jti = jwtUtil.getJti(token);
+            if (jti != null && Boolean.TRUE.equals(redisTemplate.hasKey("jwt:blacklist:" + jti))) {
+                log.debug("Token jti={} is blacklisted", jti);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             Claims claims = jwtUtil.parseToken(token);
-            Users user = new Users();
-            user.setId(claims.get("userId", Long.class));
-            user.setEmail(claims.get("email", String.class));
-            user.setNickname(claims.get("nickname", String.class));
+            // JJWT 序列化时小数值可能存为 Integer，统一按 Number 转换避免类型不匹配
+            Long userId = null;
+            Object uid = claims.get("userId");
+            if (uid instanceof Number) {
+                userId = ((Number) uid).longValue();
+            }
+            // 从数据库加载完整用户信息，确保头像、简介、性别、GitHub 等字段可用
+            Users user = userId != null ? userService.getUserById(userId) : null;
 
-            request.setAttribute("currentUser", user);
+            if (user != null) {
+                request.setAttribute("currentUser", user);
 
-            // 将认证写入 SecurityContext，使 Spring Security URL 规则（authenticated()）生效
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    user, null, Collections.emptyList());
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                // 将认证写入 SecurityContext，使 Spring Security URL 规则（authenticated()）生效
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        user, null, Collections.emptyList());
+                SecurityContextHolder.getContext().setAuthentication(auth);
 
-            log.debug("JWT authenticated: userId={}", user.getId());
+                log.debug("JWT authenticated: userId={}", user.getId());
+            }
         }
 
         filterChain.doFilter(request, response);
