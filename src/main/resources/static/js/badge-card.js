@@ -3,20 +3,34 @@
  * Ported from SparkingCard demo (spring-physics pointer interaction).
  * Adapted to (a) live inside a modal that opens/closes, (b) drive multiple
  * badges off a single registry, (c) attach pointer listeners only while
- * the modal is open so a hidden card costs nothing. */
+ * the modal is open so a hidden card costs nothing.
+ *
+ * Asset convention:
+ *   icon:      /images/badge/icon/{badgeId}-icon.jpg
+ *   full card: /images/badge/fullbadge/{badgeId}-full-{n}.jpg  (n = 1..count) */
 
 (function () {
     "use strict";
 
-    // Hardcoded badge registry. PoC scope — swap this for an API fetch + th:each
-    // loop later. Thumb buttons reference entries by `data-badge-id`.
+    // Badge registry. Each entry maps to icon + fullbadge by naming convention.
+    //   badgeId → icon:  /images/badge/icon/{badgeId}-icon.jpg
+    //   badgeId → full:  /images/badge/fullbadge/{badgeId}-full-{1..count}.jpg
+    // Swap this whole object for an API fetch when backend is ready.
     const BADGES = {
-        "re-zero-s4": {
-            image: "/images/badges/re-zero-s4.jpg",
-            name: "Re:0 第四季 纪念徽章"
+        "re-zero": {
+            name: "Re:0 第四季 纪念徽章",
+            count: 1
         }
     };
     window.BADGES = BADGES;
+
+    // Path helpers — encode the naming convention in one place.
+    function getIconPath(badgeId) {
+        return "/images/badge/icon/" + badgeId + "-icon.jpg";
+    }
+    function getFullPath(badgeId, n) {
+        return "/images/badge/fullbadge/" + badgeId + "-full-" + n + ".jpg";
+    }
 
     const modal = document.getElementById("badgeModal");
     if (!modal) return;
@@ -60,7 +74,8 @@
         if (!badge) return;
 
         lastTrigger = triggerEl || null;
-        cardImg.src = badge.image;
+        // Full card image derived from convention: {badgeId}-full-1.jpg
+        cardImg.src = getFullPath(badgeId, 1);
         cardImg.alt = badge.name;
         if (nameEl) nameEl.textContent = badge.name;
 
