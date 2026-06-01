@@ -1,0 +1,273 @@
+/* ===== Holographic card visuals (scoped to .badge-modal) =====
+ * Ported from SparkingCard demo. CSS custom properties drive 3D tilt
+ * and multi-layer shine; the JS in badge-card.js mutates them on
+ * pointer move via a spring solver. */
+
+:root {
+    --badge-card-aspect: 0.718;          /* Pokemon TCG card ratio */
+    --badge-card-radius: 4.55% / 3.5%;
+}
+
+.badge-modal .card {
+    width: min(72vw, 320px);
+    aspect-ratio: var(--badge-card-aspect);
+    border-radius: var(--badge-card-radius);
+    perspective: 600px;
+}
+
+.badge-modal .card__rotator {
+    --tilt-left-right: 0deg;
+    --tilt-up-down: 0deg;
+    --pointer-x: 50%;
+    --pointer-y: 50%;
+    --pointer-from-center: 0;
+    --effect-intensity: 0;
+    --background-x: 50%;
+    --background-y: 50%;
+    --space: 6%;
+    --angle: 133deg;
+    /* External foil texture, same CDN as the demo */
+    --foil: url("https://i.imgur.com/vu5azD2.jpeg");
+    --imgsize: 60% 30%;
+
+    width: 100%;
+    height: 100%;
+    display: grid;
+    border-radius: inherit;
+    transform: rotateY(var(--tilt-left-right)) rotateX(var(--tilt-up-down));
+    transform-origin: center;
+    will-change: transform;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.42), 0 4px 12px rgba(0, 0, 0, 0.34);
+}
+
+.badge-modal .card__front,
+.badge-modal .card__front > * {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+}
+
+.badge-modal .card__front {
+    display: grid;
+    overflow: hidden;
+}
+
+.badge-modal .card__front img {
+    display: block;
+    object-fit: cover;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Shine layer 1: foil texture × repeating rainbow × pointer-following radial.
+ * Three background-image layers blended with `difference / luminosity / soft-light`,
+ * then the whole layer color-dodged onto the artwork. Opacity ties to pointer
+ * intensity so the effect fades out when the mouse leaves. */
+.badge-modal .card__shine {
+    display: grid;
+    background-image: var(--foil),
+        repeating-linear-gradient(-33deg,
+            hsl(2, 70%, 47%) calc(var(--space) * 1),
+            hsl(228, 60%, 64%) calc(var(--space) * 2),
+            hsl(176, 55%, 39%) calc(var(--space) * 3),
+            hsl(123, 68%, 35%) calc(var(--space) * 4),
+            hsl(283, 75%, 57%) calc(var(--space) * 5),
+            hsl(2, 70%, 47%) calc(var(--space) * 6)),
+        repeating-linear-gradient(var(--angle),
+            hsla(227, 53%, 12%, 0.5) 0%,
+            hsl(180, 10%, 50%) 2.5%,
+            hsl(83, 50%, 35%) 5%,
+            hsl(180, 10%, 50%) 7.5%,
+            hsla(227, 53%, 12%, 0.5) 10%,
+            hsla(227, 53%, 12%, 0.5) 15%),
+        radial-gradient(farthest-corner circle at var(--pointer-x) var(--pointer-y),
+            hsla(189, 76%, 77%, 0.6) 0%,
+            hsla(147, 59%, 77%, 0.6) 25%,
+            hsla(271, 55%, 69%, 0.6) 50%,
+            hsla(355, 56%, 72%, 0.6) 75%);
+    background-size: var(--imgsize), 1100% 1100%, 600% 600%, 200% 200%;
+    background-blend-mode: difference, luminosity, soft-light, normal;
+    mix-blend-mode: color-dodge;
+    background-position: center, var(--background-x) var(--background-y),
+        var(--background-x) var(--background-y),
+        var(--background-x) var(--background-y);
+    opacity: var(--effect-intensity);
+    filter: brightness(calc((var(--pointer-from-center) * 0.4) + 0.4)) contrast(2) saturate(1);
+}
+
+/* Shine layer 2: sunpillar rainbow stripes on top, lighten-blended.
+ * The `::after` doubles up so the rainbow is visible even on dark artwork. */
+.badge-modal .card__shine::after {
+    --sunpillar-1: hsl(2, 100%, 73%);
+    --sunpillar-2: hsl(53, 100%, 69%);
+    --sunpillar-3: hsl(93, 100%, 69%);
+    --sunpillar-4: hsl(176, 100%, 76%);
+    --sunpillar-5: hsl(228, 100%, 74%);
+    --sunpillar-6: hsl(283, 100%, 73%);
+
+    content: "";
+    grid-area: 1 / 1;
+    border-radius: inherit;
+    background-image: repeating-linear-gradient(0deg,
+            var(--sunpillar-6) calc(var(--space) * 1),
+            var(--sunpillar-1) calc(var(--space) * 2),
+            var(--sunpillar-2) calc(var(--space) * 3),
+            var(--sunpillar-3) calc(var(--space) * 4),
+            var(--sunpillar-4) calc(var(--space) * 5),
+            var(--sunpillar-5) calc(var(--space) * 6),
+            var(--sunpillar-6) calc(var(--space) * 7)),
+        repeating-linear-gradient(var(--angle),
+            #0e152e 0%,
+            hsl(180, 10%, 60%) 3.8%,
+            hsl(180, 29%, 66%) 4.5%,
+            hsl(180, 10%, 60%) 5.2%,
+            #0e152e 10%,
+            #0e152e 12%);
+    background-blend-mode: hue, normal;
+    background-size: 200% 700%, 300% 100%;
+    background-position: 0% var(--background-y),
+        var(--background-x) var(--background-y);
+    mix-blend-mode: lighten;
+    opacity: calc((0.3 * var(--effect-intensity)) + var(--effect-intensity) *
+            var(--pointer-from-center) * 0.5);
+}
+
+/* Glare: white spotlight that tracks the pointer, hard-light blended.
+ * This is what reads as "specular highlight" to the eye. */
+.badge-modal .card__glare {
+    background-image: radial-gradient(farthest-corner circle at var(--pointer-x) var(--pointer-y),
+            hsla(0, 0%, 100%, 0.75) 0%,
+            hsl(0, 0%, 0%) 120%);
+    mix-blend-mode: hard-light;
+    opacity: calc((0.2 * var(--effect-intensity)) + var(--effect-intensity) *
+            var(--pointer-from-center) * 0.8);
+}
+
+/* ===== Thumbnail (in nickname row) =====
+ * Small card-shaped button. A diagonal shimmer sweeps across it on a
+ * loop to hint that there's something special inside — the full
+ * pointer-driven hologram is reserved for the modal. */
+
+.profile-badge-thumb {
+    width: 36px;
+    aspect-ratio: var(--badge-card-aspect);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.profile-badge-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+/* Continuous diagonal shimmer sweep across the thumb — 2.4s loop,
+ * dwells off-screen 40% of the cycle so it feels occasional, not frantic. */
+.profile-badge-thumb::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg,
+            transparent 35%,
+            rgba(255, 255, 255, 0.55) 50%,
+            transparent 65%);
+    transform: translateX(-120%);
+    animation: badge-thumb-shimmer 2.4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.profile-badge-thumb:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 200, 230, 0.45);
+}
+
+.profile-badge-thumb:focus-visible {
+    outline: 2px solid #FF6B9D;
+    outline-offset: 2px;
+}
+
+@keyframes badge-thumb-shimmer {
+    0%   { transform: translateX(-120%); }
+    60%  { transform: translateX(120%); }
+    100% { transform: translateX(120%); }
+}
+
+/* ===== Modal overlay ===== */
+.badge-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: badge-modal-fade 200ms ease forwards;
+}
+
+.badge-modal[hidden] {
+    display: none;
+}
+
+.badge-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 10, 16, 0.78);
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+}
+
+.badge-modal__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+
+.badge-modal__name {
+    color: #f7f3ea;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.badge-modal__close {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.badge-modal__close:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+body.badge-modal-open {
+    overflow: hidden;
+}
+
+@keyframes badge-modal-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
