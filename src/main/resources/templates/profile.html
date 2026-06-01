@@ -6,7 +6,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
-    <link rel="stylesheet" href="/css/badge-card.css">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('index')}"></header>
@@ -32,12 +31,6 @@
                         <div class="profile-nickname-row">
                             <span class="profile-nickname" th:text="${profileUser.nickname}">用户昵称</span>
                             <span class="profile-lv-badge" th:text="'LV.' + ${profileUser.level != null ? profileUser.level : 1}">LV.6</span>
-                            <!-- 硬编码徽章 PoC：所有用户都看到 Re:0 第四季 纪念徽章。接入接口后改为 th:each 渲染多个徽章 -->
-                            <button type="button" class="profile-badge-thumb"
-                                    data-badge-id="re-zero-s4"
-                                    aria-label="查看 Re:0 第四季 纪念徽章">
-                                <img src="/images/badges/re-zero-s4.jpg" alt="Re:0 第四季 纪念徽章">
-                            </button>
                         </div>
                         <div class="profile-meta">
                             <span th:if="${profileUser.gender == 1}">♂ 男</span>
@@ -355,24 +348,5 @@
             return dateStr.substring(0, 10);
         }
     </script>
-
-    <!-- 闪亮徽章预览 Modal -->
-    <div id="badgeModal" class="badge-modal" hidden aria-hidden="true" role="dialog" aria-label="徽章预览">
-        <div class="badge-modal__backdrop"></div>
-        <div class="badge-modal__content">
-            <div class="card">
-                <div class="card__rotator">
-                    <div class="card__front">
-                        <img id="badgeCardImg" src="" alt="">
-                        <div class="card__shine"></div>
-                        <div class="card__glare"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="badge-modal__name" id="badgeModalName"></div>
-        </div>
-        <button type="button" class="badge-modal__close" aria-label="关闭">&times;</button>
-    </div>
-    <script src="/js/badge-card.js"></script>
 </body>
 </html>
