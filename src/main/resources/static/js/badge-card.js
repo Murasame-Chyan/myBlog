@@ -12,10 +12,8 @@
 (function () {
     "use strict";
 
-    // Badge registry. Each entry maps to icon + fullbadge by naming convention.
-    //   badgeId → icon:  /images/badge/icon/{badgeId}-icon.jpg
-    //   badgeId → full:  /images/badge/fullbadge/{badgeId}-full-{1..count}.jpg
-    // Swap this whole object for an API fetch when backend is ready.
+    // Badge registry. Loaded from /sign-in/achievements API on page load.
+    // Fallback to static data if API is unavailable.
     const BADGES = {
         "re-zero": {
             name: "Re:0 第四季 纪念徽章",
@@ -23,6 +21,27 @@
         }
     };
     window.BADGES = BADGES;
+
+    // Try to load from backend API
+    fetch("/sign-in/achievements")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.code === 200 && d.data && d.data.achievements) {
+                d.data.achievements.forEach(function (a) {
+                    // Use achievement name as badgeId (kebab-cased)
+                    var badgeId = a.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                    if (!BADGES[badgeId]) {
+                        BADGES[badgeId] = {
+                            id: a.id,
+                            name: a.name,
+                            count: 1
+                        };
+                    }
+                });
+                window.BADGES = BADGES;
+            }
+        })
+        .catch(function () {});
 
     // Path helpers — encode the naming convention in one place.
     function getIconPath(badgeId) {

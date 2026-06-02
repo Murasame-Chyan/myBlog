@@ -30,22 +30,30 @@
                     <div class="profile-info">
                         <div class="profile-nickname-row">
                             <span class="profile-nickname" th:text="${profileUser.nickname}">用户昵称</span>
-                            <span class="profile-lv-badge" th:text="'LV.' + ${profileUser.level != null ? profileUser.level : 1}">LV.6</span>
+                            <span class="profile-lv-badge"
+                                  th:attr="data-level=${isMaxLevel ? 7 : (profileUser.level != null ? profileUser.level : 1)}"
+                                  th:text="${isMaxLevel ? 'LV6+' : ('LV.' + (profileUser.level != null ? profileUser.level : 1))}">LV.6</span>
                         </div>
                         <div class="profile-meta">
                             <span th:if="${profileUser.gender == 1}">♂ 男</span>
                             <span th:if="${profileUser.gender == 2}">♀ 女</span>
                             <span th:if="${profileUser.gender == null or profileUser.gender == 0}">⚥ 未设置</span>
                             <span th:if="${profileUser.exp != null}">
-                                &nbsp;·&nbsp; 经验 <span th:text="${profileUser.exp}">35000</span> / 100000
+                                &nbsp;·&nbsp; 经验 <span th:text="${profileUser.exp}">0</span> / <span th:text="${expForNextLevel}">993</span>
                             </span>
                         </div>
-                        <div class="profile-exp-bar-wrap" th:if="${profileUser.exp != null}">
+                        <div class="profile-exp-bar-wrap" th:if="${profileUser.exp != null and !isMaxLevel}">
                             <div class="profile-exp-bar-fill"
-                                 th:style="'width:' + (${profileUser.exp} > 100000 ? 100 : ${profileUser.exp} / 1000.0) + '%'"></div>
+                                 th:style="'width:' + (${expProgressInLevel} * 100.0 / (${expForNextLevel} - ${currentLevelExp})) + '%;background:' + ${levelBarColor}"></div>
                         </div>
-                        <div class="profile-exp-text" th:if="${profileUser.exp != null}">
-                            距下一级还需 <span th:text="${100000 - profileUser.exp > 0 ? 100000 - profileUser.exp : 0}">65000</span> 经验
+                        <div class="profile-exp-bar-wrap" th:if="${profileUser.exp != null and isMaxLevel}">
+                            <div class="profile-exp-bar-fill" th:style="'width:100%;background:' + ${levelBarColor}"></div>
+                        </div>
+                        <div class="profile-exp-text" th:if="${profileUser.exp != null and !isMaxLevel}">
+                            距下一级还需 <span th:text="${expForNextLevel - profileUser.exp}">0</span> 经验
+                        </div>
+                        <div class="profile-exp-text" th:if="${profileUser.exp != null and isMaxLevel}">
+                            已达最高等级
                         </div>
                         <div class="profile-exp-text" th:if="${profileUser.exp == null}">
                             暂无经验值数据

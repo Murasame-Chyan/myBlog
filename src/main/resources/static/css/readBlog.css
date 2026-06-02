@@ -1,3 +1,121 @@
 #textContent, #textTitle {
     white-space: pre-wrap;  /* 读取文本时保留空格与换行，自动换行 */
 }
+
+/* Flowchart / Sequence Diagram 容器 */
+.flowchart-container,
+.sequence-diagram-container {
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 1em 0;
+    text-align: center;
+}
+
+.flowchart-container svg,
+.sequence-diagram-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* 封面图片 —— 卡片画框式 */
+.blog-cover-card {
+    max-width: 100%;
+    margin: 1.5rem auto;
+    border: 2px solid rgba(135, 206, 235, 0.35);
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 12px rgba(135, 206, 235, 0.15);
+}
+
+.blog-cover-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.9rem;
+    background: rgba(135, 206, 235, 0.12);
+    border-bottom: 1px solid rgba(135, 206, 235, 0.25);
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    user-select: none;
+}
+
+.blog-cover-card-header i {
+    font-size: 0.85rem;
+    color: rgba(135, 206, 235, 0.8);
+}
+
+.blog-cover-card-body {
+    padding: 0.6rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.blog-cover-card-body:hover .blog-cover-overlay {
+    opacity: 1;
+}
+
+.blog-cover-image {
+    display: block;
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 4px;
+    object-fit: contain;
+}
+
+.blog-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    opacity: 0;
+    transition: opacity 0.25s;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.blog-cover-overlay span {
+    font-size: 0.85rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.25rem 0.7rem;
+    border-radius: 4px;
+}
+
+/* 灯箱 */
+.blog-cover-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.85);
+    cursor: pointer;
+}
+
+.blog-cover-lightbox.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.blog-cover-lightbox img {
+    max-width: 92vw;
+    max-height: 92vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+}
+
+/* 数学公式溢出滚动 */
+.math-display {
+    display: block;
+    overflow-x: auto;
+    margin: 1em 0;
+}

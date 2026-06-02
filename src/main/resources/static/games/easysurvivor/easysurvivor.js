@@ -527,6 +527,27 @@ function endGame() {
     finalScoreEl.textContent = score;
     finalLevelEl.textContent = level;
     gameoverOverlay.classList.remove('hidden');
+
+    // 上报补签（无门槛，游玩即可）
+    if (typeof authFetch === "function") {
+        authFetch("/sign-in/makeup", { method: "POST" })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.code === 200 && d.data && d.data.isMakeup) {
+                    var infoEl = document.getElementById("makeupInfo");
+                    if (!infoEl) {
+                        infoEl = document.createElement("p");
+                        infoEl.id = "makeupInfo";
+                        infoEl.className = "gameover-info";
+                        infoEl.style.color = "#87CEEB";
+                        infoEl.textContent = "补签成功! +" + d.data.totalExp + " EXP";
+                        var panel = document.querySelector(".gameover-panel");
+                        if (panel) panel.appendChild(infoEl);
+                    }
+                }
+            })
+            .catch(function () {});
+    }
 }
 
 // ==================== 道具应用 ====================

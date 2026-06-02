@@ -10,6 +10,7 @@ import com.murasame.entity.Blogs;
 import com.murasame.mapper.BlogMapper;
 
 import com.murasame.service.BlogService;
+import com.murasame.util.BlogHtmlUtil;
 
 import jakarta.annotation.Resource;
 
@@ -50,12 +51,18 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
-	public int publishBlogWithTags(Long authorId, String title, String content, TagWrapper tags) {
+	public int publishBlogWithTags(Long authorId, String title, String content, TagWrapper tags, String coverImage) {
 		Blogs blog = new Blogs();
 		blog.setU_id(authorId);
 		blog.setTitle(title);
 		blog.setContent(content);
 		blog.setT_id(tags);
+		// 封面图策略：显式上传的封面优先；其次从 Markdown 正文自动提取第一张图片
+		if (coverImage != null && !coverImage.isBlank()) {
+			blog.setCover_image(coverImage);
+		} else {
+			blog.setCover_image(BlogHtmlUtil.extractFirstImage(content));
+		}
 		return blogMapper.insertBlog(blog) == 1 ? blog.getId().intValue() : 0;
 	}
 
@@ -108,12 +115,25 @@ public class BlogServiceImpl implements BlogService {
 
 	@Override
 	public int updateBlog(Long id, String title, String content){
-		return blogMapper.editBlog(id, title, content);
+		// 保持原封面不变
+		Blogs existing = blogMapper.getBlogById(id);
+		String existingCover = existing != null ? existing.getCover_image() : null;
+		return blogMapper.editBlog(id, title, content, existingCover);
 	}
 
 	@Override
-	public int updateBlogWithTags(Long id, String title, String content, TagWrapper tags) {
-		int result = blogMapper.editBlog(id, title, content);
+	public int updateBlogWithTags(Long id, String title, String content, TagWrapper tags, String coverImage) {
+		// 封面处理：null=保留原值，空串=清除封面，非空=设置新值
+		String effectiveCover;
+		if (coverImage == null) {
+			Blogs existing = blogMapper.getBlogById(id);
+			effectiveCover = existing != null ? existing.getCover_image() : null;
+		} else if (coverImage.isBlank()) {
+			effectiveCover = null;
+		} else {
+			effectiveCover = coverImage;
+		}
+		int result = blogMapper.editBlog(id, title, content, effectiveCover);
 		if (result > 0 && tags != null) {
 			blogMapper.updateBlogTags(id, tags);
 		}
@@ -143,7 +163,9 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public List<BlogBriefVO> searchBlogs(String keyword, LocalDateTime dateFrom, LocalDateTime dateTo, String sortBy, int page, int pageSize) {
         int offset = (page - 1) * pageSize;
-        return blogMapper.searchBlogs(keyword, dateFrom, dateTo, sortBy, pageSize, offset);
+        List<BlogBriefVO> list = blogMapper.searchBlogs(keyword, dateFrom, dateTo, sortBy, pageSize, offset);
+        BlogHtmlUtil.processBriefs(list);
+        return list;
     }
 
     @Override
@@ -154,7 +176,9 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public List<BlogBriefVO> getUserBlogs(Long userId, String keyword, String sortBy, int page, int pageSize) {
         int offset = (page - 1) * pageSize;
-        return blogMapper.getBlogsByUserId(userId, keyword, sortBy, pageSize, offset);
+        List<BlogBriefVO> list = blogMapper.getBlogsByUserId(userId, keyword, sortBy, pageSize, offset);
+        BlogHtmlUtil.processBriefs(list);
+        return list;
     }
 
     @Override

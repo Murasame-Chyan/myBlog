@@ -12,9 +12,22 @@ $(function() {
         imageFormats: ["jpg", "jpeg", "gif", "png", "webp"],
         imageUploadURL: "/api/upload/image",
         toolbarIcons: function() {
-            return ["bold", "italic", "heading", "|", "list-ul", "list-ol", "|",
-                    "link", "image", "code", "code-block", "|", "watch", "preview", "fullscreen"];
+            return ["undo", "redo", "|",
+                    "bold", "italic", "strikethrough", "|",
+                    "h1", "h2", "h3", "h4", "h5", "h6", "|",
+                    "quote", "list-ul", "list-ol", "hr", "table", "checkbox", "|",
+                    "link", "image", "code", "code-block", "|",
+                    "emoji", "tex", "flowchart", "sequence", "|",
+                    "search-replace", "html-entities", "help", "|",
+                    "watch", "preview", "fullscreen"];
         },
+        // 启用 Editor.md 扩展插件
+        emoji: true,
+        tex: true,
+        flowChart: true,
+        sequenceDiagram: true,
+        searchReplace: true,
+        codeFold: true,
         onload: function() {
             console.log("Editor.md 加载完成");
         }
@@ -264,11 +277,14 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
     // 先创建所有新标签（id 为 null 的），再收集全部 tagIds
     try {
         const tagIds = await resolveAllTagIds();
+        const coverInput = document.getElementById('coverImageUrl');
+        const coverValue = coverInput ? (coverInput.value || '') : '';
         const body = new URLSearchParams({
             title:   form.title.value,
             content: rawContent,
             id:      form.id?.value || '',
-            tagIds:  tagIds.join(',')
+            tagIds:  tagIds.join(','),
+            coverImage: coverValue
         });
         // 不再需要 newTagNames，标签已在前端创建完毕
         body.append('newTagNames', '');
@@ -296,82 +312,6 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
     }
 });
 
-// ---- Emoji 表情选择器 ----
-(function() {
-    var EMOJIS = [
-        '😀','😃','😄','😁','😅','😂','🤣','😊','😇','🙂','😉','😍','😘','🤗','🤩','😎','😏','😒','😞','😔','😣','😖','😫','😩','😢','😭','😤','😡','🤬','😱','😨','😰','😳','🤔','🤨','😴','🤤','😋','😛','😝','🤪','😷','🤒','🤕','🥴','🥺','🧐',
-        '👍','👎','👌','✌','🤞','🤘','👋','✋','👏','🙌','🤝','💪','🙏','✍','👀','🧠','👑','💍',
-        '❤','🧡','💛','💚','💙','💜','🖤','🤍','💔','❣','💕','💞','💓','💗','💖','💘','💝',
-        '💯','🔥','⭐','🌟','✨','💫','🎉','🎊','🎈','🎂','🎁','🏆','🥇','✅','❌','💡','💻','📱','⌨','🎵','🎶','📚','📝','✏','✂','🔒','🔑','🔨','🔧','💊','🛁',
-        '☀','☁','🌧','⛈','❄','🌈','🌙','⚡','💧','🌊','🌍','🌸','🌹','🌻','🍀','🎄','⭐',
-        '🍎','🍕','🍔','🍟','🍩','🍰','🍺','☕','🍿','🍦','🎂','🍬','🍭','🍪','🍷','🍹'
-    ];
-    var targetId = null;
-    var popup = null;
-
-    function build() {
-        if (popup) return;
-        popup = document.createElement('div');
-        popup.className = 'emoji-popup';
-        popup.style.display = 'none';
-        var html = '<div class="emoji-grid">';
-        EMOJIS.forEach(function(e) {
-            html += '<span class="emoji-item" data-emoji="' + e + '">' + e + '</span>';
-        });
-        html += '</div>';
-        popup.innerHTML = html;
-        document.body.appendChild(popup);
-        popup.querySelectorAll('.emoji-item').forEach(function(item) {
-            item.addEventListener('click', function() {
-                insertEmoji(this.getAttribute('data-emoji'));
-            });
-        });
-        document.addEventListener('click', function(e) {
-            if (!popup || popup.style.display !== 'block') return;
-            var btn = document.querySelector('.btn-emoji-inline');
-            if (!popup.contains(e.target) && (!btn || !btn.contains(e.target))) {
-                popup.style.display = 'none';
-            }
-        });
-    }
-
-    function insertEmoji(emoji) {
-        if (!targetId) return;
-        if (targetId === 'content' && typeof editor !== 'undefined' && editor && editor.cm) {
-            editor.cm.replaceSelection(emoji);
-            editor.cm.focus();
-            if (popup) popup.style.display = 'none';
-            return;
-        }
-        var el = document.getElementById(targetId);
-        if (!el) return;
-        var s = el.selectionStart, end = el.selectionEnd;
-        el.value = el.value.substring(0, s) + emoji + el.value.substring(end);
-        el.selectionStart = el.selectionEnd = s + emoji.length;
-        el.focus();
-        if (popup) popup.style.display = 'none';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        build();
-        document.querySelectorAll('.btn-emoji-inline').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                targetId = this.getAttribute('data-target');
-                if (popup.style.display === 'block') {
-                    popup.style.display = 'none';
-                    return;
-                }
-                var rect = this.getBoundingClientRect();
-                popup.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-                popup.style.left = Math.max(0, rect.left + window.scrollX - 100) + 'px';
-                popup.style.display = 'block';
-                popup.style.zIndex = 9999;
-            });
-        });
-    });
-})();
-
 // 对新标签（id==null）逐个调用 POST /tags 创建，返回完整的 ID 列表
 async function resolveAllTagIds() {
     const ids = [];
@@ -397,3 +337,89 @@ async function resolveAllTagIds() {
     }
     return ids;
 }
+
+// ---- 封面图片上传与预览 ----
+(function() {
+    var coverInput   = document.getElementById('coverImageFile');
+    var coverPreview = document.getElementById('coverPreview');
+    var coverPreviewImg = document.getElementById('coverPreviewImg');
+    var coverPlaceholder = document.getElementById('coverPlaceholder');
+    var coverUrlHidden = document.getElementById('coverImageUrl');
+    var coverRemoveBtn = document.getElementById('coverRemoveBtn');
+    var coverArea    = document.getElementById('coverUploadArea');
+
+    if (!coverArea) return;
+
+    // 编辑模式下回显已有封面
+    var existingCover = coverUrlHidden.value;
+    if (existingCover && existingCover.trim()) {
+        showCoverPreview(existingCover.trim());
+    }
+
+    // 点击区域触发文件选择
+    coverArea.addEventListener('click', function() {
+        coverInput.click();
+    });
+
+    // 文件选择后立即上传
+    coverInput.addEventListener('change', function() {
+        var file = coverInput.files[0];
+        if (!file) return;
+        // 前端尺寸预检
+        if (file.size > 15 * 1024 * 1024) {
+            showToast('封面图片大小不能超过 15MB', 'error');
+            coverInput.value = '';
+            return;
+        }
+        uploadCover(file);
+    });
+
+    // 拖拽上传支持
+    coverArea.addEventListener('dragover', function(e) { e.preventDefault(); });
+    coverArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        var file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        if (file.size > 15 * 1024 * 1024) {
+            showToast('封面图片大小不能超过 15MB', 'error');
+            return;
+        }
+        uploadCover(file);
+    });
+
+    // 移除封面
+    coverRemoveBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        coverUrlHidden.value = '';
+        coverPreview.style.display = 'none';
+        coverPlaceholder.style.display = 'flex';
+    });
+
+    // 上传封面到 /blogs/uploadCover
+    async function uploadCover(file) {
+        var formData = new FormData();
+        formData.append('coverImageFile', file);
+        try {
+            var res = await authFetch('/blogs/uploadCover', {
+                method: 'POST',
+                body: formData
+            });
+            var json = await res.json();
+            if (json.code === 200) {
+                showCoverPreview(json.data);
+                coverUrlHidden.value = json.data;
+                showToast('封面上传成功', 'success');
+            } else {
+                showToast(json.msg || '封面上传失败', 'error');
+            }
+        } catch (err) {
+            showToast('封面上传失败: ' + err, 'error');
+        }
+    }
+
+    function showCoverPreview(url) {
+        coverPreviewImg.src = url;
+        coverPreview.style.display = 'block';
+        coverPlaceholder.style.display = 'none';
+    }
+})();

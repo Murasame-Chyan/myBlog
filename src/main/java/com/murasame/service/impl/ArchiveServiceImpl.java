@@ -4,6 +4,7 @@ import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.entity.BlogsBin;
 import com.murasame.mapper.ArchiveMapper;
 import com.murasame.service.ArchiveService;
+import com.murasame.util.BlogHtmlUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +17,9 @@ public class ArchiveServiceImpl implements ArchiveService {
 
 	@Override
 	public List<BlogBriefVO> getRecent5ArchivesBrief(Long uId){
-		return archiveMapper.getRecent5ArchivesBrief(uId);
+		List<BlogBriefVO> list = archiveMapper.getRecent5ArchivesBrief(uId);
+		BlogHtmlUtil.processBriefs(list);
+		return list;
 	}
 
 	@Override
@@ -27,7 +30,9 @@ public class ArchiveServiceImpl implements ArchiveService {
 	@Override
 	public List<BlogBriefVO> getArchivesByPage(int page, int pageSize, Long uId){
 		int offset = (page - 1) * pageSize;
-		return archiveMapper.getArchivesByPage(uId, pageSize, offset);
+		List<BlogBriefVO> list = archiveMapper.getArchivesByPage(uId, pageSize, offset);
+		BlogHtmlUtil.processBriefs(list);
+		return list;
 	}
 
 	@Override
@@ -37,6 +42,8 @@ public class ArchiveServiceImpl implements ArchiveService {
 
 	@Override
 	public List<BlogBriefVO> getArchivesByTagId(Integer tagId, Long uId){
-		return archiveMapper.getArchivesByTagId(uId, tagId);
+		List<BlogBriefVO> list = archiveMapper.getArchivesByTagId(uId, tagId);
+		BlogHtmlUtil.processBriefs(list);
+		return list;
 	}
 }

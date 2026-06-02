@@ -509,6 +509,33 @@ hr {
     padding-left: 1rem;
 }
 
+.tag-search-input {
+    width: 100%;
+    padding: 0.3rem 0.6rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(135, 206, 235, 0.3);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.tag-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.tag-search-input:focus {
+    border-color: rgba(135, 206, 235, 0.6);
+}
+
+.tag-limit-hint {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 0.3rem;
+}
+
 .tags-cloud {
     display: flex;
     flex-wrap: wrap;
@@ -671,12 +698,12 @@ hr {
 /* Markdown 渲染样式 */
 .blog-content {
     color: #ffffff;
-    line-height: 1.8;
+    line-height: 1.75;
     font-size: 16px;
 }
 
 .blog-content p {
-    margin: 0.5em 0;
+    margin: 0.4em 0;
 }
 
 .blog-content h1, .blog-content h2, .blog-content h3 {
@@ -697,6 +724,54 @@ hr {
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 正文图片包装器（JS 动态包裹） */
+.blog-img-wrapper {
+    display: table;
+    position: relative;
+    cursor: pointer;
+    margin: 1em auto;
+    max-width: 100%;
+}
+
+.blog-img-wrapper img {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    height: auto;
+    width: auto;
+    object-fit: contain;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.blog-img-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    opacity: 0;
+    transition: opacity 0.25s, background 0.25s;
+    pointer-events: none;
+}
+
+.blog-img-wrapper:hover .blog-img-overlay {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.blog-img-overlay span {
+    font-size: 0.85rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.25rem 0.7rem;
+    border-radius: 4px;
 }
 
 /* 代码块样式 */
@@ -827,7 +902,8 @@ hr {
 }
 
 .blog-content li {
-    margin: 0.3em 0;
+    line-height: 1.45;
+    margin: 0;
 }
 
 /* 脚注样式 */
@@ -1624,6 +1700,26 @@ hr {
     letter-spacing: 0.5px;
     line-height: 1.2;
 }
+/* 等级颜色：LV1浅绿 LV2浅蓝 LV3阳光黄 LV4橘黄 LV5红 LV6浅粉 LV6+淡紫 */
+.profile-lv-badge[data-level="1"], .sign-in-lv-badge.lv1 { background: linear-gradient(135deg, #8BC34A, #7CB342); }
+.profile-lv-badge[data-level="2"], .sign-in-lv-badge.lv2 { background: linear-gradient(135deg, #64B5F6, #42A5F5); }
+.profile-lv-badge[data-level="3"], .sign-in-lv-badge.lv3 { background: linear-gradient(135deg, #FFD54F, #FFCA28); color: #333; }
+.profile-lv-badge[data-level="4"], .sign-in-lv-badge.lv4 { background: linear-gradient(135deg, #FFB74D, #FFA726); }
+.profile-lv-badge[data-level="5"], .sign-in-lv-badge.lv5 { background: linear-gradient(135deg, #EF5350, #F44336); }
+.profile-lv-badge[data-level="6"], .sign-in-lv-badge.lv6 { background: linear-gradient(135deg, #F48FB1, #EC407A); }
+.profile-lv-badge[data-level="7"], .sign-in-lv-badge.lvmax { background: linear-gradient(135deg, #CE93D8, #AB47BC); }
+
+.sign-in-lv-badge {
+    display: inline-block;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+}
 .profile-meta {
     font-size: 0.82rem;
     color: rgba(255,255,255,0.45);
@@ -2359,4 +2455,334 @@ hr {
 .auth-send-code-btn.counting {
     color: rgba(255,255,255,0.4);
     background: rgba(255,255,255,0.06);
+}
+
+/* ===== 博客卡片双区布局 ===== */
+.blog-card-new .card-body-new {
+    padding: 1.25rem;
+}
+
+/* 上区：flex row，左侧信息 + 右侧封面 */
+.card-upper {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+/* 封面缩略图容器 */
+.card-cover {
+    flex-shrink: 0;
+    width: 120px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(135, 206, 235, 0.2);
+    transition: border-color 0.2s;
+}
+
+.card-clickable:hover .card-cover {
+    border-color: rgba(135, 206, 235, 0.4);
+    box-shadow: 0 0 10px rgba(135, 206, 235, 0.12);
+}
+
+.cover-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.card-clickable:hover .cover-thumbnail {
+    transform: scale(1.05);
+}
+
+/* 标签 row 位于上区的 brief 下方 */
+.card-info .blog-tags {
+    margin-top: 0.15rem;
+    margin-bottom: 0;
+}
+
+/* 下区 meta 行 */
+.blog-card-new .blog-meta {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 0.6rem;
+    margin-top: 0;
+}
+
+@media (max-width: 576px) {
+    .card-cover {
+        width: 80px;
+        height: 54px;
+    }
+}
+
+/* ===== 封面图片上传区域 ===== */
+.cover-upload-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px dashed rgba(135, 206, 235, 0.2);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+.cover-upload-area:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(135, 206, 235, 0.4);
+}
+.cover-upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+.cover-upload-placeholder i {
+    font-size: 2rem;
+    color: rgba(135, 206, 235, 0.4);
+}
+.cover-preview {
+    position: relative;
+    width: 100%;
+    max-height: 200px;
+}
+.cover-preview-img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+.cover-remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.2s;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.cover-remove-btn:hover {
+    background: rgba(255, 80, 80, 0.6);
+    color: #fff;
+}
+
+/* ==================== 签到Widget ==================== */
+.sign-in-widget .sidebar-title i {
+    color: #87CEEB;
+}
+.sign-in-body {
+    text-align: center;
+}
+.sign-in-unauth {
+    padding: 0.25rem 0;
+}
+.sign-in-hint {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+}
+.sign-in-level {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #87CEEB;
+    margin-bottom: 0.4rem;
+}
+.sign-in-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0.5rem 0 0.3rem;
+}
+.sign-in-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    min-width: 2px;
+}
+.sign-in-progress-label {
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+}
+.sign-in-btn {
+    background: rgb(135, 206, 235);
+    color: #fff;
+    border: none;
+    padding: 0.4rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.sign-in-btn:hover {
+    background: rgb(110, 190, 225);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(135, 206, 235, 0.35);
+}
+.sign-in-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.sign-in-done {
+    margin: 0.5rem 0;
+}
+.sign-in-letter {
+    display: inline-block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #FFD700;
+    background: rgba(255, 215, 0, 0.12);
+    width: 48px;
+    height: 48px;
+    line-height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 0, 0.35);
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+.sign-in-consecutive {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-top: 0.3rem;
+}
+.sign-in-makeup {
+    margin-top: 0.6rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sign-in-makeup-link {
+    font-size: 0.7rem;
+    color: #87CEEB;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.sign-in-makeup-link:hover {
+    color: #4fc3f7;
+}
+.sign-in-loading {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #999;
+    padding: 0.5rem;
+}
+
+/* 签到结果弹窗 */
+.sign-in-result-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: signInFadeIn 0.2s ease;
+}
+.sign-in-result-overlay.fade-out {
+    animation: signInFadeOut 0.3s ease forwards;
+}
+@keyframes signInFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes signInFadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+.sign-in-result-card {
+    background: rgba(20, 20, 40, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    min-width: 240px;
+}
+.sign-in-result-letter {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    opacity: 0;
+    transform: scale(0.3);
+}
+.sign-in-result-letter.bounce-in {
+    animation: letterBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes letterBounce {
+    0%   { opacity: 0; transform: scale(0.3); }
+    50%  { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.sign-in-result-exp {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4fc3f7;
+    margin-top: 0.75rem;
+}
+.sign-in-result-bonus {
+    font-size: 0.85rem;
+    color: #ff9800;
+    margin-top: 0.25rem;
+}
+.sign-in-result-levelup {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #FFD740;
+    margin-top: 0.5rem;
+    animation: pulseGlow 0.6s ease-in-out infinite alternate;
+}
+@keyframes pulseGlow {
+    from { text-shadow: 0 0 8px rgba(255, 215, 64, 0.5); }
+    to   { text-shadow: 0 0 20px rgba(255, 215, 64, 0.9); }
+}
+.sign-in-result-consec {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-top: 0.5rem;
+}
+.sign-in-result-close {
+    margin-top: 1rem;
+    background: rgba(255, 255, 255, 0.15);
+    color: #ccc;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.4rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.sign-in-result-close:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
 }

@@ -22,7 +22,7 @@ public interface BlogService {
 
 	int publishBlog(Long authorId, String title, String content);    // 撰写-发布文章 return BlogId or 0
 
-	int publishBlogWithTags(Long authorId, String title, String content, TagWrapper tags); // 撰写-发布文章带标签
+	int publishBlogWithTags(Long authorId, String title, String content, TagWrapper tags, String coverImage); // 撰写-发布文章带标签
 
 	int dropBlogToBin(Long id);                                         // 删除blogs.id的博文移入回收箱
 
@@ -32,7 +32,7 @@ public interface BlogService {
 
 	int updateBlog(Long id, String title, String content);              // 更新blog，自动更新update_at时间
 
-	int updateBlogWithTags(Long id, String title, String content, TagWrapper tags); // 更新blog带标签
+	int updateBlogWithTags(Long id, String title, String content, TagWrapper tags, String coverImage); // 更新blog带标签
 
 	List<Blogs> getBlogsByTagId(Integer tagId);                          // 根据标签ID查询博客
 

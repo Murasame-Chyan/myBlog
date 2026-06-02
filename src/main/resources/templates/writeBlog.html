@@ -26,12 +26,28 @@
                 <input th:value="${blog?.getTitle()}" type="text" class="form-control" name="title" id="title" required maxlength="255">
             </div>
 
+            <!-- 封面图片上传 -->
+            <div class="mb-3">
+                <label class="form-label">封面图片（可选，不选则自动取正文第一张图）</label>
+                <div class="cover-upload-area" id="coverUploadArea">
+                    <div class="cover-preview" id="coverPreview" style="display:none;">
+                        <img id="coverPreviewImg" src="" alt="封面预览" class="cover-preview-img">
+                        <button type="button" class="cover-remove-btn" id="coverRemoveBtn" title="移除封面">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                    <div class="cover-upload-placeholder" id="coverPlaceholder">
+                        <i class="bi bi-image"></i>
+                        <span>点击或拖拽上传封面（最大 15MB）</span>
+                    </div>
+                    <input type="file" id="coverImageFile" accept="image/*" style="display:none;">
+                </div>
+                <input type="hidden" name="coverImage" id="coverImageUrl" th:value="${blog?.cover_image}">
+            </div>
+
             <!-- 正文（Markdown 编辑器） -->
             <div class="mb-3">
-                <label class="form-label">
-                    正文
-                    <button type="button" class="btn-emoji-inline" data-target="content" title="插入表情">😊</button>
-                </label>
+                <label class="form-label">正文</label>
                 <div id="editormd">
                     <textarea th:text="${blog?.content}" id="content" name="content" style="display:none;"></textarea>
                 </div>

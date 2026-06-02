@@ -2,12 +2,16 @@ package com.murasame.controller;
 
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.domain.vo.CommentVO;
+import com.murasame.domain.vo.SignInStatusVO;
 import com.murasame.entity.Tag;
+import com.murasame.entity.Users;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
 import com.murasame.service.IndexService;
+import com.murasame.service.SignInService;
 import com.murasame.service.TagService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +35,8 @@ public class IndexController {
 	private CommentService commentService;
 	@Resource
 	private TagService tagService;
+	@Resource
+	private SignInService signInService;
 
 	@GetMapping("/game")
 	public String game() {
@@ -39,6 +45,7 @@ public class IndexController {
 
 	@GetMapping({"/", "/index"})
 	public String index(Model model,
+	                    HttpServletRequest request,
 	                    @RequestParam(required = false) String keyword,
 	                    @RequestParam(required = false) String dateFrom,
 	                    @RequestParam(required = false) String dateTo,
@@ -82,6 +89,14 @@ public class IndexController {
 		model.addAttribute("dateFrom", dateFrom != null ? dateFrom : "");
 		model.addAttribute("dateTo", dateTo != null ? dateTo : "");
 		model.addAttribute("sortBy", sortBy != null ? sortBy : "");
+
+		// 注入签到状态到模板
+		Users currentUser = (Users) request.getAttribute("currentUser");
+		if (currentUser != null) {
+			SignInStatusVO signInStatus = signInService.getSignInStatus(currentUser.getId());
+			model.addAttribute("signInStatus", signInStatus);
+		}
+
 		return "index";
 	}
 

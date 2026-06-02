@@ -61,6 +61,9 @@ public class CosUploadServiceImpl implements CosUploadService {
 
     private static final int AVATAR_MAX_SIZE = 256;
 
+    // 封面图片专用目录，与正文内嵌图片隔离
+    private static final String COVER_FOLDER_SUFFIX = "/covers";
+
     @Override
     public String uploadAvatar(MultipartFile file, Long userId) throws IOException {
         String originalFilename = file.getOriginalFilename();
@@ -80,6 +83,29 @@ public class CosUploadServiceImpl implements CosUploadService {
         uploadBytes(compressed, key, "image/jpeg");
 
         return cosConfig.getBaseUrl() + "/" + key;
+    }
+
+    @Override
+    public String uploadCoverImage(MultipartFile file) throws IOException {
+        // 1. 验证文件名
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isEmpty()) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+
+        // 2. 验证文件扩展名
+        String extension = getFileExtension(originalFilename);
+        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new IllegalArgumentException("不支持的文件类型，仅支持: " + ALLOWED_EXTENSIONS);
+        }
+
+        // 3. 复用魔术字节校验，防止伪装扩展名
+        validateImageContent(file);
+
+        // 4. 生成唯一文件名并上传到 covers/ 子目录，与正文图片隔离
+        String fileName = generateUniqueFileName(extension);
+        String key = cosConfig.getFolder() + COVER_FOLDER_SUFFIX + "/" + fileName;
+        return uploadToCos(file, key, extension);
     }
 
     /**

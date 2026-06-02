@@ -8,6 +8,7 @@ import com.murasame.entity.Blogs;
 import com.murasame.entity.Tag;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
+import com.murasame.service.CosUploadService;
 import com.murasame.service.LikesService;
 import com.murasame.service.TagService;
 import com.murasame.service.UserService;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,8 @@ public class BlogController {
 	private UserService userService;
 	@Resource
 	private LikesService likesService;
+	@Resource
+	private CosUploadService cosUploadService;
 
 	// From index 点击跳转文章正文 RESTful跟随文章id
 	@GetMapping("read/{id}")
@@ -93,6 +97,7 @@ public class BlogController {
 			@RequestParam String content,
 			@RequestParam(value = "tagIds", required = false) String tagIds,
 			@RequestParam(value = "newTagNames", required = false) String newTagNames,
+			@RequestParam(value = "coverImage", required = false) String coverImage,
 			HttpServletRequest request) {
 		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
@@ -105,7 +110,7 @@ public class BlogController {
 		}
 		TagWrapper tagWrapper = new TagWrapper();
 		tagWrapper.setTagList(tagList);
-		int newId = blogService.publishBlogWithTags(authorId, title, content, tagWrapper);
+		int newId = blogService.publishBlogWithTags(authorId, title, content, tagWrapper, coverImage);
 		if (newId > 0) {
 			return ReturnUtil.custom(200, "发布成功", newId);
 		} else {
@@ -141,6 +146,7 @@ public class BlogController {
 			@RequestParam Long id,
 			@RequestParam(value = "tagIds", required = false) String tagIds,
 			@RequestParam(value = "newTagNames", required = false) String newTagNames,
+			@RequestParam(value = "coverImage", required = false) String coverImage,
 			HttpServletRequest request) {
 		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
@@ -159,7 +165,7 @@ public class BlogController {
 		}
 		TagWrapper tagWrapper = new TagWrapper();
 		tagWrapper.setTagList(tagList);
-		int result = blogService.updateBlogWithTags(id, title, content, tagWrapper);
+		int result = blogService.updateBlogWithTags(id, title, content, tagWrapper, coverImage);
 		if (result > 0) {
 			return ReturnUtil.success("成功更新");
 		} else {
@@ -205,6 +211,29 @@ public class BlogController {
 		return recoverStatus == 1 ? ReturnUtil.success("博客已重新发布") : ReturnUtil.error("博客不存在");
 	}
 
+	// 封面上传接口，复用 COS 校验管道
+	@ResponseBody
+	@PostMapping("/uploadCover")
+	public Map<String, Object> uploadCover(@RequestParam("coverImageFile") MultipartFile file,
+	                                       HttpServletRequest request) {
+		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized();
+		}
+		// 后端二次校验，前端也做了预检
+		if (file.getSize() > 15 * 1024 * 1024) {
+			return ReturnUtil.error("封面图片大小不能超过 15MB");
+		}
+		try {
+			String url = cosUploadService.uploadCoverImage(file);
+			return ReturnUtil.success("封面上传成功", url);
+		} catch (IllegalArgumentException e) {
+			return ReturnUtil.error(e.getMessage());
+		} catch (Exception e) {
+			return ReturnUtil.error("封面上传失败: " + e.getMessage());
+		}
+	}
+
 	@GetMapping("/tag/{id}")
 	public String getBlogsByTag(@PathVariable Integer id, Model model) {
 		List<Blogs> blogs = blogService.getBlogsByTagId(id);
@@ -216,6 +245,7 @@ public class BlogController {
 			vo.setU_id(blog.getU_id());
 			vo.setTitle(blog.getTitle());
 			vo.setBrief(BlogHtmlUtil.extractBrief(blog.getContent()));
+			vo.setCover_image(blog.getCover_image());
 			vo.setCreated_at(blog.getCreated_at());
 			vo.setUpdated_at(blog.getUpdated_at());
 			vo.setAuthor(userService.getNicknameById(blog.getU_id()));

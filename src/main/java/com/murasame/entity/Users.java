@@ -26,6 +26,7 @@ public class Users {
 	String githubUsername;
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	String githubToken;     // AES-256-GCM 加密存储，仅写入不解出到前端
+	String achievement;     // MySQL JSON 列，存储成就ID数组，如 [1,3,5]
 	Integer followerCount;
 	Integer followingCount;
 }

@@ -4,6 +4,7 @@ import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.mapper.BlogMapper;
 import com.murasame.mapper.UserLikeMapper;
 import com.murasame.service.LikesService;
+import com.murasame.util.BlogHtmlUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -112,7 +113,9 @@ public class LikesServiceImpl implements LikesService {
     private List<BlogBriefVO> fetchBlogsByIds(List<Long> ids, int limit) {
         List<Long> limited = ids.size() > limit ? ids.subList(0, limit) : ids;
         if (limited.isEmpty()) return Collections.emptyList();
-        return blogMapper.getBlogsByIds(limited);
+        List<BlogBriefVO> list = blogMapper.getBlogsByIds(limited);
+        BlogHtmlUtil.processBriefs(list);
+        return list;
     }
 
     @Async

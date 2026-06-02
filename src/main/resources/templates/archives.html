@@ -18,12 +18,15 @@
                         <h6 class="sidebar-title">
                             <i class="bi bi-tags"></i> 标签
                         </h6>
-                        <div class="tags-cloud">
-                            <a th:each="tag : ${allTags}" th:href="@{/archives/tag/{id}(id=${tag.id})}" 
+                        <input type="text" class="tag-search-input" id="tagSearch" placeholder="搜索标签..."
+                               oninput="filterTags()">
+                        <div class="tags-cloud" id="tagsCloud">
+                            <a th:each="tag : ${allTags}" th:href="@{/archives/tag/{id}(id=${tag.id})}"
                                class="tag-badge"
                                th:class="${selectedTagId != null and selectedTagId == tag.id ? 'tag-badge active' : 'tag-badge'}"
                                th:text="${tag.tagName}">标签</a>
                         </div>
+                        <div class="tag-limit-hint" id="tagLimitHint"></div>
                     </div>
                 </div>
             </aside>
@@ -160,6 +163,35 @@
                 if (href) window.location = href;
             });
         });
+
+        // 标签搜索与限制显示
+        var MAX_TAGS = 10;
+        function filterTags() {
+            var searchTerm = document.getElementById('tagSearch').value.toLowerCase();
+            var badges = document.querySelectorAll('#tagsCloud .tag-badge');
+            var visibleCount = 0;
+            badges.forEach(function(badge) {
+                var match = badge.textContent.toLowerCase().includes(searchTerm);
+                if (match && visibleCount < MAX_TAGS) {
+                    badge.style.display = '';
+                    visibleCount++;
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+            var hint = document.getElementById('tagLimitHint');
+            var total = badges.length;
+            var filtered = document.querySelectorAll('#tagsCloud .tag-badge[style*="display: none"]').length;
+            var shown = total - filtered;
+            if (total > MAX_TAGS && !searchTerm) {
+                hint.textContent = '显示前 ' + MAX_TAGS + ' 个，共 ' + total + ' 个，请搜索以查找更多';
+            } else if (searchTerm) {
+                hint.textContent = '找到 ' + shown + ' 个匹配的标签';
+            } else {
+                hint.textContent = '';
+            }
+        }
+        filterTags();
     </script>
 </body>
 </html>

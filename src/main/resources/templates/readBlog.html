@@ -57,6 +57,19 @@
 
         <hr>
 
+        <!--  封面  -->
+        <div class="blog-cover-card" th:if="${blog.cover_image != null and !blog.cover_image.isEmpty()}">
+            <div class="blog-cover-card-header">
+                <i class="bi bi-image"></i> 封面
+            </div>
+            <div class="blog-cover-card-body" onclick="openCoverLightbox(this.querySelector('img').src)">
+                <img class="blog-cover-image" th:src="${blog.cover_image}" alt="封面图片" loading="lazy">
+                <div class="blog-cover-overlay">
+                    <span><i class="bi bi-zoom-in"></i> 点击查看原图</span>
+                </div>
+            </div>
+        </div>
+
         <!--  正文  -->
         <div class="blog-content" id="textContent" th:utext="${blog.content}">正文</div>
 
@@ -107,6 +120,11 @@
         <a th:href="@{/}" class="btn btn-sm btn-outline-primary">← 返回首页</a>
     </main>
 
+    <!-- 封面灯箱 -->
+    <div class="blog-cover-lightbox" id="coverLightbox" onclick="closeCoverLightbox()">
+        <img id="coverLightboxImg" src="" alt="封面原图">
+    </div>
+
     <!-- 99.Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/comment.js"></script>
@@ -116,7 +134,27 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <!-- Mermaid 流程图渲染 -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- Flowchart.js + Sequence Diagram 渲染依赖（与 Editor.md 同版本） -->
+    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/raphael.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/flowchart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/jquery.flowchart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/underscore.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/sequence-diagram.min.js"></script>
     <script>
+        // 封面灯箱
+        function openCoverLightbox(src) {
+            document.getElementById('coverLightboxImg').src = src;
+            document.getElementById('coverLightbox').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeCoverLightbox() {
+            document.getElementById('coverLightbox').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeCoverLightbox();
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             // KaTeX 自动渲染
             renderMathInElement(document.querySelector('.blog-content'), {
@@ -143,7 +181,90 @@
                 mermaid.initialize({ startOnLoad: false, theme: 'dark' });
                 mermaid.run();
             }
+
+            // Flowchart.js 渲染（```flow 代码块）
+            document.querySelectorAll('.blog-content pre code.language-flow').forEach(function(block) {
+                var pre = block.parentElement;
+                var container = document.createElement('div');
+                container.className = 'flowchart-container';
+                try {
+                    var diagram = flowchart.parse(block.textContent);
+                    diagram.drawSVG(container);
+                    pre.parentElement.replaceChild(container, pre);
+                } catch (e) {
+                    container.textContent = '[流程图渲染失败]';
+                    container.style.color = '#ff6b6b';
+                    pre.parentElement.replaceChild(container, pre);
+                }
+            });
+
+            // Sequence Diagram 渲染（```seq 代码块）
+            document.querySelectorAll('.blog-content pre code.language-seq').forEach(function(block) {
+                var pre = block.parentElement;
+                var container = document.createElement('div');
+                container.className = 'sequence-diagram-container';
+                try {
+                    var diagram = Diagram.parse(block.textContent);
+                    diagram.drawSVG(container, { theme: 'simple' });
+                    pre.parentElement.replaceChild(container, pre);
+                } catch (e) {
+                    container.textContent = '[时序图渲染失败]';
+                    container.style.color = '#ff6b6b';
+                    pre.parentElement.replaceChild(container, pre);
+                }
+            });
+
+            // Emoji 短码转 Unicode（遍历 .blog-content 文本节点）
+            (function() {
+                var map = {
+                    'smile':'😊','laughing':'😆','joy':'😂','rofl':'🤣','wink':'😉','grin':'😁',
+                    'heart_eyes':'😍','kissing_heart':'😘','sweat_smile':'😅','stuck_out_tongue':'😛',
+                    'sunglasses':'😎','thinking':'🤔','neutral_face':'😐','confused':'😕','worried':'😟',
+                    'cry':'😢','sob':'😭','angry':'😠','rage':'😡','disappointed':'😞','fearful':'😨',
+                    'heart':'❤️','broken_heart':'💔','star':'⭐','sparkles':'✨','fire':'🔥',
+                    '+1':'👍','-1':'👎','clap':'👏','ok_hand':'👌','pray':'🙏','muscle':'💪',
+                    'rocket':'🚀','tada':'🎉','check':'✅','x':'❌','warning':'⚠️','question':'❓',
+                    'bulb':'💡','zap':'⚡','coffee':'☕','beer':'🍺','pizza':'🍕','cake':'🎂',
+                    '100':'💯','arrow_up':'⬆️','arrow_down':'⬇️','arrow_left':'⬅️','arrow_right':'➡️',
+                    'eyes':'👀','book':'📖','memo':'📝','link':'🔗','lock':'🔒','key':'🔑',
+                    'sun':'☀️','moon':'🌙','cloud':'☁️','rain':'🌧️','snow':'❄️','umbrella':'☔',
+                    'cat':'🐱','dog':'🐶','note':'🎵','art':'🎨','camera':'📷','phone':'📱',
+                    'mail':'📧','calendar':'📅','clock':'🕐','hourglass':'⏳','gift':'🎁',
+                    'info':'ℹ️','new':'🆕','free':'🆓','up':'🆙','cool':'🆒'
+                };
+                var blogContent = document.querySelector('.blog-content');
+                if (!blogContent) return;
+                var walker = document.createTreeWalker(blogContent, NodeFilter.SHOW_TEXT, null, false);
+                var textNodes = [];
+                while (walker.nextNode()) textNodes.push(walker.currentNode);
+                textNodes.forEach(function(node) {
+                    var text = node.textContent;
+                    var replaced = text.replace(/:([a-zA-Z0-9_+-]+):/g, function(m, name) {
+                        return map[name] || m;
+                    });
+                    if (replaced !== text) node.textContent = replaced;
+                });
+            })();
         });
+
+        // 正文图片包裹 + 悬停暗化 + 点击预览（DOMContentLoaded 之外，确保不受前面脚本错误影响）
+        (function wrapContentImages() {
+            var content = document.querySelector('.blog-content');
+            if (!content) return;
+            content.querySelectorAll('img').forEach(function(img) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'blog-img-wrapper';
+                var overlay = document.createElement('div');
+                overlay.className = 'blog-img-overlay';
+                overlay.innerHTML = '<span><i class="bi bi-zoom-in"></i> 查看原图</span>';
+                img.parentNode.insertBefore(wrapper, img);
+                wrapper.appendChild(img);
+                wrapper.appendChild(overlay);
+                wrapper.addEventListener('click', function() {
+                    openCoverLightbox(img.src);
+                });
+            });
+        })();
     </script>
 </body>
 </html>

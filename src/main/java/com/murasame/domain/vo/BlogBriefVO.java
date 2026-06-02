@@ -13,6 +13,7 @@ public class BlogBriefVO {
 	private Long u_id;             // blogs.u_id
 	private String title;               // blogs.title
 	private String brief;               // top 30 char of blogs.content
+	private String cover_image;         // 封面图片URL
 	private LocalDateTime created_at;   // same
 	private LocalDateTime updated_at;
 	private String author;              // users.nickname

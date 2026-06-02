@@ -27,20 +27,21 @@
                         <h6 class="sidebar-title">
                             <i class="bi bi-tags"></i> 标签
                         </h6>
-                        <div class="tags-cloud">
-                            <a th:each="tag : ${allTags}" th:href="@{/blogs/tag/{id}(id=${tag.id})}" 
+                        <input type="text" class="tag-search-input" id="tagSearch" placeholder="搜索标签..."
+                               oninput="filterTags()">
+                        <div class="tags-cloud" id="tagsCloud">
+                            <a th:each="tag : ${allTags}" th:href="@{/blogs/tag/{id}(id=${tag.id})}"
                                class="tag-badge"
                                th:class="${selectedTagId != null and selectedTagId == tag.id ? 'tag-badge active' : 'tag-badge'}"
                                th:text="${tag.tagName}">标签</a>
                         </div>
+                        <div class="tag-limit-hint" id="tagLimitHint"></div>
                     </div>
                 </div>
             </aside>
 
             <!-- 中间内容 -->
             <div class="col-lg-8 col-md-6 mb-4">
-                <h5 class="mb-3">最新文章</h5>
-
                 <!-- 搜索与筛选 -->
                 <div class="search-container mb-4">
                     <form th:action="@{/}" method="get" class="search-form" id="searchForm">
@@ -92,19 +93,39 @@
                     </div>
                 </div>
 
-                <div class="card shadow-sm mb-3 card-clickable" th:each="b : ${blogBrief}" th:attr="data-href=@{/blogs/read/{id}(id=${b.id})}">
-                    <div class="card-body">
-                        <!-- 标题 -->
-                        <h5 class="card-title mb-2">
-                            <a th:href="@{/blogs/read/{id}(id=${b.id})}" th:text="${b.title}">标题</a>
-                        </h5>
-                        
-                        <!-- 摘要 -->
-                        <p class="card-text text-muted small mb-3"
-                           th:text="${b.brief}+'...'">摘要...</p>
-                        
-                        <!-- 元信息 -->
+                <div class="card shadow-sm mb-3 card-clickable blog-card-new" th:each="b : ${blogBrief}" th:attr="data-href=@{/blogs/read/{id}(id=${b.id})}">
+                    <div class="card-body card-body-new">
+                        <!-- 上区：标题（左）+ 封面缩略图（右） -->
+                        <div class="card-upper">
+                            <div class="card-info">
+                                <h5 class="card-title mb-2">
+                                    <a th:href="@{/blogs/read/{id}(id=${b.id})}" th:text="${b.title}">标题</a>
+                                </h5>
+                                <!-- 摘要 -->
+                                <p class="card-text text-muted small mb-2"
+                                   th:text="${b.brief}+'...'">摘要...</p>
+                                <!-- 标签移到摘要下方 -->
+                                <div class="blog-tags" th:if="${b.t_id != null and b.t_id.tagList != null and !b.t_id.tagList.isEmpty()}">
+                                    <th:block th:each="tagId : ${b.t_id.tagList}">
+                                        <span th:each="tag : ${allTags}" th:if="${tag.id == tagId}" class="blog-tag" th:text="${tag.tagName}">标签</span>
+                                    </th:block>
+                                </div>
+                            </div>
+                            <!-- 封面缩略图：仅当 cover_image 非空时渲染 -->
+                            <div class="card-cover" th:if="${b.cover_image != null and !b.cover_image.isEmpty()}">
+                                <img th:src="${b.cover_image}" alt="封面" class="cover-thumbnail">
+                            </div>
+                        </div>
+
+                        <!-- 下区：作者 + 元信息 -->
                         <div class="blog-meta">
+                            <span class="meta-item">
+                                <a th:href="@{/user/profile(id=${b.u_id})}" class="author-link">
+                                    <img th:src="${b.author_avatar != null ? b.author_avatar : '/images/default-avatar.png'}"
+                                         class="author-avatar-mini" alt="" style="width:22px;height:22px;object-fit:cover;">
+                                    <span th:text="${b.author}">作者</span>
+                                </a>
+                            </span>
                             <span class="meta-item">
                                 <i class="bi bi-eye"></i>
                                 <span th:text="${b.read_count != null ? b.read_count : 0}">0</span>
@@ -118,24 +139,10 @@
                                 <span th:text="${b.comment_count != null ? b.comment_count : 0}">0</span>
                             </span>
                             <span class="meta-item">
-                                <a th:href="@{/user/profile(id=${b.u_id})}" class="author-link">
-                                    <img th:src="${b.author_avatar != null ? b.author_avatar : '/images/default-avatar.png'}"
-                                         class="author-avatar-mini" alt="" style="width:22px;height:22px;object-fit:cover;">
-                                    <span th:text="${b.author}">作者</span>
-                                </a>
-                            </span>
-                            <span class="meta-item">
                                 <i class="bi bi-calendar"></i>
                                 <span th:text="${#temporals.format(b.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 17:00</span>
                             </span>
                         </div>
-
-                        <div class="blog-tags" th:if="${b.t_id != null and b.t_id.tagList != null and !b.t_id.tagList.isEmpty()}">
-                            <th:block th:each="tagId : ${b.t_id.tagList}">
-                                <span th:each="tag : ${allTags}" th:if="${tag.id == tagId}" class="blog-tag" th:text="${tag.tagName}">标签</span>
-                            </th:block>
-                        </div>
-
                     </div>
                 </div>
 
@@ -239,6 +246,12 @@
             <!-- 右侧栏 -->
             <aside class="col-lg-2 col-md-3 mb-4">
                 <div class="sidebar-right">
+                    <!-- 签到Widget -->
+                    <div class="sidebar-section sign-in-widget" id="signInWidget">
+                        <h6 class="sidebar-title"><i class="bi bi-calendar-check"></i> 每日签到</h6>
+                        <div class="sign-in-loading">加载中...</div>
+                    </div>
+
                     <div class="sidebar-section">
                         <h6 class="sidebar-title">
                             <i class="bi bi-fire"></i> 热门文章
@@ -286,6 +299,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/weather.js"></script>
     <script src="/js/search.js"></script>
+    <script src="/js/sign-in.js"></script>
     <script>
         // 整张卡片点击跳转
         document.querySelectorAll('.card-clickable').forEach(function(card) {
@@ -296,6 +310,35 @@
                 if (href) window.location = href;
             });
         });
+
+        // 标签搜索与限制显示
+        var MAX_TAGS = 10;
+        function filterTags() {
+            var searchTerm = document.getElementById('tagSearch').value.toLowerCase();
+            var badges = document.querySelectorAll('#tagsCloud .tag-badge');
+            var visibleCount = 0;
+            badges.forEach(function(badge) {
+                var match = badge.textContent.toLowerCase().includes(searchTerm);
+                if (match && visibleCount < MAX_TAGS) {
+                    badge.style.display = '';
+                    visibleCount++;
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+            var hint = document.getElementById('tagLimitHint');
+            var total = badges.length;
+            var filtered = document.querySelectorAll('#tagsCloud .tag-badge[style*="display: none"]').length;
+            var shown = total - filtered;
+            if (total > MAX_TAGS && !searchTerm) {
+                hint.textContent = '显示前 ' + MAX_TAGS + ' 个，共 ' + total + ' 个，请搜索以查找更多';
+            } else if (searchTerm) {
+                hint.textContent = '找到 ' + shown + ' 个匹配的标签';
+            } else {
+                hint.textContent = '';
+            }
+        }
+        filterTags();
     </script>
 </body>
 </html>

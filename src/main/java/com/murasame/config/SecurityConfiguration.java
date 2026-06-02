@@ -15,7 +15,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -29,7 +28,8 @@ public class SecurityConfiguration {
     private final UserService userService;
 
     public SecurityConfiguration(JwtUtil jwtUtil, JwtAuthenticationEntryPoint entryPoint,
-                                  StringRedisTemplate redisTemplate, UserService userService) {
+                                  StringRedisTemplate redisTemplate,
+                                  UserService userService) {
         this.jwtUtil = jwtUtil;
         this.entryPoint = entryPoint;
         this.redisTemplate = redisTemplate;
@@ -51,10 +51,13 @@ public class SecurityConfiguration {
                             "/blogs/like/**",
                             "/blogs/unlike/**",
                             "/blogs/recover/**",
+                            "/blogs/uploadCover",
                             "/user/comment/add",
                             "/user/avatar/upload",
                             "/user/settings/**",
-                            "/user/profile/update").authenticated();
+                            "/user/profile/update",
+                            "/sign-in",
+                            "/sign-in/makeup").authenticated();
                     // 其余放行（页面渲染、公开 API、登录注册等）
                     auth.anyRequest().permitAll();
                 })
@@ -66,11 +69,6 @@ public class SecurityConfiguration {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService), UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     // 从源头禁止 HttpSession 创建：拦截 getSession() 返回 null，杜绝 JSESSIONID
