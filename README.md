@@ -2,6 +2,8 @@
 
 基于 Spring Boot + Thymeleaf 的深色风格个人博客系统。
 
+已有体验版网站：https://www.murasameblog.top
+
 ## 效果预览
 
 ### 首页
