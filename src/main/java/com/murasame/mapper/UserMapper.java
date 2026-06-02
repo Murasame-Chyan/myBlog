@@ -49,4 +49,17 @@ public interface UserMapper {
 
     @Update("UPDATE users SET following_count = GREATEST(following_count - 1, 0) WHERE id = #{userId}")
     int decrementFollowingCount(@Param("userId") Long userId);
+
+    // 原子更新经验值，同时更新等级；上限 999999
+    @Update("UPDATE users SET exp = LEAST(exp + #{delta}, 999999), level = #{newLevel} WHERE id = #{userId}")
+    int addExp(@Param("userId") Long userId, @Param("delta") int delta, @Param("newLevel") int newLevel);
+
+    @Select("SELECT exp FROM users WHERE id = #{userId}")
+    int getExpById(@Param("userId") Long userId);
+
+    @Update("UPDATE users SET achievement = #{achievement} WHERE id = #{userId}")
+    int updateAchievement(@Param("userId") Long userId, @Param("achievement") String achievement);
+
+    @Select("SELECT achievement FROM users WHERE id = #{userId}")
+    String getAchievementById(@Param("userId") Long userId);
 }

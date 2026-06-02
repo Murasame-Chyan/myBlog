@@ -16,6 +16,7 @@ public class Blogs {
 	@Size(max = 255, message = "标题不能超过255个字符")
 	String title;
 	String content;
+	String cover_image;  // 封面图片URL
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	TagWrapper t_id;
 	Long read_count;

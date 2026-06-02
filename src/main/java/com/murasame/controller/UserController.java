@@ -140,7 +140,28 @@ public class UserController {
 		}
 		model.addAttribute("followerCount", followService.countFollowers(profileUserId));
 		model.addAttribute("followingCount", followService.countFollowing(profileUserId));
+		// 经验值等级体系：动态阈值供模板使用
+		Integer exp = profileUser.getExp();
+		if (exp != null) {
+			int nextLevelExp = userService.getExpForNextLevel(exp);
+			int currentLevelExp = userService.getCurrentLevelExp(exp);
+			boolean isMaxLevel = nextLevelExp <= 0;
+			int level = profileUser.getLevel() != null ? profileUser.getLevel() : 1;
+			model.addAttribute("expForNextLevel", isMaxLevel ? 999999 : nextLevelExp);
+			model.addAttribute("expProgressInLevel", exp - currentLevelExp);
+			model.addAttribute("currentLevelExp", currentLevelExp);
+			model.addAttribute("isMaxLevel", isMaxLevel);
+			model.addAttribute("levelBarColor", getLevelBarColor(level, isMaxLevel));
+		}
 		return "profile";
+	}
+
+	private static final String[] LEVEL_BAR_COLORS = {"", "#8BC34A", "#64B5F6", "#FFD54F", "#FFB74D", "#EF5350", "#F48FB1"};
+	private static final String MAX_LEVEL_BAR_COLOR = "#CE93D8";
+
+	private String getLevelBarColor(int level, boolean isMaxLevel) {
+		if (isMaxLevel) return MAX_LEVEL_BAR_COLOR;
+		return LEVEL_BAR_COLORS[Math.min(level, 6)];
 	}
 
 	@ResponseBody

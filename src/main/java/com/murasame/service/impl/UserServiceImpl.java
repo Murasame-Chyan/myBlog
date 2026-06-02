@@ -128,10 +128,11 @@ public class UserServiceImpl implements UserService {
 		return userMapper.getUserByEmail(email);
 	}
 
-	// 经验值等级体系：共10级，阈值大致每级翻倍，从LV1(0)到LV10(600,000)
-	private static final long[] LEVEL_THRESHOLDS = {
-		0, 200, 1500, 4500, 10800, 28800, 65000, 140000, 300000, 600000
+	// 经验值等级体系：6级，阈值 993-5461-11451-23333-36666，上限 999999
+	private static final int[] LEVEL_THRESHOLDS = {
+		0, 993, 5461, 11451, 23333, 36666
 	};
+	private static final int MAX_EXP = 999999;
 
 	@Override
 	public int calculateLevel(int exp) {
@@ -144,6 +145,34 @@ public class UserServiceImpl implements UserService {
 			}
 		}
 		return level;
+	}
+
+	@Override
+	public int addExp(Long userId, int delta) {
+		if (delta <= 0) return userMapper.getExpById(userId);
+		int currentExp = userMapper.getExpById(userId);
+		int newExp = Math.min(currentExp + delta, MAX_EXP);
+		int newLevel = calculateLevel(newExp);
+		userMapper.addExp(userId, delta, newLevel);
+		return newExp;
+	}
+
+	@Override
+	public int getExp(Long userId) {
+		return userMapper.getExpById(userId);
+	}
+
+	@Override
+	public int getCurrentLevelExp(int exp) {
+		int level = calculateLevel(exp);
+		return LEVEL_THRESHOLDS[level - 1];
+	}
+
+	@Override
+	public int getExpForNextLevel(int exp) {
+		int level = calculateLevel(exp);
+		if (level >= LEVEL_THRESHOLDS.length) return -1;
+		return LEVEL_THRESHOLDS[level];
 	}
 
 	@Override

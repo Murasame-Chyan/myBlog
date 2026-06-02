@@ -28,4 +28,16 @@ public interface UserService {
 
     /** 根据 GitHub 用户名查找已绑定 token 的用户，取第一个匹配者的解密 token */
     String findGithubTokenByGithubUsername(String githubUsername);
+
+    /** 原子增加经验值并更新等级，返回新经验值 */
+    int addExp(Long userId, int delta);
+
+    /** 从 DB 读取当前经验值 */
+    int getExp(Long userId);
+
+    /** 当前等级起始经验值 */
+    int getCurrentLevelExp(int exp);
+
+    /** 下一等级所需总经验，已满级返回 -1 */
+    int getExpForNextLevel(int exp);
 }

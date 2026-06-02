@@ -36,6 +36,13 @@ public class FileUploadController {
             result.put("message", "请先登录");
             return result;
         }
+        // 拒绝超过 15MB 的图片，给用户友好的错误提示
+        if (file.getSize() > 15 * 1024 * 1024) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", 0);
+            result.put("message", "图片大小不能超过 15MB，请压缩后重新上传");
+            return result;
+        }
         try {
             String imageUrl = cosUploadService.uploadImage(file);
 

@@ -3,6 +3,9 @@
 springdoc:
   api-docs:
     enabled: false
+  swagger-ui:
+    enabled: false    # 关掉 UI 页面
+
 
 logging:
   level:

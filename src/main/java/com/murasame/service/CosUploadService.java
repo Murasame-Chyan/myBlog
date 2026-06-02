@@ -20,4 +20,11 @@ public interface CosUploadService {
      * @return 头像访问 URL
      */
     String uploadAvatar(MultipartFile file, Long userId) throws IOException;
+
+    /**
+     * 上传博客封面图片（不压缩，原图上传）
+     * @param file 封面图片文件
+     * @return 封面图片访问 URL
+     */
+    String uploadCoverImage(MultipartFile file) throws IOException;
 }
