@@ -259,13 +259,13 @@ public interface BlogMapper {
     @Select("""
         SELECT
             t.id as tag_id,
-            t.tag_name,
+            t.tagName as tag_name,
             COUNT(DISTINCT b.id) as blog_count,
             COALESCE(AVG(b.read_count), 0) as avg_reads
         FROM tag t
         INNER JOIN blogs b ON JSON_CONTAINS(b.t_id, CAST(t.id AS CHAR), '$.tagList')
         WHERE b.u_id = #{userId}
-        GROUP BY t.id, t.tag_name
+        GROUP BY t.id, t.tagName
         HAVING blog_count > 0
         ORDER BY blog_count DESC
     """)
