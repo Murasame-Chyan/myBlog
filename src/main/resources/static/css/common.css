@@ -2786,3 +2786,80 @@ hr {
     background: rgba(255, 255, 255, 0.25);
     color: #fff;
 }
+
+/* ==================== 创作者数据分析页面 ==================== */
+.page-header {
+    border-bottom: 1px solid rgba(135, 206, 235, 0.2);
+    padding-bottom: 12px;
+}
+
+.analytics-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(135, 206, 235, 0.15);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s ease;
+}
+
+.analytics-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(135, 206, 235, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.analytics-card-body {
+    flex: 1;
+}
+
+.analytics-card-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 4px;
+}
+
+.analytics-card-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.analytics-section {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(135, 206, 235, 0.12);
+    border-radius: 14px;
+    padding: 20px;
+}
+
+.analytics-section-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(135, 206, 235, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.analytics-section-title i {
+    color: #87CEEB;
+}
