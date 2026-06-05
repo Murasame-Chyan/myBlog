@@ -306,8 +306,25 @@ function renderHeatmapChart(publishHeatmap) {
         heatmapChart = echarts.init(chartDom);
     }
 
-    const data = publishHeatmap.map(d => [d.date, d.publishCount]);
-    const maxCount = Math.max(...publishHeatmap.map(d => d.publishCount), 1);
+    // 构造过去一年的数据（从今天往前推365天）
+    const today = new Date();
+    const oneYearAgo = new Date(today);
+    oneYearAgo.setDate(today.getDate() - 364);
+
+    // 创建日期到数量的映射
+    const dataMap = {};
+    publishHeatmap.forEach(item => {
+        dataMap[item.date] = item.publishCount;
+    });
+
+    // 生成完整的365天数据
+    const fullYearData = [];
+    for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        fullYearData.push([dateStr, dataMap[dateStr] || 0]);
+    }
+
+    const maxCount = Math.max(...fullYearData.map(d => d[1]), 1);
 
     const option = {
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -316,7 +333,7 @@ function renderHeatmapChart(publishHeatmap) {
                 const count = params.value[1];
                 return `<div style="text-align:left;">
                     <strong>${params.value[0]}</strong><br/>
-                    ${count > 0 ? `<span style="color:#87CEEB;">${count}篇</span> 文章` : '无发文'}
+                    ${count > 0 ? `<span style="color:#87CEEB;">${count} 篇</span>文章` : '<span style="color:#888;">无发文</span>'}
                 </div>`;
             },
             backgroundColor: 'rgba(30, 35, 50, 0.95)',
@@ -331,42 +348,44 @@ function renderHeatmapChart(publishHeatmap) {
             type: 'continuous',
             inRange: {
                 color: [
-                    'rgba(135, 206, 235, 0.05)',  // 0篇 - 几乎透明
-                    'rgba(135, 206, 235, 0.25)',  // 少量
-                    'rgba(135, 206, 235, 0.5)',   // 中等
-                    'rgba(135, 206, 235, 0.75)',  // 较多
-                    'rgba(135, 206, 235, 1)'      // 很多
+                    'rgba(255, 255, 255, 0.08)',  // 0篇 - 深色背景格子
+                    'rgba(135, 206, 235, 0.3)',   // 1篇
+                    'rgba(135, 206, 235, 0.5)',   // 2-3篇
+                    'rgba(135, 206, 235, 0.75)',  // 4-5篇
+                    'rgba(135, 206, 235, 1)'      // 6+篇
                 ]
             }
         },
         calendar: {
-            top: 40,
-            left: 40,
+            top: 35,
+            left: 50,
             right: 20,
-            bottom: 10,
-            cellSize: ['auto', 14],
-            range: new Date().getFullYear(),
+            bottom: 5,
+            cellSize: [13, 13],  // 固定格子大小
+            range: [oneYearAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]],
+            orient: 'horizontal',
             itemStyle: {
-                borderWidth: 2,
+                borderWidth: 3,
                 borderColor: 'rgba(20, 24, 38, 1)',
                 borderRadius: 2
             },
             yearLabel: {
-                show: true,
-                position: 'top',
-                formatter: '{start}',
-                color: 'rgba(255,255,255,0.6)',
-                fontSize: 14
+                show: false
             },
             dayLabel: {
+                show: true,
                 firstDay: 1,
-                nameMap: ['日', '一', '二', '三', '四', '五', '六'],
+                nameMap: ['一', '三', '五'],
+                margin: 10,
                 color: 'rgba(255,255,255,0.4)',
-                fontSize: 11
+                fontSize: 10
             },
             monthLabel: {
+                show: true,
+                nameMap: 'cn',
+                margin: 5,
                 color: 'rgba(255,255,255,0.5)',
-                fontSize: 11
+                fontSize: 10
             },
             splitLine: {
                 show: false
@@ -375,13 +394,13 @@ function renderHeatmapChart(publishHeatmap) {
         series: [{
             type: 'heatmap',
             coordinateSystem: 'calendar',
-            data: data,
+            data: fullYearData,
             emphasis: {
                 itemStyle: {
                     borderColor: '#87CEEB',
                     borderWidth: 2,
-                    shadowBlur: 10,
-                    shadowColor: 'rgba(135, 206, 235, 0.5)'
+                    shadowBlur: 8,
+                    shadowColor: 'rgba(135, 206, 235, 0.6)'
                 }
             }
         }]
@@ -390,6 +409,7 @@ function renderHeatmapChart(publishHeatmap) {
     heatmapChart.setOption(option);
     window.addEventListener('resize', () => heatmapChart.resize());
 }
+
 
 
 
