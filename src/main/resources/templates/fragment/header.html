@@ -42,6 +42,81 @@
     box-shadow: 0 4px 12px rgba(135, 206, 235, 0.6);
     color: #ffffff !important;
   }
+
+  /* 创作者中心下拉菜单 */
+  .creator-dropdown {
+    position: relative;
+    display: inline-block;
+    z-index: 100;
+  }
+
+  .creator-dropdown-menu {
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: rgba(30, 35, 50, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(135, 206, 235, 0.2);
+    border-radius: 12px;
+    min-width: 180px;
+    padding: 8px 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    transition: opacity 0.25s ease,
+                transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+                visibility 0s 0.45s;
+    pointer-events: none;
+  }
+
+  /* 向上箭头指示器 */
+  .creator-dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 14px;
+    height: 14px;
+    background: rgba(30, 35, 50, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 2px 0 0 0;
+    border-top: 1px solid rgba(135, 206, 235, 0.2);
+    border-left: 1px solid rgba(135, 206, 235, 0.2);
+    z-index: 1;
+  }
+
+  .creator-dropdown.show .creator-dropdown-menu {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    transition: opacity 0.2s ease,
+                transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+                visibility 0s 0s;
+    pointer-events: auto;
+  }
+
+  /* 雪佛龙图标旋转动画 */
+  .creator-dropdown.show .bi-chevron-down {
+    transform: rotate(180deg);
+  }
+
+  /* 扩展占位区样式 */
+  .dropdown-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px 12px;
+    gap: 6px;
+    text-align: center;
+    pointer-events: none;
+  }
 </style>
 <nav class="navbar navbar-expand-lg navbar-custom">
   <div class="container">
@@ -99,9 +174,29 @@
         <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'index' ? 'active' : ''}" th:href="@{/}">首页</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'game' ? 'active' : ''}" th:href="@{/game}">小游戏</a></li>
         <li class="nav-item ms-lg-3">
-          <a th:href="@{/blogs/write}" class="btn btn-write">
-            <i class="bi bi-pencil-square"></i> 写作
-          </a>
+          <div class="creator-dropdown" id="creatorDropdown">
+            <button class="btn btn-write" style="cursor: pointer;" onclick="toggleCreatorMenu(event)">
+              <i class="bi bi-pencil-square"></i> 创作者中心
+              <i class="bi bi-chevron-down" style="font-size: 0.75rem; margin-left: 4px; transition: transform 0.3s;"></i>
+            </button>
+            <div class="creator-dropdown-menu">
+              <!-- 主功能区 -->
+              <a th:href="@{/blogs/write}" class="dropdown-item">
+                <i class="bi bi-pencil"></i> 写博客
+              </a>
+              <a th:href="@{/creator/analytics}" class="dropdown-item">
+                <i class="bi bi-graph-up"></i> 数据分析
+              </a>
+
+              <div class="dropdown-divider"></div>
+
+              <!-- 扩展占位区 -->
+              <div class="dropdown-placeholder">
+                <i class="bi bi-plus-circle" style="font-size: 1.5rem; color: rgba(255,255,255,0.15);"></i>
+                <span style="font-size: 0.72rem; color: rgba(255,255,255,0.25);">更多功能即将上线</span>
+              </div>
+            </div>
+          </div>
         </li>
       </ul>
     </div>
@@ -451,6 +546,28 @@
     }
     document.addEventListener('click', function(e) {
         var dd = document.getElementById('avatarDropdown');
+        if (dd && dd.classList.contains('show') && !dd.contains(e.target)) {
+            dd.classList.remove('show');
+        }
+    });
+
+    // ===== 创作者中心下拉菜单 =====
+    function toggleCreatorMenu(e) {
+        e.stopPropagation();
+        var dropdown = document.getElementById('creatorDropdown');
+
+        // 关闭头像菜单（互斥）
+        var avatarDropdown = document.getElementById('avatarDropdown');
+        if (avatarDropdown && avatarDropdown.classList.contains('show')) {
+            avatarDropdown.classList.remove('show');
+        }
+
+        dropdown.classList.toggle('show');
+    }
+
+    // 点击外部关闭创作者菜单
+    document.addEventListener('click', function(e) {
+        var dd = document.getElementById('creatorDropdown');
         if (dd && dd.classList.contains('show') && !dd.contains(e.target)) {
             dd.classList.remove('show');
         }
