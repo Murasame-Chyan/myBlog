@@ -214,4 +214,92 @@ public interface BlogMapper {
     })
     @Select("SELECT * FROM blogsBin WHERE u_id=#{userId} ORDER BY deleted_at DESC")
     java.util.List<com.murasame.entity.BlogsBin> getUserBins(@Param("userId") Long userId);
+
+    /**
+     * 获取用户创作数据统计
+     */
+    @Select("""
+        SELECT
+            COUNT(*) as total_blogs,
+            COALESCE(SUM(read_count), 0) as total_reads,
+            COALESCE(SUM(like_count), 0) as total_likes
+        FROM blogs
+        WHERE u_id = #{userId}
+    """)
+    Map<String, Object> getCreatorStats(@Param("userId") Long userId);
+
+    /**
+     * 获取用户总评论数
+     */
+    @Select("""
+        SELECT COUNT(*)
+        FROM comments c
+        INNER JOIN blogs b ON c.b_id = b.id
+        WHERE b.u_id = #{userId}
+    """)
+    Long getTotalCommentsByCreator(@Param("userId") Long userId);
+
+    /**
+     * 获取热门文章Top10
+     */
+    @Select("""
+        SELECT id, title, read_count, like_count,
+               (read_count * 0.5 + like_count * 2) as score
+        FROM blogs
+        WHERE u_id = #{userId}
+        ORDER BY score DESC
+        LIMIT 10
+    """)
+    List<Map<String, Object>> getHotBlogsTop10(@Param("userId") Long userId);
+
+    /**
+     * 获取用户标签分析数据
+     */
+    @Select("""
+        SELECT
+            t.id as tag_id,
+            t.tag_name,
+            COUNT(b.id) as blog_count,
+            AVG(b.read_count) as avg_reads
+        FROM tag t
+        LEFT JOIN blogs b ON JSON_CONTAINS(b.t_id, CAST(t.id AS JSON), '$.tagList')
+        WHERE b.u_id = #{userId}
+        GROUP BY t.id, t.tag_name
+        HAVING blog_count > 0
+        ORDER BY blog_count DESC
+    """)
+    List<Map<String, Object>> getTagAnalytics(@Param("userId") Long userId);
+
+    /**
+     * 获取近N天的趋势数据
+     */
+    @Select("""
+        SELECT
+            DATE(created_at) as date,
+            COUNT(*) as publish_count,
+            SUM(read_count) as daily_reads,
+            SUM(like_count) as daily_likes
+        FROM blogs
+        WHERE u_id = #{userId}
+          AND created_at >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+    """)
+    List<Map<String, Object>> getTrendData(@Param("userId") Long userId, @Param("days") int days);
+
+    /**
+     * 获取全年发文热力图数据（365天）
+     */
+    @Select("""
+        SELECT
+            DATE(created_at) as date,
+            COUNT(*) as publish_count
+        FROM blogs
+        WHERE u_id = #{userId}
+          AND created_at >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)
+        GROUP BY DATE(created_at)
+    """)
+    List<Map<String, Object>> getPublishHeatmap(@Param("userId") Long userId);
+}
+
 }
