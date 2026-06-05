@@ -1,5 +1,5 @@
-// 全局图表实例
-let trendChart, hotBlogsChart, tagChart, interactionChart, heatmapChart;
+// 全局图表实例（热力图改为原生SVG，不再使用echarts）
+let trendChart, hotBlogsChart, tagChart, interactionChart;
 
 // 页面加载时获取数据
 document.addEventListener('DOMContentLoaded', function() {
@@ -299,116 +299,170 @@ function renderInteractionChart(likeRate, commentRate) {
     window.addEventListener('resize', () => interactionChart.resize());
 }
 
-// 发文热力图（GitHub风格）
+// 发文热力图（原生SVG GitHub风格）
 function renderHeatmapChart(publishHeatmap) {
-    const chartDom = document.getElementById('heatmapChart');
-    if (!heatmapChart) {
-        heatmapChart = echarts.init(chartDom);
-    }
+    const svg = document.getElementById('heatmapChart');
+    const tooltipEl = document.getElementById('heatmapTooltip');
+    if (!svg) return;
+
+    const CELL = 11;
+    const GAP = 3;
+    const ROWS = 7;
+    const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const DAYS = ['', '一', '', '三', '', '五', ''];
 
     // 构造过去一年的数据（从今天往前推365天）
     const today = new Date();
     const oneYearAgo = new Date(today);
     oneYearAgo.setDate(today.getDate() - 364);
 
-    // 创建日期到数量的映射
     const dataMap = {};
     publishHeatmap.forEach(item => {
         dataMap[item.date] = item.publishCount;
     });
 
-    // 生成完整的365天数据
-    const fullYearData = [];
+    const contributions = [];
     for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
-        fullYearData.push([dateStr, dataMap[dateStr] || 0]);
+        contributions.push({
+            date: dateStr,
+            count: dataMap[dateStr] || 0
+        });
     }
 
-    const maxCount = Math.max(...fullYearData.map(d => d[1]), 1);
+    const maxCount = Math.max(...contributions.map(d => d.count), 1);
+    const weeks = Math.ceil(contributions.length / ROWS);
+    const labelOffset = 28;
+    const headerOffset = 16;
+    const svgWidth = labelOffset + weeks * (CELL + GAP);
+    const svgHeight = headerOffset + ROWS * (CELL + GAP);
 
-    const option = {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        tooltip: {
-            formatter: function(params) {
-                const count = params.value[1];
-                return `<div style="text-align:left;">
-                    <strong>${params.value[0]}</strong><br/>
-                    ${count > 0 ? `<span style="color:#87CEEB;">${count} 篇</span>文章` : '<span style="color:#888;">无发文</span>'}
-                </div>`;
-            },
-            backgroundColor: 'rgba(30, 35, 50, 0.95)',
-            borderColor: 'rgba(135, 206, 235, 0.3)',
-            textStyle: { color: '#fff' },
-            padding: 10
-        },
-        visualMap: {
-            show: false,
-            min: 0,
-            max: maxCount,
-            type: 'continuous',
-            inRange: {
-                color: [
-                    'rgba(255, 255, 255, 0.08)',  // 0篇 - 深色背景格子
-                    'rgba(135, 206, 235, 0.3)',   // 1篇
-                    'rgba(135, 206, 235, 0.5)',   // 2-3篇
-                    'rgba(135, 206, 235, 0.75)',  // 4-5篇
-                    'rgba(135, 206, 235, 1)'      // 6+篇
-                ]
-            }
-        },
-        calendar: {
-            top: 35,
-            left: 50,
-            right: 20,
-            bottom: 5,
-            cellSize: [13, 13],  // 固定格子大小
-            range: [oneYearAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]],
-            orient: 'horizontal',
-            itemStyle: {
-                borderWidth: 3,
-                borderColor: 'rgba(20, 24, 38, 1)',
-                borderRadius: 2
-            },
-            yearLabel: {
-                show: false
-            },
-            dayLabel: {
-                show: true,
-                firstDay: 1,
-                nameMap: ['一', '三', '五'],
-                margin: 10,
-                color: 'rgba(255,255,255,0.4)',
-                fontSize: 10
-            },
-            monthLabel: {
-                show: true,
-                nameMap: 'cn',
-                margin: 5,
-                color: 'rgba(255,255,255,0.5)',
-                fontSize: 10
-            },
-            splitLine: {
-                show: false
-            }
-        },
-        series: [{
-            type: 'heatmap',
-            coordinateSystem: 'calendar',
-            data: fullYearData,
-            emphasis: {
-                itemStyle: {
-                    borderColor: '#87CEEB',
-                    borderWidth: 2,
-                    shadowBlur: 8,
-                    shadowColor: 'rgba(135, 206, 235, 0.6)'
-                }
-            }
-        }]
-    };
+    svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+    svg.innerHTML = '';
 
-    heatmapChart.setOption(option);
-    window.addEventListener('resize', () => heatmapChart.resize());
+    const ns = 'http://www.w3.org/2000/svg';
+
+    // 顶部月份标签
+    const monthLabels = [];
+    let lastMonth = -1;
+    for (let w = 0; w < weeks; w++) {
+        const idx = w * ROWS;
+        if (idx < contributions.length) {
+            const month = new Date(contributions[idx].date).getMonth();
+            if (month !== lastMonth) {
+                monthLabels.push({
+                    label: MONTHS[month],
+                    x: labelOffset + w * (CELL + GAP)
+                });
+                lastMonth = month;
+            }
+        }
+    }
+
+    monthLabels.forEach(m => {
+        const text = document.createElementNS(ns, 'text');
+        text.setAttribute('x', m.x);
+        text.setAttribute('y', 11);
+        text.setAttribute('fill', 'rgba(255,255,255,0.5)');
+        text.setAttribute('font-size', '10');
+        text.setAttribute('font-family', 'sans-serif');
+        text.textContent = m.label;
+        svg.appendChild(text);
+    });
+
+    // 左侧星期标签
+    DAYS.forEach((d, i) => {
+        if (d) {
+            const text = document.createElementNS(ns, 'text');
+            text.setAttribute('x', 0);
+            text.setAttribute('y', headerOffset + i * (CELL + GAP) + CELL - 1);
+            text.setAttribute('fill', 'rgba(255,255,255,0.4)');
+            text.setAttribute('font-size', '9');
+            text.setAttribute('font-family', 'sans-serif');
+            text.textContent = d;
+            svg.appendChild(text);
+        }
+    });
+
+    // 绘制格子
+    contributions.forEach((day, idx) => {
+        const col = Math.floor(idx / ROWS);
+        const row = idx % ROWS;
+        const rect = document.createElementNS(ns, 'rect');
+
+        rect.setAttribute('x', labelOffset + col * (CELL + GAP));
+        rect.setAttribute('y', headerOffset + row * (CELL + GAP));
+        rect.setAttribute('width', CELL);
+        rect.setAttribute('height', CELL);
+        rect.setAttribute('rx', 2);
+        rect.setAttribute('ry', 2);
+
+        // 计算颜色透明度
+        let opacity;
+        if (day.count === 0) {
+            opacity = 0.1;
+        } else if (day.count === 1) {
+            opacity = 0.3;
+        } else if (day.count <= 3) {
+            opacity = 0.6;
+        } else if (day.count <= 5) {
+            opacity = 0.85;
+        } else {
+            opacity = 1;
+        }
+
+        rect.setAttribute('fill', `rgba(135, 206, 235, ${opacity})`);
+        rect.style.transition = 'opacity 150ms, filter 150ms';
+        rect.style.cursor = 'default';
+
+        // hover效果
+        rect.addEventListener('mouseenter', function() {
+            this.style.opacity = '1';
+            this.style.filter = 'drop-shadow(0 2px 6px rgba(135, 206, 235, 0.5))';
+            showTooltip(day.date, day.count, this);
+        });
+
+        rect.addEventListener('mouseleave', function() {
+            this.style.opacity = '';
+            this.style.filter = '';
+            hideTooltip();
+        });
+
+        svg.appendChild(rect);
+    });
+
+    function showTooltip(date, count, element) {
+        const d = new Date(date);
+        const dateStr = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+        const text = count > 0 ? `${dateStr}: ${count} 篇文章` : `${dateStr}: 无发文`;
+
+        tooltipEl.textContent = text;
+        tooltipEl.style.display = 'block';
+
+        const rect = element.getBoundingClientRect();
+        const tooltipRect = tooltipEl.getBoundingClientRect();
+
+        let x = rect.left + rect.width / 2 - tooltipRect.width / 2;
+        let y = rect.top - tooltipRect.height - 8;
+
+        const margin = 10;
+        const maxX = window.innerWidth - tooltipRect.width - margin;
+        x = Math.max(margin, Math.min(x, maxX));
+
+        if (y < margin) {
+            y = rect.bottom + 8;
+        }
+
+        tooltipEl.style.left = x + 'px';
+        tooltipEl.style.top = y + 'px';
+    }
+
+    function hideTooltip() {
+        tooltipEl.style.display = 'none';
+    }
 }
+
+
 
 
 

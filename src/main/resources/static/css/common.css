@@ -2863,3 +2863,45 @@ hr {
 .analytics-section-title i {
     color: #87CEEB;
 }
+
+/* 热力图tooltip */
+.heatmap-tooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+    background: rgba(30, 35, 50, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(135, 206, 235, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* 热力图图例 */
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.legend-label {
+    font-weight: 500;
+}
+
+.legend-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    background-color: #87CEEB;
+    flex-shrink: 0;
+}
