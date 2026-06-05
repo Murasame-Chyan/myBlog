@@ -299,7 +299,7 @@ function renderInteractionChart(likeRate, commentRate) {
     window.addEventListener('resize', () => interactionChart.resize());
 }
 
-// 发文热力图（日历）
+// 发文热力图（GitHub风格）
 function renderHeatmapChart(publishHeatmap) {
     const chartDom = document.getElementById('heatmapChart');
     if (!heatmapChart) {
@@ -307,52 +307,83 @@ function renderHeatmapChart(publishHeatmap) {
     }
 
     const data = publishHeatmap.map(d => [d.date, d.publishCount]);
-    const year = new Date().getFullYear();
+    const maxCount = Math.max(...publishHeatmap.map(d => d.publishCount), 1);
 
     const option = {
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         tooltip: {
             formatter: function(params) {
-                return `${params.value[0]}<br/>发文: ${params.value[1]}篇`;
+                const count = params.value[1];
+                return `<div style="text-align:left;">
+                    <strong>${params.value[0]}</strong><br/>
+                    ${count > 0 ? `<span style="color:#87CEEB;">${count}篇</span> 文章` : '无发文'}
+                </div>`;
             },
             backgroundColor: 'rgba(30, 35, 50, 0.95)',
             borderColor: 'rgba(135, 206, 235, 0.3)',
-            textStyle: { color: '#fff' }
+            textStyle: { color: '#fff' },
+            padding: 10
         },
         visualMap: {
+            show: false,
             min: 0,
-            max: Math.max(...publishHeatmap.map(d => d.publishCount), 5),
-            type: 'piecewise',
-            orient: 'horizontal',
-            left: 'center',
-            top: 10,
-            textStyle: { color: '#ccc' },
+            max: maxCount,
+            type: 'continuous',
             inRange: {
-                color: ['rgba(135, 206, 235, 0.1)', 'rgba(135, 206, 235, 0.9)']
+                color: [
+                    'rgba(135, 206, 235, 0.05)',  // 0篇 - 几乎透明
+                    'rgba(135, 206, 235, 0.25)',  // 少量
+                    'rgba(135, 206, 235, 0.5)',   // 中等
+                    'rgba(135, 206, 235, 0.75)',  // 较多
+                    'rgba(135, 206, 235, 1)'      // 很多
+                ]
             }
         },
         calendar: {
-            top: 60,
-            left: 30,
-            right: 30,
-            cellSize: ['auto', 13],
-            range: year,
+            top: 40,
+            left: 40,
+            right: 20,
+            bottom: 10,
+            cellSize: ['auto', 14],
+            range: new Date().getFullYear(),
             itemStyle: {
-                borderWidth: 0.5,
-                borderColor: 'rgba(255,255,255,0.1)'
+                borderWidth: 2,
+                borderColor: 'rgba(20, 24, 38, 1)',
+                borderRadius: 2
             },
-            yearLabel: { show: false },
-            dayLabel: { color: 'rgba(255,255,255,0.5)' },
-            monthLabel: { color: 'rgba(255,255,255,0.5)' },
-            splitLine: {
+            yearLabel: {
                 show: true,
-                lineStyle: { color: 'rgba(255,255,255,0.1)' }
+                position: 'top',
+                formatter: '{start}',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: 14
+            },
+            dayLabel: {
+                firstDay: 1,
+                nameMap: ['日', '一', '二', '三', '四', '五', '六'],
+                color: 'rgba(255,255,255,0.4)',
+                fontSize: 11
+            },
+            monthLabel: {
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: 11
+            },
+            splitLine: {
+                show: false
             }
         },
         series: [{
             type: 'heatmap',
             coordinateSystem: 'calendar',
-            data: data
+            data: data,
+            emphasis: {
+                itemStyle: {
+                    borderColor: '#87CEEB',
+                    borderWidth: 2,
+                    shadowBlur: 10,
+                    shadowColor: 'rgba(135, 206, 235, 0.5)'
+                }
+            }
         }]
     };
 
