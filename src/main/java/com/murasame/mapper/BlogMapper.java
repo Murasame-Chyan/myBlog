@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface BlogMapper {
@@ -302,4 +303,3 @@ public interface BlogMapper {
     List<Map<String, Object>> getPublishHeatmap(@Param("userId") Long userId);
 }
 
-}
