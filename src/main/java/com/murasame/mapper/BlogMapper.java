@@ -254,15 +254,20 @@ public interface BlogMapper {
     List<Map<String, Object>> getHotBlogsTop10(@Param("userId") Long userId);
 
     /**
-     * 获取用户标签分析数据（简化版，先返回空列表避免SQL错误）
+     * 获取用户标签分析数据
      */
     @Select("""
         SELECT
-            1 as tag_id,
-            'placeholder' as tag_name,
-            0 as blog_count,
-            0.0 as avg_reads
-        WHERE 1=0
+            t.id as tag_id,
+            t.tag_name,
+            COUNT(DISTINCT b.id) as blog_count,
+            COALESCE(AVG(b.read_count), 0) as avg_reads
+        FROM tag t
+        INNER JOIN blogs b ON JSON_CONTAINS(b.t_id, CAST(t.id AS CHAR), '$.tagList')
+        WHERE b.u_id = #{userId}
+        GROUP BY t.id, t.tag_name
+        HAVING blog_count > 0
+        ORDER BY blog_count DESC
     """)
     List<Map<String, Object>> getTagAnalytics(@Param("userId") Long userId);
 
