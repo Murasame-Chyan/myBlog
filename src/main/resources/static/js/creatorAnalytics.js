@@ -412,23 +412,40 @@ function renderHeatmapChart(publishHeatmap) {
         }
 
         rect.setAttribute('fill', `rgba(135, 206, 235, ${opacity})`);
-        rect.style.transition = 'opacity 150ms, filter 150ms';
-        rect.style.cursor = 'default';
-
-        // hover效果
-        rect.addEventListener('mouseenter', function() {
-            this.style.opacity = '1';
-            this.style.filter = 'drop-shadow(0 2px 6px rgba(135, 206, 235, 0.5))';
-            showTooltip(day.date, day.count, this);
-        });
-
-        rect.addEventListener('mouseleave', function() {
-            this.style.opacity = '';
-            this.style.filter = '';
-            hideTooltip();
-        });
+        rect.style.transition = 'all 150ms ease';
+        rect.style.cursor = 'pointer';
+        rect.setAttribute('data-date', day.date);
+        rect.setAttribute('data-count', day.count);
 
         svg.appendChild(rect);
+    });
+
+    // 使用事件委托处理hover
+    let currentHoverRect = null;
+
+    svg.addEventListener('mouseover', function(e) {
+        const rect = e.target;
+        if (rect.tagName === 'rect' && rect.hasAttribute('data-date')) {
+            if (currentHoverRect === rect) return;
+
+            currentHoverRect = rect;
+            rect.style.opacity = '1';
+            rect.style.filter = 'drop-shadow(0 2px 6px rgba(135, 206, 235, 0.6))';
+
+            const date = rect.getAttribute('data-date');
+            const count = parseInt(rect.getAttribute('data-count'));
+            showTooltip(date, count, rect);
+        }
+    });
+
+    svg.addEventListener('mouseout', function(e) {
+        const rect = e.target;
+        if (rect.tagName === 'rect' && rect.hasAttribute('data-date')) {
+            rect.style.opacity = '';
+            rect.style.filter = '';
+            currentHoverRect = null;
+            hideTooltip();
+        }
     });
 
     function showTooltip(date, count, element) {
@@ -439,22 +456,24 @@ function renderHeatmapChart(publishHeatmap) {
         tooltipEl.textContent = text;
         tooltipEl.style.display = 'block';
 
-        const rect = element.getBoundingClientRect();
-        const tooltipRect = tooltipEl.getBoundingClientRect();
+        requestAnimationFrame(() => {
+            const rect = element.getBoundingClientRect();
+            const tooltipRect = tooltipEl.getBoundingClientRect();
 
-        let x = rect.left + rect.width / 2 - tooltipRect.width / 2;
-        let y = rect.top - tooltipRect.height - 8;
+            let x = rect.left + rect.width / 2 - tooltipRect.width / 2;
+            let y = rect.top - tooltipRect.height - 8;
 
-        const margin = 10;
-        const maxX = window.innerWidth - tooltipRect.width - margin;
-        x = Math.max(margin, Math.min(x, maxX));
+            const margin = 10;
+            const maxX = window.innerWidth - tooltipRect.width - margin;
+            x = Math.max(margin, Math.min(x, maxX));
 
-        if (y < margin) {
-            y = rect.bottom + 8;
-        }
+            if (y < margin) {
+                y = rect.bottom + 8;
+            }
 
-        tooltipEl.style.left = x + 'px';
-        tooltipEl.style.top = y + 'px';
+            tooltipEl.style.left = x + 'px';
+            tooltipEl.style.top = y + 'px';
+        });
     }
 
     function hideTooltip() {

@@ -99,9 +99,8 @@
             <div class="col-lg-6">
                 <div class="analytics-section">
                     <h5 class="analytics-section-title"><i class="bi bi-calendar-check"></i> 发文热力图</h5>
-                    <div style="position: relative; overflow-x: auto; overflow-y: hidden; padding: 10px 0;">
-                        <svg id="heatmapChart" style="width: 100%; min-height: 140px;"></svg>
-                        <div id="heatmapTooltip" class="heatmap-tooltip"></div>
+                    <div class="heatmap-container">
+                        <svg id="heatmapChart"></svg>
                     </div>
                     <div class="heatmap-legend">
                         <span class="legend-label">少</span>
@@ -113,6 +112,7 @@
                         <span class="legend-label">多</span>
                     </div>
                 </div>
+                <div id="heatmapTooltip" class="heatmap-tooltip"></div>
             </div>
         </div>
     </main>
