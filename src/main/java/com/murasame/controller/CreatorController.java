@@ -1,15 +1,19 @@
 package com.murasame.controller;
 
 import com.murasame.domain.vo.CreatorAnalyticsVO;
+import com.murasame.entity.Users;
 import com.murasame.service.CreatorAnalyticsService;
 import com.murasame.util.AuthHelper;
 import com.murasame.util.ReturnUtil;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Map;
 
 @Controller
 @RequestMapping("/creator")
@@ -26,13 +30,13 @@ public class CreatorController {
      * 数据分析页面
      */
     @GetMapping("/analytics")
-    public String analyticsPage(Model model) {
-        Long currentUserId = authHelper.getCurrentUserId();
-        if (currentUserId == null) {
+    public String analyticsPage(HttpServletRequest request, Model model) {
+        Users currentUser = authHelper.getCurrentUser(request);
+        if (currentUser == null) {
             return "redirect:/";
         }
 
-        model.addAttribute("currentUser", authHelper.getCurrentUser());
+        model.addAttribute("currentUser", currentUser);
         return "creatorAnalytics";
     }
 
@@ -41,13 +45,13 @@ public class CreatorController {
      */
     @GetMapping("/analytics/data")
     @ResponseBody
-    public ReturnUtil getAnalyticsData() {
-        Long currentUserId = authHelper.getCurrentUserId();
-        if (currentUserId == null) {
-            return ReturnUtil.fail("请先登录");
+    public Map<String, Object> getAnalyticsData(HttpServletRequest request) {
+        Users currentUser = authHelper.getCurrentUser(request);
+        if (currentUser == null) {
+            return ReturnUtil.unauthorized("请先登录");
         }
 
-        CreatorAnalyticsVO data = analyticsService.getAnalytics(currentUserId);
+        CreatorAnalyticsVO data = analyticsService.getAnalytics(currentUser.getId());
         return ReturnUtil.success(data);
     }
 }
