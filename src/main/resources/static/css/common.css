@@ -3043,7 +3043,6 @@ hr {
 /* ===== 标签选择区域 ===== */
 .tag-select-area {
     margin-bottom: 12px;
-    position: relative;
 }
 
 .tag-select-chips {
@@ -3052,7 +3051,7 @@ hr {
     gap: 8px;
     max-height: 32px;
     overflow: hidden;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     transition: max-height 0.3s ease;
 }
 
@@ -3061,14 +3060,12 @@ hr {
 }
 
 .tag-expand-btn {
-    position: absolute;
-    top: -28px;
-    right: 0;
     font-size: 0.68rem;
     color: rgba(135, 206, 235, 0.5);
     cursor: pointer;
     user-select: none;
     transition: color 0.2s;
+    margin-right: auto;
 }
 
 .tag-expand-btn:hover {

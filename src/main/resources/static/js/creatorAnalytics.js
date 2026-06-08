@@ -139,8 +139,9 @@ function renderTagChips(tags) {
         container.appendChild(chip);
     });
 
-    // 绑定展开/收起
+    // 绑定展开/收起 — 放在 tag-select-row 的 hint 旁边
     var area = document.getElementById('tagSelectArea');
+    var hint = document.querySelector('#tagSelectArea .tag-select-hint');
     var expandBtn = document.getElementById('tagExpandBtn');
     if (!expandBtn) {
         expandBtn = document.createElement('span');
@@ -151,7 +152,11 @@ function renderTagChips(tags) {
             var isExpanded = area.classList.toggle('expanded');
             expandBtn.textContent = isExpanded ? '收起' : '展开';
         });
-        area.appendChild(expandBtn);
+        if (hint) {
+            hint.parentNode.insertBefore(expandBtn, hint);
+        } else {
+            area.appendChild(expandBtn);
+        }
     }
 
     updateTagChartBySelection();
