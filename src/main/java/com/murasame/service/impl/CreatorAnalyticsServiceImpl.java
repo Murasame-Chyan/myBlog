@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,10 +25,10 @@ public class CreatorAnalyticsServiceImpl implements CreatorAnalyticsService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
-    public CreatorAnalyticsVO getAnalytics(Long userId) {
+    public CreatorAnalyticsVO getAnalytics(Long userId, Integer days, String startDate, String endDate, List<Long> tagIds) {
         CreatorAnalyticsVO vo = new CreatorAnalyticsVO();
 
-        // 1. 核心数据看板
+        // 1. 核心数据看板（不受日期范围影响，始终为总计）
         Map<String, Object> stats = blogMapper.getCreatorStats(userId);
         vo.setTotalBlogs(getLongValue(stats, "total_blogs"));
         vo.setTotalReads(getLongValue(stats, "total_reads"));
@@ -39,39 +40,80 @@ public class CreatorAnalyticsServiceImpl implements CreatorAnalyticsService {
         vo.setLikeRate(totalReads > 0 ? vo.getTotalLikes() * 100.0 / totalReads : 0.0);
         vo.setCommentRate(totalReads > 0 ? vo.getTotalComments() * 100.0 / totalReads : 0.0);
 
-        // 3. 趋势数据（近30天）
-        buildTrendData(vo, userId, 30);
+        // 3. 趋势数据：支持天数或自定义日期范围
+        int trendDays = resolveDays(days, startDate, endDate);
+        if (startDate != null && endDate != null) {
+            buildTrendDataByRange(vo, userId, startDate, endDate);
+        } else {
+            buildTrendData(vo, userId, trendDays);
+        }
 
-        // 4. 热门文章Top10
+        // 4. 热门文章Top10（不受日期范围影响）
         List<Map<String, Object>> hotData = blogMapper.getHotBlogsTop10(userId);
         vo.setHotBlogs(hotData.stream().map(this::mapToHotBlogItem).collect(Collectors.toList()));
 
-        // 5. 标签分析
-        List<Map<String, Object>> tagData = blogMapper.getTagAnalytics(userId);
+        // 5. 标签分析（支持按标签ID过滤）
+        List<Map<String, Object>> tagData;
+        if (tagIds != null && !tagIds.isEmpty()) {
+            tagData = blogMapper.getTagAnalyticsByIds(userId, tagIds);
+        } else {
+            tagData = blogMapper.getTagAnalytics(userId);
+        }
         vo.setTagAnalytics(tagData.stream().map(this::mapToTagAnalyticsItem).collect(Collectors.toList()));
 
-        // 6. 发文热力图（365天）
+        // 6. 发文热力图（始终365天）
         List<Map<String, Object>> heatData = blogMapper.getPublishHeatmap(userId);
         vo.setPublishHeatmap(heatData.stream().map(this::mapToHeatmapDay).collect(Collectors.toList()));
 
         return vo;
     }
 
+    @Override
+    public List<Map<String, Object>> getUserTags(Long userId) {
+        return blogMapper.getUserTags(userId);
+    }
+
+    private int resolveDays(Integer days, String startDate, String endDate) {
+        if (startDate != null && endDate != null) {
+            try {
+                LocalDate start = LocalDate.parse(startDate, DATE_FORMATTER);
+                LocalDate end = LocalDate.parse(endDate, DATE_FORMATTER);
+                return (int) ChronoUnit.DAYS.between(start, end) + 1;
+            } catch (Exception e) {
+                // fallback
+            }
+        }
+        return days != null && days > 0 ? days : 30;
+    }
+
     private void buildTrendData(CreatorAnalyticsVO vo, Long userId, int days) {
-        // 获取原始数据
         List<Map<String, Object>> blogTrend = blogMapper.getTrendData(userId, days);
         List<Map<String, Object>> commentTrend = commentMapper.getDailyCommentTrend(userId, days);
 
-        // 构建完整日期范围（填充空白日期为0）
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
+        fillTrendData(vo, blogTrend, commentTrend, startDate, endDate);
+    }
+
+    private void buildTrendDataByRange(CreatorAnalyticsVO vo, Long userId, String start, String end) {
+        List<Map<String, Object>> blogTrend = blogMapper.getTrendDataByRange(userId, start, end);
+        List<Map<String, Object>> commentTrend = commentMapper.getDailyCommentTrendByRange(userId, start, end);
+
+        LocalDate startDate = LocalDate.parse(start, DATE_FORMATTER);
+        LocalDate endDate = LocalDate.parse(end, DATE_FORMATTER);
+        fillTrendData(vo, blogTrend, commentTrend, startDate, endDate);
+    }
+
+    private void fillTrendData(CreatorAnalyticsVO vo,
+            List<Map<String, Object>> blogTrend,
+            List<Map<String, Object>> commentTrend,
+            LocalDate startDate, LocalDate endDate) {
 
         List<String> dates = new ArrayList<>();
         List<Long> reads = new ArrayList<>();
         List<Long> likes = new ArrayList<>();
         List<Long> comments = new ArrayList<>();
 
-        // 转为Map方便查找
         Map<String, Long> readsMap = blogTrend.stream()
             .collect(Collectors.toMap(
                 m -> m.get("date").toString(),
@@ -91,7 +133,6 @@ public class CreatorAnalyticsServiceImpl implements CreatorAnalyticsService {
                 (a, b) -> b
             ));
 
-        // 填充完整日期数据
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             String dateStr = date.format(DATE_FORMATTER);
             dates.add(dateStr);
@@ -149,6 +190,3 @@ public class CreatorAnalyticsServiceImpl implements CreatorAnalyticsService {
         return 0.0;
     }
 }
-
-
-

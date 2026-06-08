@@ -68,22 +68,52 @@
 
         <!-- 趋势折线图 -->
         <div class="analytics-section mb-4">
-            <h5 class="analytics-section-title"><i class="bi bi-graph-up-arrow"></i> 近30天趋势</h5>
-            <div id="trendChart" style="width: 100%; height: 400px;"></div>
+            <div class="analytics-section-header">
+                <h5 class="analytics-section-title" style="border: none; margin: 0; padding: 0;"><i class="bi bi-graph-up-arrow"></i> 趋势分析</h5>
+                <div class="trend-date-filter">
+                    <button class="date-preset-btn active" data-days="7">7天</button>
+                    <button class="date-preset-btn" data-days="30">30天</button>
+                    <button class="date-preset-btn" data-days="90">90天</button>
+                    <button class="date-preset-btn" data-days="365">本年</button>
+                    <input type="date" id="startDate" class="date-input">
+                    <span class="date-separator">至</span>
+                    <input type="date" id="endDate" class="date-input">
+                    <button class="date-apply-btn" id="dateApplyBtn">确定</button>
+                </div>
+            </div>
+            <div id="trendChart" style="width: 100%; height: 380px;"></div>
         </div>
 
         <!-- 热门文章 + 标签分析 -->
         <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="analytics-section">
-                    <h5 class="analytics-section-title"><i class="bi bi-fire"></i> 热门文章 Top10</h5>
+                    <h5 class="analytics-section-title">
+                        <i class="bi bi-fire"></i> 热门文章 Top10
+                        <i class="bi bi-info-circle formula-info-icon"
+                           data-bs-toggle="tooltip"
+                           data-bs-html="true"
+                           data-bs-placement="top"
+                           data-bs-title="<strong>热度得分 = </strong><br>阅读数 × 0.5 + 点赞数 × 2<br><small class='text-white-50'>综合考量内容传播广度与读者喜爱度</small>">
+                        </i>
+                    </h5>
                     <div id="hotBlogsChart" style="width: 100%; height: 400px;"></div>
                 </div>
             </div>
             <div class="col-lg-6">
                 <div class="analytics-section">
                     <h5 class="analytics-section-title"><i class="bi bi-tag"></i> 标签分析</h5>
-                    <div id="tagChart" style="width: 100%; height: 400px;"></div>
+                    <div class="tag-select-area" id="tagSelectArea">
+                        <div class="tag-select-chips" id="tagSelectChips"></div>
+                        <div class="tag-select-row">
+                            <div class="tag-select-hint">勾选标签后显示对比图表</div>
+                            <div class="tag-select-actions">
+                                <button class="tag-select-btn" id="tagSelectAll">全选</button>
+                                <button class="tag-select-btn" id="tagSelectNone">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="tagChart" style="width: 100%; height: 350px;"></div>
                 </div>
             </div>
         </div>
@@ -93,7 +123,32 @@
             <div class="col-lg-6">
                 <div class="analytics-section">
                     <h5 class="analytics-section-title"><i class="bi bi-percent"></i> 互动率分析</h5>
-                    <div id="interactionChart" style="width: 100%; height: 300px;"></div>
+                    <div class="interaction-cards">
+                        <div class="interaction-card">
+                            <div class="interaction-card-header">
+                                <span class="interaction-icon" style="color: #00f2fe;"><i class="bi bi-heart-fill"></i></span>
+                                <span class="interaction-name">点赞率</span>
+                                <span class="interaction-value" id="likeRateValue" style="color: #00f2fe;">--</span>
+                                <span class="interaction-unit">%</span>
+                            </div>
+                            <div class="interaction-bar-wrap">
+                                <div class="interaction-bar-fill like-bar" id="likeRateBar" style="width: 0%;"></div>
+                            </div>
+                            <div class="interaction-desc">总点赞数 / 总阅读数</div>
+                        </div>
+                        <div class="interaction-card">
+                            <div class="interaction-card-header">
+                                <span class="interaction-icon" style="color: #fee140;"><i class="bi bi-chat-dots-fill"></i></span>
+                                <span class="interaction-name">评论率</span>
+                                <span class="interaction-value" id="commentRateValue" style="color: #fee140;">--</span>
+                                <span class="interaction-unit">%</span>
+                            </div>
+                            <div class="interaction-bar-wrap">
+                                <div class="interaction-bar-fill comment-bar" id="commentRateBar" style="width: 0%;"></div>
+                            </div>
+                            <div class="interaction-desc">总评论数 / 总阅读数</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-lg-6">

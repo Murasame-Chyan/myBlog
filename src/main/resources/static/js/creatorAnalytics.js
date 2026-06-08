@@ -1,26 +1,43 @@
 // 全局图表实例（热力图改为原生SVG，不再使用echarts）
-let trendChart, hotBlogsChart, tagChart, interactionChart;
+let trendChart, hotBlogsChart, tagChart;
+// 缓存完整数据引用
+let fullData = null;
+let allTagAnalytics = [];
 
 // 页面加载时获取数据
 document.addEventListener('DOMContentLoaded', function() {
+    // 初始化Bootstrap tooltip
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
+
     fetchAnalyticsData();
+    loadUserTags();
+    initDateFilter();
 });
 
 // 获取数据
-function fetchAnalyticsData() {
-    fetch('/creator/analytics/data')
+function fetchAnalyticsData(days, startDate, endDate) {
+    var url = '/creator/analytics/data';
+    var params = [];
+    if (days) params.push('days=' + days);
+    if (startDate && endDate) {
+        params.push('startDate=' + startDate);
+        params.push('endDate=' + endDate);
+    }
+    if (params.length > 0) url += '?' + params.join('&');
+
+    fetch(url)
         .then(res => res.json())
         .then(data => {
             if (data.code === 200) {
+                fullData = data.data;
                 renderData(data.data);
             } else {
                 console.error('数据加载失败:', data.msg);
-                alert(data.msg || '数据加载失败');
             }
         })
         .catch(err => {
             console.error('数据加载失败', err);
-            alert('网络错误');
         });
 }
 
@@ -38,7 +55,7 @@ function renderData(data) {
     // 3. 热门文章排行
     renderHotBlogsChart(data.hotBlogs);
 
-    // 4. 标签分析
+    // 4. 标签分析（使用缓存的全部标签数据首次渲染）
     renderTagChart(data.tagAnalytics);
 
     // 5. 互动率分析
@@ -53,6 +70,114 @@ function formatNumber(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
     return num.toString();
+}
+
+// ===== 日期筛选 =====
+function initDateFilter() {
+    document.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.date-preset-btn').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            var days = parseInt(this.dataset.days);
+            fetchAnalyticsData(days);
+        });
+    });
+
+    document.getElementById('dateApplyBtn').addEventListener('click', function() {
+        var startVal = document.getElementById('startDate').value;
+        var endVal = document.getElementById('endDate').value;
+        if (startVal && endVal) {
+            document.querySelectorAll('.date-preset-btn').forEach(function(b) { b.classList.remove('active'); });
+            fetchAnalyticsData(null, startVal, endVal);
+        }
+    });
+}
+
+// ===== 标签选择交互 =====
+function loadUserTags() {
+    fetch('/creator/analytics/tags')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.code === 200 && data.data && data.data.length > 0) {
+                renderTagChips(data.data);
+            }
+        })
+        .catch(function(err) {
+            console.error('加载标签列表失败', err);
+        });
+}
+
+function renderTagChips(tags) {
+    var container = document.getElementById('tagSelectChips');
+    container.innerHTML = '';
+
+    tags.forEach(function(tag) {
+        var chip = document.createElement('label');
+        chip.className = 'tag-select-chip selected';
+        chip.innerHTML = '<input type="checkbox" value="' + tag.tagId + '" checked> ' + tag.tagName;
+        chip.querySelector('input').addEventListener('change', updateTagChartBySelection);
+        container.appendChild(chip);
+    });
+
+    updateTagChartBySelection();
+
+    document.getElementById('tagSelectAll').addEventListener('click', function() {
+        container.querySelectorAll('input').forEach(function(cb) {
+            cb.checked = true;
+            cb.parentElement.classList.add('selected');
+        });
+        updateTagChartBySelection();
+    });
+
+    document.getElementById('tagSelectNone').addEventListener('click', function() {
+        container.querySelectorAll('input').forEach(function(cb) {
+            cb.checked = false;
+            cb.parentElement.classList.remove('selected');
+        });
+        updateTagChartBySelection();
+    });
+}
+
+function updateTagChartBySelection() {
+    var checked = document.querySelectorAll('#tagSelectChips input:checked');
+    var selectedIds = Array.from(checked).map(function(cb) { return cb.value; });
+
+    var chips = document.querySelectorAll('.tag-select-chip');
+    chips.forEach(function(chip) {
+        var cb = chip.querySelector('input');
+        if (cb.checked) {
+            chip.classList.add('selected');
+        } else {
+            chip.classList.remove('selected');
+        }
+    });
+
+    if (selectedIds.length === 0) {
+        renderTagChart([]);
+        return;
+    }
+
+    fetch('/creator/analytics/data?tagIds=' + selectedIds.join(','))
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.code === 200) {
+                renderTagChart(data.data.tagAnalytics);
+            }
+        });
+}
+
+// ===== 互动率进度条 =====
+function renderInteractionChart(likeRate, commentRate) {
+    var likeVal = likeRate.toFixed(2);
+    var commentVal = commentRate.toFixed(2);
+
+    document.getElementById('likeRateValue').textContent = likeVal;
+    document.getElementById('commentRateValue').textContent = commentVal;
+
+    document.getElementById('likeRateBar').style.width = Math.min(likeRate, 100) + '%';
+    document.getElementById('commentRateBar').style.width = Math.min(commentRate, 100) + '%';
 }
 
 // 趋势折线图

@@ -301,5 +301,59 @@ public interface BlogMapper {
         GROUP BY DATE(created_at)
     """)
     List<Map<String, Object>> getPublishHeatmap(@Param("userId") Long userId);
+
+    /**
+     * 获取用户已使用的所有标签
+     */
+    @Select("""
+        SELECT DISTINCT t.id as tagId, t.tagName
+        FROM tag t
+        INNER JOIN blogs b ON JSON_CONTAINS(b.t_id, CAST(t.id AS CHAR), '$.tagList')
+        WHERE b.u_id = #{userId}
+        ORDER BY t.tagName
+    """)
+    List<Map<String, Object>> getUserTags(@Param("userId") Long userId);
+
+    /**
+     * 获取按标签ID过滤的标签分析
+     */
+    @Select("""
+        <script>
+        SELECT
+            t.id as tag_id,
+            t.tagName as tag_name,
+            COUNT(DISTINCT b.id) as blog_count,
+            COALESCE(AVG(b.read_count), 0) as avg_reads
+        FROM tag t
+        INNER JOIN blogs b ON JSON_CONTAINS(b.t_id, CAST(t.id AS CHAR), '$.tagList')
+        WHERE b.u_id = #{userId}
+          AND t.id IN
+          <foreach collection="tagIds" item="tid" open="(" separator="," close=")">
+              #{tid}
+          </foreach>
+        GROUP BY t.id, t.tagName
+        ORDER BY blog_count DESC
+        </script>
+    """)
+    List<Map<String, Object>> getTagAnalyticsByIds(@Param("userId") Long userId, @Param("tagIds") List<Long> tagIds);
+
+    /**
+     * 获取自定义日期范围的趋势数据
+     */
+    @Select("""
+        SELECT
+            DATE(created_at) as date,
+            COUNT(*) as publish_count,
+            SUM(read_count) as daily_reads,
+            SUM(like_count) as daily_likes
+        FROM blogs
+        WHERE u_id = #{userId}
+          AND created_at &gt;= #{startDate}
+          AND created_at &lt; #{endDate} + INTERVAL 1 DAY
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+    """)
+    List<Map<String, Object>> getTrendDataByRange(@Param("userId") Long userId,
+            @Param("startDate") String startDate, @Param("endDate") String endDate);
 }
 
