@@ -1,14 +1,15 @@
-// 全局图表实例（热力图改为原生SVG，不再使用echarts）
+// 全局图表实例
 let trendChart, hotBlogsChart, tagChart;
 // 缓存完整数据引用
-let fullData = null;
 let allTagAnalytics = [];
 
-// 页面加载时获取数据
+// 页面加载
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化Bootstrap tooltip
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
+    try {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
+    } catch (e) {}
 
     fetchAnalyticsData();
     loadUserTags();
@@ -27,46 +28,59 @@ function fetchAnalyticsData(days, startDate, endDate) {
     if (params.length > 0) url += '?' + params.join('&');
 
     fetch(url)
-        .then(res => res.json())
-        .then(data => {
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
             if (data.code === 200) {
-                fullData = data.data;
                 renderData(data.data);
             } else {
                 console.error('数据加载失败:', data.msg);
             }
         })
-        .catch(err => {
+        .catch(function(err) {
             console.error('数据加载失败', err);
         });
 }
 
 // 渲染所有图表
 function renderData(data) {
+    if (!data) return;
+
     // 1. 核心数据看板
-    document.getElementById('totalBlogs').textContent = formatNumber(data.totalBlogs);
-    document.getElementById('totalReads').textContent = formatNumber(data.totalReads);
-    document.getElementById('totalLikes').textContent = formatNumber(data.totalLikes);
-    document.getElementById('totalComments').textContent = formatNumber(data.totalComments);
+    setText('totalBlogs', formatNumber(data.totalBlogs));
+    setText('totalReads', formatNumber(data.totalReads));
+    setText('totalLikes', formatNumber(data.totalLikes));
+    setText('totalComments', formatNumber(data.totalComments));
 
     // 2. 趋势折线图
-    renderTrendChart(data);
+    if (data.trendDates && data.trendDates.length > 0) {
+        renderTrendChart(data);
+    }
 
     // 3. 热门文章排行
-    renderHotBlogsChart(data.hotBlogs);
+    if (data.hotBlogs && data.hotBlogs.length > 0) {
+        renderHotBlogsChart(data.hotBlogs);
+    }
 
-    // 4. 标签分析（使用缓存的全部标签数据首次渲染）
-    renderTagChart(data.tagAnalytics);
+    // 4. 标签分析
+    renderTagChart(data.tagAnalytics || []);
 
-    // 5. 互动率分析
-    renderInteractionChart(data.likeRate, data.commentRate);
+    // 5. 互动率
+    renderInteractionChart(data.likeRate || 0, data.commentRate || 0);
 
     // 6. 发文热力图
-    renderHeatmapChart(data.publishHeatmap);
+    if (data.publishHeatmap && data.publishHeatmap.length > 0) {
+        renderHeatmapChart(data.publishHeatmap);
+    }
 }
 
-// 格式化数字（1000 -> 1k）
+function setText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+
+// 格式化数字
 function formatNumber(num) {
+    if (num == null) return '0';
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
     return num.toString();
@@ -74,28 +88,33 @@ function formatNumber(num) {
 
 // ===== 日期筛选 =====
 function initDateFilter() {
-    document.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+    var btns = document.querySelectorAll('.date-preset-btn');
+    btns.forEach(function(btn) {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.date-preset-btn').forEach(function(b) { b.classList.remove('active'); });
+            btns.forEach(function(b) { b.classList.remove('active'); });
             this.classList.add('active');
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-            var days = parseInt(this.dataset.days);
-            fetchAnalyticsData(days);
+            var sd = document.getElementById('startDate');
+            var ed = document.getElementById('endDate');
+            if (sd) sd.value = '';
+            if (ed) ed.value = '';
+            fetchAnalyticsData(parseInt(this.dataset.days));
         });
     });
 
-    document.getElementById('dateApplyBtn').addEventListener('click', function() {
-        var startVal = document.getElementById('startDate').value;
-        var endVal = document.getElementById('endDate').value;
-        if (startVal && endVal) {
-            document.querySelectorAll('.date-preset-btn').forEach(function(b) { b.classList.remove('active'); });
-            fetchAnalyticsData(null, startVal, endVal);
-        }
-    });
+    var applyBtn = document.getElementById('dateApplyBtn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            var sv = document.getElementById('startDate').value;
+            var ev = document.getElementById('endDate').value;
+            if (sv && ev) {
+                btns.forEach(function(b) { b.classList.remove('active'); });
+                fetchAnalyticsData(null, sv, ev);
+            }
+        });
+    }
 }
 
-// ===== 标签选择交互 =====
+// ===== 标签选择 =====
 function loadUserTags() {
     fetch('/creator/analytics/tags')
         .then(function(res) { return res.json(); })
@@ -104,13 +123,12 @@ function loadUserTags() {
                 renderTagChips(data.data);
             }
         })
-        .catch(function(err) {
-            console.error('加载标签列表失败', err);
-        });
+        .catch(function() {});
 }
 
 function renderTagChips(tags) {
     var container = document.getElementById('tagSelectChips');
+    if (!container) return;
     container.innerHTML = '';
 
     tags.forEach(function(tag) {
@@ -121,33 +139,49 @@ function renderTagChips(tags) {
         container.appendChild(chip);
     });
 
+    // 绑定展开/收起
+    var area = document.getElementById('tagSelectArea');
+    var expandBtn = document.getElementById('tagExpandBtn');
+    if (!expandBtn) {
+        expandBtn = document.createElement('span');
+        expandBtn.id = 'tagExpandBtn';
+        expandBtn.className = 'tag-expand-btn';
+        expandBtn.textContent = '展开';
+        expandBtn.addEventListener('click', function() {
+            var isExpanded = area.classList.toggle('expanded');
+            expandBtn.textContent = isExpanded ? '收起' : '展开';
+        });
+        area.appendChild(expandBtn);
+    }
+
     updateTagChartBySelection();
 
-    document.getElementById('tagSelectAll').addEventListener('click', function() {
+    document.getElementById('tagSelectAll').onclick = function() {
         container.querySelectorAll('input').forEach(function(cb) {
             cb.checked = true;
             cb.parentElement.classList.add('selected');
         });
         updateTagChartBySelection();
-    });
+    };
 
-    document.getElementById('tagSelectNone').addEventListener('click', function() {
+    document.getElementById('tagSelectNone').onclick = function() {
         container.querySelectorAll('input').forEach(function(cb) {
             cb.checked = false;
             cb.parentElement.classList.remove('selected');
         });
         updateTagChartBySelection();
-    });
+    };
 }
 
 function updateTagChartBySelection() {
-    var checked = document.querySelectorAll('#tagSelectChips input:checked');
-    var selectedIds = Array.from(checked).map(function(cb) { return cb.value; });
+    var selectedIds = [];
+    document.querySelectorAll('#tagSelectChips input:checked').forEach(function(cb) {
+        selectedIds.push(cb.value);
+    });
 
-    var chips = document.querySelectorAll('.tag-select-chip');
-    chips.forEach(function(chip) {
+    document.querySelectorAll('.tag-select-chip').forEach(function(chip) {
         var cb = chip.querySelector('input');
-        if (cb.checked) {
+        if (cb && cb.checked) {
             chip.classList.add('selected');
         } else {
             chip.classList.remove('selected');
@@ -163,31 +197,34 @@ function updateTagChartBySelection() {
         .then(function(res) { return res.json(); })
         .then(function(data) {
             if (data.code === 200) {
-                renderTagChart(data.data.tagAnalytics);
+                renderTagChart(data.data.tagAnalytics || []);
             }
         });
 }
 
 // ===== 互动率进度条 =====
 function renderInteractionChart(likeRate, commentRate) {
-    var likeVal = likeRate.toFixed(2);
-    var commentVal = commentRate.toFixed(2);
+    var likeVal = (likeRate || 0).toFixed(2);
+    var commentVal = (commentRate || 0).toFixed(2);
 
-    document.getElementById('likeRateValue').textContent = likeVal;
-    document.getElementById('commentRateValue').textContent = commentVal;
+    setText('likeRateValue', likeVal);
+    setText('commentRateValue', commentVal);
 
-    document.getElementById('likeRateBar').style.width = Math.min(likeRate, 100) + '%';
-    document.getElementById('commentRateBar').style.width = Math.min(commentRate, 100) + '%';
+    var likeBar = document.getElementById('likeRateBar');
+    var commentBar = document.getElementById('commentRateBar');
+    if (likeBar) likeBar.style.width = Math.min(likeRate, 100) + '%';
+    if (commentBar) commentBar.style.width = Math.min(commentRate, 100) + '%';
 }
 
-// 趋势折线图
+// ===== 趋势折线图 =====
 function renderTrendChart(data) {
-    const chartDom = document.getElementById('trendChart');
+    var chartDom = document.getElementById('trendChart');
+    if (!chartDom) return;
     if (!trendChart) {
         trendChart = echarts.init(chartDom);
     }
 
-    const option = {
+    var option = {
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         tooltip: {
             trigger: 'axis',
@@ -198,69 +235,93 @@ function renderTrendChart(data) {
         legend: {
             data: ['阅读量', '点赞数', '评论数'],
             textStyle: { color: '#ccc' },
-            top: 15
+            top: 10
         },
         grid: {
             left: '3%',
-            right: '4%',
+            right: '8%',
             bottom: '3%',
-            top: 60,
+            top: 55,
             containLabel: true
         },
         xAxis: {
             type: 'category',
             data: data.trendDates,
             axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
-            axisLabel: { color: 'rgba(255,255,255,0.6)' }
+            axisLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 10, rotate: data.trendDates.length > 30 ? 30 : 0 }
         },
-        yAxis: {
-            type: 'value',
-            splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-            axisLabel: { color: 'rgba(255,255,255,0.6)' }
-        },
+        yAxis: [
+            {
+                type: 'value',
+                name: '阅读量',
+                nameTextStyle: { color: '#f5576c', fontSize: 11 },
+                splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+                axisLabel: { color: 'rgba(255,255,255,0.5)' }
+            },
+            {
+                type: 'value',
+                name: '互动',
+                nameTextStyle: { color: '#00f2fe', fontSize: 11 },
+                splitLine: { show: false },
+                axisLabel: { color: 'rgba(255,255,255,0.5)' }
+            }
+        ],
         series: [
             {
                 name: '阅读量',
-                type: 'line',
-                smooth: true,
+                type: 'bar',
                 data: data.trendReads,
-                itemStyle: { color: '#f5576c' },
-                areaStyle: { color: 'rgba(245, 87, 108, 0.2)' }
+                itemStyle: {
+                    color: 'rgba(245, 87, 108, 0.6)',
+                    borderRadius: [4, 4, 0, 0]
+                },
+                barWidth: '60%'
             },
             {
                 name: '点赞数',
                 type: 'line',
                 smooth: true,
+                yAxisIndex: 1,
                 data: data.trendLikes,
                 itemStyle: { color: '#00f2fe' },
-                areaStyle: { color: 'rgba(0, 242, 254, 0.2)' }
+                symbol: 'circle',
+                symbolSize: 4,
+                lineStyle: { width: 2 }
             },
             {
                 name: '评论数',
                 type: 'line',
                 smooth: true,
+                yAxisIndex: 1,
                 data: data.trendComments,
                 itemStyle: { color: '#fee140' },
-                areaStyle: { color: 'rgba(254, 225, 64, 0.2)' }
+                symbol: 'circle',
+                symbolSize: 4,
+                lineStyle: { width: 2 }
             }
         ]
     };
 
-    trendChart.setOption(option);
-    window.addEventListener('resize', () => trendChart.resize());
+    trendChart.setOption(option, true);
+    window.addEventListener('resize', function() { trendChart.resize(); });
 }
 
-// 热门文章排行（横向条形图）
+// ===== 热门文章排行 =====
 function renderHotBlogsChart(hotBlogs) {
-    const chartDom = document.getElementById('hotBlogsChart');
+    var chartDom = document.getElementById('hotBlogsChart');
+    if (!chartDom) return;
     if (!hotBlogsChart) {
         hotBlogsChart = echarts.init(chartDom);
     }
 
-    const titles = hotBlogs.map(b => b.title.length > 20 ? b.title.substring(0, 20) + '...' : b.title);
-    const scores = hotBlogs.map(b => b.score);
+    // 反转数组使得分高的在上面（ECharts bar chart的y轴从下到上）
+    var reversed = hotBlogs.slice().reverse();
+    var titles = reversed.map(function(b) {
+        return b.title.length > 20 ? b.title.substring(0, 20) + '...' : b.title;
+    });
+    var scores = reversed.map(function(b) { return b.score; });
 
-    const option = {
+    var option = {
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         tooltip: {
             trigger: 'axis',
@@ -269,8 +330,12 @@ function renderHotBlogsChart(hotBlogs) {
             borderColor: 'rgba(135, 206, 235, 0.3)',
             textStyle: { color: '#fff' },
             formatter: function(params) {
-                const blog = hotBlogs[params[0].dataIndex];
-                return `${blog.title}<br/>阅读: ${blog.readCount}<br/>点赞: ${blog.likeCount}<br/>得分: ${blog.score.toFixed(1)}`;
+                var blog = reversed[params[0].dataIndex];
+                if (!blog) return '';
+                return '<strong>' + blog.title + '</strong><br/>' +
+                       '阅读: ' + blog.readCount + '<br/>' +
+                       '点赞: ' + blog.likeCount + '<br/>' +
+                       '得分: ' + blog.score.toFixed(1);
             }
         },
         grid: {
@@ -282,45 +347,63 @@ function renderHotBlogsChart(hotBlogs) {
         },
         xAxis: {
             type: 'value',
-            splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-            axisLabel: { color: 'rgba(255,255,255,0.6)' }
+            splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+            axisLabel: { color: 'rgba(255,255,255,0.5)' }
         },
         yAxis: {
             type: 'category',
-            data: titles.reverse(),
-            axisLabel: { color: 'rgba(255,255,255,0.7)' }
+            data: titles,
+            axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11 }
         },
         series: [{
             name: '综合得分',
             type: 'bar',
-            data: scores.reverse(),
+            data: scores,
             itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
                     { offset: 0, color: '#667eea' },
                     { offset: 1, color: '#764ba2' }
-                ])
+                ]),
+                borderRadius: [0, 4, 4, 0]
             },
-            barWidth: '60%'
+            barWidth: '55%'
         }]
     };
 
-    hotBlogsChart.setOption(option);
-    window.addEventListener('resize', () => hotBlogsChart.resize());
+    hotBlogsChart.setOption(option, true);
+    window.addEventListener('resize', function() { hotBlogsChart.resize(); });
 }
 
-// 标签分析（饼图）
+// ===== 标签分析 =====
 function renderTagChart(tagAnalytics) {
-    const chartDom = document.getElementById('tagChart');
+    var chartDom = document.getElementById('tagChart');
+    if (!chartDom) return;
     if (!tagChart) {
         tagChart = echarts.init(chartDom);
     }
 
-    const data = tagAnalytics.map(t => ({
-        name: t.tagName,
-        value: t.blogCount
-    }));
+    if (!tagAnalytics || tagAnalytics.length === 0) {
+        tagChart.setOption({
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            graphic: {
+                type: 'text',
+                left: 'center',
+                top: 'center',
+                style: {
+                    text: '请选择标签以查看分析',
+                    fill: 'rgba(255,255,255,0.3)',
+                    fontSize: 14
+                }
+            }
+        }, true);
+        return;
+    }
 
-    const option = {
+    var pieData = tagAnalytics.map(function(t) {
+        return { name: t.tagName, value: t.blogCount, avgReads: t.avgReads };
+    });
+
+    var option = {
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         tooltip: {
             trigger: 'item',
@@ -328,21 +411,29 @@ function renderTagChart(tagAnalytics) {
             borderColor: 'rgba(135, 206, 235, 0.3)',
             textStyle: { color: '#fff' },
             formatter: function(params) {
-                const tag = tagAnalytics[params.dataIndex];
-                return `${tag.tagName}<br/>文章数: ${tag.blogCount}<br/>平均阅读: ${tag.avgReads.toFixed(1)}`;
+                var item = pieData[params.dataIndex];
+                if (!item) return '';
+                return item.name + '<br/>文章数: ' + item.value + '<br/>平均阅读: ' + item.avgReads.toFixed(1);
             }
         },
         legend: {
-            orient: 'vertical',
-            left: 'left',
-            textStyle: { color: '#ccc' }
+            type: 'scroll',
+            orient: 'horizontal',
+            bottom: 5,
+            textStyle: { color: '#ccc', fontSize: 10 }
         },
         series: [{
             name: '标签分布',
             type: 'pie',
-            radius: '60%',
-            center: ['60%', '50%'],
-            data: data,
+            radius: ['45%', '70%'],
+            center: ['50%', '45%'],
+            itemStyle: { borderRadius: 6, borderColor: 'rgba(20, 24, 38, 1)', borderWidth: 2 },
+            label: {
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: 10,
+                formatter: '{b} ({c})'
+            },
+            data: pieData,
             emphasis: {
                 itemStyle: {
                     shadowBlur: 10,
@@ -353,139 +444,65 @@ function renderTagChart(tagAnalytics) {
         }]
     };
 
-    tagChart.setOption(option);
-    window.addEventListener('resize', () => tagChart.resize());
+    tagChart.setOption(option, true);
+    window.addEventListener('resize', function() { tagChart.resize(); });
 }
 
-// 互动率仪表盘
-function renderInteractionChart(likeRate, commentRate) {
-    const chartDom = document.getElementById('interactionChart');
-    if (!interactionChart) {
-        interactionChart = echarts.init(chartDom);
-    }
-
-    const option = {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        series: [
-            {
-                type: 'gauge',
-                center: ['25%', '60%'],
-                radius: '70%',
-                startAngle: 200,
-                endAngle: -20,
-                min: 0,
-                max: 100,
-                detail: {
-                    formatter: '{value}%',
-                    color: '#00f2fe',
-                    fontSize: 20
-                },
-                data: [{ value: likeRate.toFixed(2), name: '点赞率' }],
-                title: {
-                    offsetCenter: [0, '80%'],
-                    color: '#ccc'
-                },
-                itemStyle: { color: '#00f2fe' },
-                axisLine: {
-                    lineStyle: {
-                        color: [[1, 'rgba(0, 242, 254, 0.2)']]
-                    }
-                }
-            },
-            {
-                type: 'gauge',
-                center: ['75%', '60%'],
-                radius: '70%',
-                startAngle: 200,
-                endAngle: -20,
-                min: 0,
-                max: 100,
-                detail: {
-                    formatter: '{value}%',
-                    color: '#fee140',
-                    fontSize: 20
-                },
-                data: [{ value: commentRate.toFixed(2), name: '评论率' }],
-                title: {
-                    offsetCenter: [0, '80%'],
-                    color: '#ccc'
-                },
-                itemStyle: { color: '#fee140' },
-                axisLine: {
-                    lineStyle: {
-                        color: [[1, 'rgba(254, 225, 64, 0.2)']]
-                    }
-                }
-            }
-        ]
-    };
-
-    interactionChart.setOption(option);
-    window.addEventListener('resize', () => interactionChart.resize());
-}
-
-// 发文热力图（原生SVG GitHub风格）
+// ===== 发文热力图 =====
 function renderHeatmapChart(publishHeatmap) {
-    const svg = document.getElementById('heatmapChart');
-    const tooltipEl = document.getElementById('heatmapTooltip');
+    var svg = document.getElementById('heatmapChart');
+    var tooltipEl = document.getElementById('heatmapTooltip');
     if (!svg) return;
 
-    const CELL = 11;
-    const GAP = 3;
-    const ROWS = 7;
-    const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-    const DAYS = ['', '一', '', '三', '', '五', ''];
+    var CELL = 11;
+    var GAP = 3;
+    var ROWS = 7;
+    var MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    var DAYS = ['', '一', '', '三', '', '五', ''];
 
-    // 构造过去一年的数据（从今天往前推365天）
-    const today = new Date();
-    const oneYearAgo = new Date(today);
+    var today = new Date();
+    var oneYearAgo = new Date(today);
     oneYearAgo.setDate(today.getDate() - 364);
 
-    const dataMap = {};
-    publishHeatmap.forEach(item => {
-        dataMap[item.date] = item.publishCount;
-    });
-
-    const contributions = [];
-    for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
-        contributions.push({
-            date: dateStr,
-            count: dataMap[dateStr] || 0
+    var dataMap = {};
+    if (publishHeatmap) {
+        publishHeatmap.forEach(function(item) {
+            dataMap[item.date] = item.publishCount;
         });
     }
 
-    const maxCount = Math.max(...contributions.map(d => d.count), 1);
-    const weeks = Math.ceil(contributions.length / ROWS);
-    const labelOffset = 28;
-    const headerOffset = 16;
-    const svgWidth = labelOffset + weeks * (CELL + GAP);
-    const svgHeight = headerOffset + ROWS * (CELL + GAP);
+    var contributions = [];
+    for (var d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
+        var ds = d.toISOString().split('T')[0];
+        contributions.push({ date: ds, count: dataMap[ds] || 0 });
+    }
 
-    svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+    var weeks = Math.ceil(contributions.length / ROWS);
+    var labelOffset = 28;
+    var headerOffset = 16;
+    var svgWidth = labelOffset + weeks * (CELL + GAP);
+    var svgHeight = headerOffset + ROWS * (CELL + GAP);
+
+    svg.setAttribute('viewBox', '0 0 ' + svgWidth + ' ' + svgHeight);
     svg.innerHTML = '';
 
-    const ns = 'http://www.w3.org/2000/svg';
+    var ns = 'http://www.w3.org/2000/svg';
 
-    // 顶部月份标签
-    const monthLabels = [];
-    let lastMonth = -1;
-    for (let w = 0; w < weeks; w++) {
-        const idx = w * ROWS;
+    // 月份标签
+    var monthLabels = [];
+    var lastMonth = -1;
+    for (var w = 0; w < weeks; w++) {
+        var idx = w * ROWS;
         if (idx < contributions.length) {
-            const month = new Date(contributions[idx].date).getMonth();
+            var month = new Date(contributions[idx].date).getMonth();
             if (month !== lastMonth) {
-                monthLabels.push({
-                    label: MONTHS[month],
-                    x: labelOffset + w * (CELL + GAP)
-                });
+                monthLabels.push({ label: MONTHS[month], x: labelOffset + w * (CELL + GAP) });
                 lastMonth = month;
             }
         }
     }
-
-    monthLabels.forEach(m => {
-        const text = document.createElementNS(ns, 'text');
+    monthLabels.forEach(function(m) {
+        var text = document.createElementNS(ns, 'text');
         text.setAttribute('x', m.x);
         text.setAttribute('y', 11);
         text.setAttribute('fill', 'rgba(255,255,255,0.5)');
@@ -495,10 +512,10 @@ function renderHeatmapChart(publishHeatmap) {
         svg.appendChild(text);
     });
 
-    // 左侧星期标签
-    DAYS.forEach((d, i) => {
+    // 星期标签
+    DAYS.forEach(function(d, i) {
         if (d) {
-            const text = document.createElementNS(ns, 'text');
+            var text = document.createElementNS(ns, 'text');
             text.setAttribute('x', 0);
             text.setAttribute('y', headerOffset + i * (CELL + GAP) + CELL - 1);
             text.setAttribute('fill', 'rgba(255,255,255,0.4)');
@@ -509,11 +526,11 @@ function renderHeatmapChart(publishHeatmap) {
         }
     });
 
-    // 绘制格子
-    contributions.forEach((day, idx) => {
-        const col = Math.floor(idx / ROWS);
-        const row = idx % ROWS;
-        const rect = document.createElementNS(ns, 'rect');
+    // 格子
+    contributions.forEach(function(day, idx) {
+        var col = Math.floor(idx / ROWS);
+        var row = idx % ROWS;
+        var rect = document.createElementNS(ns, 'rect');
 
         rect.setAttribute('x', labelOffset + col * (CELL + GAP));
         rect.setAttribute('y', headerOffset + row * (CELL + GAP));
@@ -522,94 +539,71 @@ function renderHeatmapChart(publishHeatmap) {
         rect.setAttribute('rx', 2);
         rect.setAttribute('ry', 2);
 
-        // 计算颜色透明度
-        let opacity;
-        if (day.count === 0) {
-            opacity = 0.1;
-        } else if (day.count === 1) {
-            opacity = 0.3;
-        } else if (day.count <= 3) {
-            opacity = 0.6;
-        } else if (day.count <= 5) {
-            opacity = 0.85;
-        } else {
-            opacity = 1;
-        }
+        var opacity;
+        if (day.count === 0) opacity = 0.1;
+        else if (day.count === 1) opacity = 0.3;
+        else if (day.count <= 3) opacity = 0.6;
+        else if (day.count <= 5) opacity = 0.85;
+        else opacity = 1;
 
-        rect.setAttribute('fill', `rgba(135, 206, 235, ${opacity})`);
+        rect.setAttribute('fill', 'rgba(135, 206, 235, ' + opacity + ')');
         rect.style.transition = 'all 150ms ease';
         rect.style.cursor = 'pointer';
         rect.setAttribute('data-date', day.date);
         rect.setAttribute('data-count', day.count);
-
         svg.appendChild(rect);
     });
 
-    // 使用事件委托处理hover
-    let currentHoverRect = null;
+    // 事件委托
+    var currentHoverRect = null;
+    svg.removeEventListener('mouseover', svg._hoverHandler);
+    svg.removeEventListener('mouseout', svg._outHandler);
 
-    svg.addEventListener('mouseover', function(e) {
-        const rect = e.target;
+    svg._hoverHandler = function(e) {
+        var rect = e.target;
         if (rect.tagName === 'rect' && rect.hasAttribute('data-date')) {
             if (currentHoverRect === rect) return;
-
             currentHoverRect = rect;
             rect.style.opacity = '1';
             rect.style.filter = 'drop-shadow(0 2px 6px rgba(135, 206, 235, 0.6))';
-
-            const date = rect.getAttribute('data-date');
-            const count = parseInt(rect.getAttribute('data-count'));
-            showTooltip(date, count, rect);
+            showTooltip(rect.getAttribute('data-date'), parseInt(rect.getAttribute('data-count')), rect);
         }
-    });
+    };
 
-    svg.addEventListener('mouseout', function(e) {
-        const rect = e.target;
+    svg._outHandler = function(e) {
+        var rect = e.target;
         if (rect.tagName === 'rect' && rect.hasAttribute('data-date')) {
             rect.style.opacity = '';
             rect.style.filter = '';
             currentHoverRect = null;
             hideTooltip();
         }
-    });
+    };
+
+    svg.addEventListener('mouseover', svg._hoverHandler);
+    svg.addEventListener('mouseout', svg._outHandler);
 
     function showTooltip(date, count, element) {
-        const d = new Date(date);
-        const dateStr = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-        const text = count > 0 ? `${dateStr}: ${count} 篇文章` : `${dateStr}: 无发文`;
-
+        if (!tooltipEl) return;
+        var d = new Date(date);
+        var ds = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+        var text = count > 0 ? ds + ': ' + count + ' 篇文章' : ds + ': 无发文';
         tooltipEl.textContent = text;
         tooltipEl.style.display = 'block';
 
-        requestAnimationFrame(() => {
-            const rect = element.getBoundingClientRect();
-            const tooltipRect = tooltipEl.getBoundingClientRect();
-
-            let x = rect.left + rect.width / 2 - tooltipRect.width / 2;
-            let y = rect.top - tooltipRect.height - 8;
-
-            const margin = 10;
-            const maxX = window.innerWidth - tooltipRect.width - margin;
-            x = Math.max(margin, Math.min(x, maxX));
-
-            if (y < margin) {
-                y = rect.bottom + 8;
-            }
-
+        requestAnimationFrame(function() {
+            var rect = element.getBoundingClientRect();
+            var ttRect = tooltipEl.getBoundingClientRect();
+            var x = rect.left + rect.width / 2 - ttRect.width / 2;
+            var y = rect.top - ttRect.height - 8;
+            x = Math.max(10, Math.min(x, window.innerWidth - ttRect.width - 10));
+            if (y < 10) y = rect.bottom + 8;
             tooltipEl.style.left = x + 'px';
             tooltipEl.style.top = y + 'px';
         });
     }
 
     function hideTooltip() {
-        tooltipEl.style.display = 'none';
+        if (tooltipEl) tooltipEl.style.display = 'none';
     }
 }
-
-
-
-
-
-
-
-

@@ -3043,13 +3043,36 @@ hr {
 /* ===== 标签选择区域 ===== */
 .tag-select-area {
     margin-bottom: 12px;
+    position: relative;
 }
 
 .tag-select-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 8px;
+    max-height: 32px;
+    overflow: hidden;
+    margin-bottom: 6px;
+    transition: max-height 0.3s ease;
+}
+
+.tag-select-area.expanded .tag-select-chips {
+    max-height: 400px;
+}
+
+.tag-expand-btn {
+    position: absolute;
+    top: -28px;
+    right: 0;
+    font-size: 0.68rem;
+    color: rgba(135, 206, 235, 0.5);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.tag-expand-btn:hover {
+    color: #87CEEB;
 }
 
 .tag-select-chip {
