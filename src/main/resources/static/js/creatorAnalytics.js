@@ -285,24 +285,22 @@ function renderTrendChart(data) {
             {
                 name: '点赞数',
                 type: 'line',
-                smooth: true,
                 yAxisIndex: 1,
                 data: data.trendLikes,
                 itemStyle: { color: '#00f2fe' },
                 symbol: 'circle',
-                symbolSize: 4,
-                lineStyle: { width: 2 }
+                symbolSize: 5,
+                lineStyle: { width: 2.5 }
             },
             {
                 name: '评论数',
                 type: 'line',
-                smooth: true,
                 yAxisIndex: 1,
                 data: data.trendComments,
                 itemStyle: { color: '#fee140' },
                 symbol: 'circle',
-                symbolSize: 4,
-                lineStyle: { width: 2 }
+                symbolSize: 5,
+                lineStyle: { width: 2.5 }
             }
         ]
     };
@@ -436,7 +434,7 @@ function renderTagChart(tagAnalytics) {
             label: {
                 color: 'rgba(255,255,255,0.6)',
                 fontSize: 10,
-                formatter: '{b} ({c})'
+                formatter: '{b} ({c}, {d}%)'
             },
             data: pieData,
             emphasis: {
