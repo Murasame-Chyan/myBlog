@@ -106,15 +106,71 @@
     transform: rotate(180deg);
   }
 
-  /* 扩展占位区样式 */
-  .dropdown-placeholder {
+  /* 储物柜格子布局 */
+  .dropdown-locker-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px 10px 10px;
+  }
+
+  .locker-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 16px 20px 12px;
-    gap: 6px;
+    padding: 10px 6px 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(135, 206, 235, 0.1);
+    cursor: pointer;
+    transition: all 0.25s ease;
     text-align: center;
+    gap: 4px;
+    min-height: 72px;
+  }
+
+  .locker-item:hover {
+    background: rgba(135, 206, 235, 0.1);
+    border-color: rgba(135, 206, 235, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(135, 206, 235, 0.15);
+  }
+
+  .locker-item i {
+    font-size: 1.3rem;
+    color: #87CEEB;
+    transition: color 0.25s ease;
+  }
+
+  .locker-item:hover i {
+    color: #a8ddf5;
+  }
+
+  .locker-item span {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+  }
+
+  .locker-status {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.3);
+    transition: color 0.25s ease;
+  }
+
+  .locker-item.active .locker-status {
+    color: #6bd9a0;
+  }
+
+  .locker-item.active {
+    border-color: rgba(107, 217, 160, 0.3);
+    background: rgba(107, 217, 160, 0.06);
+  }
+
+  .locker-item-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
     pointer-events: none;
   }
 </style>
@@ -176,7 +232,7 @@
         <li class="nav-item ms-lg-3">
           <div class="creator-dropdown" id="creatorDropdown">
             <button class="btn btn-write" style="cursor: pointer;" onclick="toggleCreatorMenu(event)">
-              <i class="bi bi-pencil-square"></i> 创作者中心
+              <i class="bi bi-pencil-square"></i> 创作与更多
               <i class="bi bi-chevron-down" style="font-size: 0.75rem; margin-left: 4px; transition: transform 0.3s;"></i>
             </button>
             <div class="creator-dropdown-menu">
@@ -190,10 +246,18 @@
 
               <div class="dropdown-divider"></div>
 
-              <!-- 扩展占位区 -->
-              <div class="dropdown-placeholder">
-                <i class="bi bi-plus-circle" style="font-size: 1.5rem; color: rgba(255,255,255,0.15);"></i>
-                <span style="font-size: 0.72rem; color: rgba(255,255,255,0.25);">更多功能即将上线</span>
+              <!-- 扩展功能区：储物柜格子布局 -->
+              <div class="dropdown-locker-grid">
+                <div class="locker-item" id="musicPlayerToggle" onclick="toggleMusicPlayer(event)">
+                  <i class="bi bi-music-note-beamed"></i>
+                  <span>博客音乐</span>
+                  <small class="locker-status" id="musicPlayerStatus">已关闭</small>
+                </div>
+                <div class="locker-item locker-item-disabled">
+                  <i class="bi bi-plus-circle"></i>
+                  <span>更多功能</span>
+                  <small class="locker-status">即将上线</small>
+                </div>
               </div>
             </div>
           </div>
@@ -572,5 +636,43 @@
             dd.classList.remove('show');
         }
     });
+
+    // ===== 音乐播放器开关 =====
+    function toggleMusicPlayer(e) {
+        e.stopPropagation();
+        var toggleEl = document.getElementById('musicPlayerToggle');
+        var statusEl = document.getElementById('musicPlayerStatus');
+
+        if (!toggleEl || !statusEl) return;
+
+        var isActive = toggleEl.classList.contains('active');
+
+        if (isActive) {
+            // 关闭播放器
+            toggleEl.classList.remove('active');
+            statusEl.textContent = '已关闭';
+            localStorage.setItem('musicPlayerOpen', 'false');
+            // 通知播放器组件关闭
+            window.dispatchEvent(new CustomEvent('musicPlayerToggle', { detail: { open: false } }));
+        } else {
+            // 开启播放器
+            toggleEl.classList.add('active');
+            statusEl.textContent = '已开启';
+            localStorage.setItem('musicPlayerOpen', 'true');
+            // 通知播放器组件开启
+            window.dispatchEvent(new CustomEvent('musicPlayerToggle', { detail: { open: true } }));
+        }
+    }
+
+    // 页面加载时同步播放器开关状态
+    (function() {
+        var isOpen = localStorage.getItem('musicPlayerOpen') === 'true';
+        var toggleEl = document.getElementById('musicPlayerToggle');
+        var statusEl = document.getElementById('musicPlayerStatus');
+        if (isOpen && toggleEl && statusEl) {
+            toggleEl.classList.add('active');
+            statusEl.textContent = '已开启';
+        }
+    })();
 </script>
 </th:block>
