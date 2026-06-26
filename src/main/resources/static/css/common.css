@@ -2786,3 +2786,421 @@ hr {
     background: rgba(255, 255, 255, 0.25);
     color: #fff;
 }
+
+/* ==================== 创作者数据分析页面 ==================== */
+.page-header {
+    border-bottom: 1px solid rgba(135, 206, 235, 0.2);
+    padding-bottom: 12px;
+}
+
+.analytics-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(135, 206, 235, 0.15);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s ease;
+}
+
+.analytics-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(135, 206, 235, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.analytics-card-body {
+    flex: 1;
+}
+
+.analytics-card-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 4px;
+}
+
+.analytics-card-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.analytics-section {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(135, 206, 235, 0.12);
+    border-radius: 14px;
+    padding: 20px;
+}
+
+.analytics-section-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(135, 206, 235, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.analytics-section-title i {
+    color: #87CEEB;
+}
+
+/* 热力图容器 */
+.heatmap-container {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 0;
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.heatmap-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.heatmap-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.heatmap-container::-webkit-scrollbar-thumb {
+    background: rgba(135, 206, 235, 0.3);
+    border-radius: 3px;
+}
+
+.heatmap-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(135, 206, 235, 0.5);
+}
+
+#heatmapChart {
+    width: 100%;
+    min-height: 140px;
+    display: block;
+}
+
+/* 热力图tooltip */
+.heatmap-tooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    display: none;
+    background: rgba(30, 35, 50, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(135, 206, 235, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* 热力图图例 */
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.legend-label {
+    font-weight: 500;
+}
+
+.legend-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    background-color: #87CEEB;
+    flex-shrink: 0;
+}
+
+/* ===== 趋势图日期筛选 ===== */
+.analytics-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(135, 206, 235, 0.1);
+}
+
+.trend-date-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.date-preset-btn {
+    padding: 4px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(135, 206, 235, 0.2);
+    background: rgba(135, 206, 235, 0.06);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.date-preset-btn:hover {
+    background: rgba(135, 206, 235, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.date-preset-btn.active {
+    background: rgba(135, 206, 235, 0.22);
+    border-color: #87CEEB;
+    color: #87CEEB;
+    font-weight: 600;
+}
+
+.date-input {
+    padding: 4px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(135, 206, 235, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 0.72rem;
+    outline: none;
+    width: 115px;
+    transition: border-color 0.2s;
+}
+
+.date-input:focus {
+    border-color: rgba(135, 206, 235, 0.5);
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.date-separator {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.7rem;
+}
+
+.date-apply-btn {
+    padding: 4px 12px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #87CEEB, #5BA4CF);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.date-apply-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(135, 206, 235, 0.35);
+}
+
+/* ===== 热度公式提示图标 ===== */
+.formula-info-icon {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.28);
+    cursor: help;
+    margin-left: 4px;
+    transition: color 0.2s;
+}
+
+.formula-info-icon:hover {
+    color: #87CEEB;
+}
+
+/* ===== 标签选择区域 ===== */
+.tag-select-area {
+    margin-bottom: 12px;
+}
+
+.tag-select-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 32px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    transition: max-height 0.3s ease;
+}
+
+.tag-select-area.expanded .tag-select-chips {
+    max-height: 400px;
+}
+
+.tag-expand-btn {
+    font-size: 0.68rem;
+    color: rgba(135, 206, 235, 0.5);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+    margin-right: auto;
+}
+
+.tag-expand-btn:hover {
+    color: #87CEEB;
+}
+
+.tag-select-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    background: rgba(135, 206, 235, 0.08);
+    border: 1px solid rgba(135, 206, 235, 0.15);
+    border-radius: 16px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.tag-select-chip:hover {
+    background: rgba(135, 206, 235, 0.15);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tag-select-chip.selected {
+    background: rgba(135, 206, 235, 0.22);
+    border-color: #87CEEB;
+    color: #fff;
+}
+
+.tag-select-chip input {
+    display: none;
+}
+
+.tag-select-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tag-select-hint {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.tag-select-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.tag-select-btn {
+    padding: 3px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(135, 206, 235, 0.15);
+    background: rgba(135, 206, 235, 0.06);
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tag-select-btn:hover {
+    background: rgba(135, 206, 235, 0.15);
+    color: #87CEEB;
+}
+
+/* ===== 互动率进度条卡片 ===== */
+.interaction-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.interaction-card {
+    padding: 4px 0;
+}
+
+.interaction-card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.interaction-icon {
+    font-size: 1.1rem;
+    width: 26px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.interaction-name {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    flex: 1;
+}
+
+.interaction-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.interaction-unit {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.interaction-bar-wrap {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.interaction-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.interaction-bar-fill.like-bar {
+    background: linear-gradient(90deg, rgba(0, 242, 254, 0.4), #00f2fe);
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
+}
+
+.interaction-bar-fill.comment-bar {
+    background: linear-gradient(90deg, rgba(254, 225, 64, 0.4), #fee140);
+    box-shadow: 0 0 10px rgba(254, 225, 64, 0.35);
+}
+
+.interaction-desc {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.25);
+    margin-top: 8px;
+}

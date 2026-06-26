@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>数据分析 - 创作者中心</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/common.css?v=2">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header th:replace="~{fragment/header :: nav('index')}"></header>
+
+    <main class="container my-4">
+        <div class="page-header mb-4">
+            <h3><i class="bi bi-graph-up"></i> 数据分析</h3>
+            <p class="text-muted" style="font-size: 0.85rem;">了解你的创作表现</p>
+        </div>
+
+        <!-- 核心数据看板 -->
+        <div class="row g-3 mb-4" id="statsCards">
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-file-text"></i>
+                    </div>
+                    <div class="analytics-card-body">
+                        <div class="analytics-card-label">总博客数</div>
+                        <div class="analytics-card-value" id="totalBlogs">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="analytics-card-body">
+                        <div class="analytics-card-label">总阅读量</div>
+                        <div class="analytics-card-value" id="totalReads">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-card-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="bi bi-heart-fill"></i>
+                    </div>
+                    <div class="analytics-card-body">
+                        <div class="analytics-card-label">总点赞数</div>
+                        <div class="analytics-card-value" id="totalLikes">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-card">
+                    <div class="analytics-card-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="analytics-card-body">
+                        <div class="analytics-card-label">总评论数</div>
+                        <div class="analytics-card-value" id="totalComments">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 趋势折线图 -->
+        <div class="analytics-section mb-4">
+            <div class="analytics-section-header">
+                <h5 class="analytics-section-title" style="border: none; margin: 0; padding: 0;"><i class="bi bi-graph-up-arrow"></i> 趋势分析</h5>
+                <div class="trend-date-filter">
+                    <button class="date-preset-btn active" data-days="7">7天</button>
+                    <button class="date-preset-btn" data-days="30">30天</button>
+                    <button class="date-preset-btn" data-days="90">90天</button>
+                    <button class="date-preset-btn" data-days="365">本年</button>
+                    <input type="date" id="startDate" class="date-input">
+                    <span class="date-separator">至</span>
+                    <input type="date" id="endDate" class="date-input">
+                    <button class="date-apply-btn" id="dateApplyBtn">确定</button>
+                </div>
+            </div>
+            <div id="trendChart" style="width: 100%; height: 380px;"></div>
+        </div>
+
+        <!-- 热门文章 + 标签分析 -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="analytics-section">
+                    <h5 class="analytics-section-title">
+                        <i class="bi bi-fire"></i> 热门文章 Top10
+                        <i class="bi bi-info-circle formula-info-icon"
+                           data-bs-toggle="tooltip"
+                           data-bs-html="true"
+                           data-bs-placement="top"
+                           data-bs-title="<strong>热度得分 = </strong><br>阅读数 × 0.5 + 点赞数 × 2<br><small class='text-white-50'>综合考量内容传播广度与读者喜爱度</small>">
+                        </i>
+                    </h5>
+                    <div id="hotBlogsChart" style="width: 100%; height: 400px;"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="analytics-section">
+                    <h5 class="analytics-section-title"><i class="bi bi-tag"></i> 标签分析</h5>
+                    <div class="tag-select-area" id="tagSelectArea">
+                        <div class="tag-select-chips" id="tagSelectChips"></div>
+                        <div class="tag-select-row">
+                            <div class="tag-select-hint">勾选标签后显示对比图表</div>
+                            <div class="tag-select-actions">
+                                <button class="tag-select-btn" id="tagSelectAll">全选</button>
+                                <button class="tag-select-btn" id="tagSelectNone">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="tagChart" style="width: 100%; height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 互动率分析 + 发文热力图 -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="analytics-section">
+                    <h5 class="analytics-section-title"><i class="bi bi-percent"></i> 互动率分析</h5>
+                    <div class="interaction-cards">
+                        <div class="interaction-card">
+                            <div class="interaction-card-header">
+                                <span class="interaction-icon" style="color: #00f2fe;"><i class="bi bi-heart-fill"></i></span>
+                                <span class="interaction-name">点赞率</span>
+                                <span class="interaction-value" id="likeRateValue" style="color: #00f2fe;">--</span>
+                                <span class="interaction-unit">%</span>
+                            </div>
+                            <div class="interaction-bar-wrap">
+                                <div class="interaction-bar-fill like-bar" id="likeRateBar" style="width: 0%;"></div>
+                            </div>
+                            <div class="interaction-desc">总点赞数 / 总阅读数</div>
+                        </div>
+                        <div class="interaction-card">
+                            <div class="interaction-card-header">
+                                <span class="interaction-icon" style="color: #fee140;"><i class="bi bi-chat-dots-fill"></i></span>
+                                <span class="interaction-name">评论率</span>
+                                <span class="interaction-value" id="commentRateValue" style="color: #fee140;">--</span>
+                                <span class="interaction-unit">%</span>
+                            </div>
+                            <div class="interaction-bar-wrap">
+                                <div class="interaction-bar-fill comment-bar" id="commentRateBar" style="width: 0%;"></div>
+                            </div>
+                            <div class="interaction-desc">总评论数 / 总阅读数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="analytics-section">
+                    <h5 class="analytics-section-title"><i class="bi bi-calendar-check"></i> 发文热力图</h5>
+                    <div class="heatmap-container">
+                        <svg id="heatmapChart"></svg>
+                    </div>
+                    <div class="heatmap-legend">
+                        <span class="legend-label">少</span>
+                        <div class="legend-cell" style="opacity: 0.1;"></div>
+                        <div class="legend-cell" style="opacity: 0.3;"></div>
+                        <div class="legend-cell" style="opacity: 0.6;"></div>
+                        <div class="legend-cell" style="opacity: 0.85;"></div>
+                        <div class="legend-cell" style="opacity: 1;"></div>
+                        <span class="legend-label">多</span>
+                    </div>
+                </div>
+                <div id="heatmapTooltip" class="heatmap-tooltip"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/creatorAnalytics.js?v=2"></script>
+<footer th:replace="~{fragment/footer :: footer}"></footer>
+<div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>
+</body>
+</html>

@@ -6,6 +6,7 @@ import com.murasame.entity.Comments;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface CommentMapper {
@@ -59,4 +60,39 @@ public interface CommentMapper {
 
 	@Select("SELECT COUNT(*) FROM comments WHERE b_id=#{blogId}")
 	int getCommentCountByBlogId(@Param("blogId") Long blogId);
+
+	/**
+	 * 获取近N天每日评论数
+	 */
+	@Select("""
+		SELECT
+			DATE(c.created_at) as date,
+			COUNT(*) as comment_count
+		FROM comments c
+		INNER JOIN blogs b ON c.b_id = b.id
+		WHERE b.u_id = #{userId}
+		  AND c.created_at >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+		GROUP BY DATE(c.created_at)
+		ORDER BY date ASC
+	""")
+	List<Map<String, Object>> getDailyCommentTrend(@Param("userId") Long userId, @Param("days") int days);
+
+	/**
+	 * 获取自定义日期范围的每日评论数趋势
+	 */
+	@Select("""
+		SELECT
+			DATE(c.created_at) as date,
+			COUNT(*) as comment_count
+		FROM comments c
+		INNER JOIN blogs b ON c.b_id = b.id
+		WHERE b.u_id = #{userId}
+		  AND c.created_at &gt;= #{startDate}
+		  AND c.created_at &lt; #{endDate} + INTERVAL 1 DAY
+		GROUP BY DATE(c.created_at)
+		ORDER BY date ASC
+	""")
+	List<Map<String, Object>> getDailyCommentTrendByRange(@Param("userId") Long userId,
+			@Param("startDate") String startDate, @Param("endDate") String endDate);
 }
+
