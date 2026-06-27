@@ -458,12 +458,13 @@ var _isRefreshing = false;
 var _pendingRequests = [];
 
 function authFetch(url, options) {
-    options = options || {};
-    options.credentials = 'same-origin';
-    var isRetry = options._isRetry === true;
-    delete options._isRetry;
+    // 浅拷贝避免修改调用方的原始对象（FormData body 等）
+    var opts = Object.assign({}, options || {});
+    opts.credentials = 'same-origin';
+    var isRetry = opts._isRetry === true;
+    delete opts._isRetry;
 
-    return fetch(url, options).then(function(response) {
+    return fetch(url, opts).then(function(response) {
         if (response.status !== 401 || isRetry) {
             return response;
         }
@@ -473,7 +474,7 @@ function authFetch(url, options) {
             return new Promise(function(resolve) {
                 _pendingRequests.push(function(success) {
                     if (success) {
-                        var retryOpts = Object.assign({}, options, { _isRetry: true });
+                        var retryOpts = Object.assign({}, opts, { _isRetry: true });
                         resolve(authFetch(url, retryOpts));
                     } else {
                         resolve(response);
@@ -490,7 +491,7 @@ function authFetch(url, options) {
                 _pendingRequests.forEach(function(cb) { cb(success); });
                 _pendingRequests = [];
                 if (success) {
-                    var retryOpts = Object.assign({}, options, { _isRetry: true });
+                    var retryOpts = Object.assign({}, opts, { _isRetry: true });
                     return authFetch(url, retryOpts);
                 }
                 // 刷新失败：弹出登录框

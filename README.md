@@ -12,6 +12,15 @@
 ### 博客详情
 ![博客详情](docs/screenshots/02-blog-detail.png)
 
+### 归档页
+![归档页](docs/screenshots/03-archives.png)
+
+### 标签筛选
+![标签筛选](docs/screenshots/04-tag-filter.png)
+
+### 小游戏
+![小游戏](docs/screenshots/05-game.png)
+
 ## 技术栈
 
 | 层面 | 技术 |

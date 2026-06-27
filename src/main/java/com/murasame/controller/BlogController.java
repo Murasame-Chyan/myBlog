@@ -16,6 +16,7 @@ import com.murasame.util.BlogHtmlUtil;
 import com.murasame.util.ReturnUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.stereotype.Controller;
@@ -215,9 +216,11 @@ public class BlogController {
 	@ResponseBody
 	@PostMapping("/uploadCover")
 	public Map<String, Object> uploadCover(@RequestParam("coverImageFile") MultipartFile file,
-	                                       HttpServletRequest request) {
+	                                       HttpServletRequest request,
+	                                       HttpServletResponse response) {
 		com.murasame.entity.Users currentUser = authHelper.getCurrentUser(request);
 		if (currentUser == null) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			return ReturnUtil.unauthorized();
 		}
 		// 后端二次校验，前端也做了预检

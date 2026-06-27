@@ -4,13 +4,13 @@
   /* ===== CSS 变量（共享） ===== */
   #musicMiniCapsule, #musicFullPanel {
     --mp-bg: rgba(15, 15, 35, 0.95);
-    --mp-accent: #87CEEB;
+    --mp-accent: var(--accent);
     --mp-green: #22C55E;
     --mp-text: #FFFFFF;
     --mp-text-dim: rgba(255, 255, 255, 0.6);
     --mp-text-faint: rgba(255, 255, 255, 0.3);
     --mp-panel-bg: rgba(30, 35, 50, 0.97);
-    --mp-border: rgba(135, 206, 235, 0.15);
+    --mp-border: var(--accent-15);
     --mp-radius: 16px;
     --mp-transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     --mp-transition-ease: 0.25s ease;
@@ -20,7 +20,7 @@
   #musicMiniCapsule {
     position: fixed;
     bottom: 24px;
-    right: 24px;
+    left: calc(100vw - 340px - 24px);
     z-index: 9998;
     display: none;
     align-items: center;
@@ -128,7 +128,7 @@
   #musicFullPanel {
     position: fixed;
     bottom: 90px;
-    right: 24px;
+    left: calc(100vw - 340px - 24px);
     z-index: 9997;
     width: 340px;
     max-height: 560px;
@@ -140,9 +140,19 @@
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
     display: none;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     cursor: default;
     transition: opacity var(--mp-transition-ease), transform var(--mp-transition-ease);
+  }
+
+  #musicFullPanel::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  #musicFullPanel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
   }
 
   #musicFullPanel.visible {
@@ -250,6 +260,12 @@
     border-radius: 10px;
   }
 
+  .viz-mode-btn {
+    position: absolute;
+    right: 16px;
+    font-size: 0.75rem;
+  }
+
   /* 进度条 */
   .panel-progress-section {
     padding: 0 16px 8px;
@@ -302,6 +318,7 @@
 
   /* 控制按钮 */
   .panel-controls {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -327,6 +344,17 @@
   .ctrl-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     color: var(--mp-text);
+  }
+
+  .mode-btn {
+    position: absolute;
+    left: 16px;
+    font-size: 0.8rem;
+  }
+
+  .mode-btn.shuffle {
+    color: var(--mp-accent);
+    background: rgba(135, 206, 235, 0.15);
   }
 
   .ctrl-btn-play {
@@ -393,19 +421,66 @@
     color: var(--mp-text);
   }
 
-  /* 歌单区域 */
+  /* 歌单区域 —— 可折叠抽屉 */
   .panel-playlist {
     border-top: 1px solid var(--mp-border);
-    padding: 8px 12px;
   }
 
   .playlist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 16px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background var(--mp-transition-ease);
+  }
+
+  .playlist-header:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .playlist-header-label {
     font-size: 0.7rem;
     color: var(--mp-text-faint);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding: 0 4px 6px;
+  }
+
+  .playlist-toggle-icon {
+    font-size: 0.75rem;
+    color: var(--mp-text-faint);
+    transition: transform 0.25s ease;
+  }
+
+  /* 折叠态：图标旋转，内容收起 */
+  .panel-playlist.collapsed .playlist-toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  .playlist-body {
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 12px 8px;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+
+  .panel-playlist.collapsed .playlist-body {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .playlist-body::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  .playlist-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
   }
 
   .playlist-item {
@@ -478,7 +553,7 @@
 
     #musicMiniCapsule {
       bottom: 16px;
-      right: 16px;
+      left: 8px;
     }
 
     .capsule-info {
@@ -551,6 +626,9 @@
 
   <!-- 控制按钮 -->
   <div class="panel-controls">
+    <button class="ctrl-btn mode-btn" id="playModeBtn" title="顺序循环">
+      <i class="bi bi-arrow-repeat"></i>
+    </button>
     <button class="ctrl-btn" id="prevBtn" title="上一首">
       <i class="bi bi-skip-start-fill"></i>
     </button>
@@ -560,6 +638,9 @@
     <button class="ctrl-btn" id="nextBtn" title="下一首">
       <i class="bi bi-skip-end-fill"></i>
     </button>
+    <button class="ctrl-btn viz-mode-btn" id="vizModeBtn" title="柱状频谱">
+      <i class="bi bi-bar-chart-fill"></i>
+    </button>
   </div>
 
   <!-- 封面：音频频谱可视化 -->
@@ -568,17 +649,13 @@
   </div>
 
   <!-- 歌单 -->
-  <div class="panel-playlist">
-    <div class="playlist-header">歌单</div>
-    <div id="playlistContainer">
-      <div class="playlist-item active" data-index="0">
-        <span class="playlist-item-num">01</span>
-        <div class="playlist-item-info">
-          <div class="playlist-item-title">TOMATO</div>
-          <div class="playlist-item-artist">7co</div>
-        </div>
-        <span class="playlist-item-playing"><i class="bi bi-play-fill"></i></span>
-      </div>
+  <div class="panel-playlist" id="playlistSection">
+    <div class="playlist-header" id="playlistHeader">
+      <span class="playlist-header-label">歌单</span>
+      <i class="bi bi-chevron-up playlist-toggle-icon"></i>
+    </div>
+    <div class="playlist-body" id="playlistBody">
+      <div id="playlistContainer"></div>
     </div>
   </div>
 </div>

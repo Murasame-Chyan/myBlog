@@ -1,35 +1,65 @@
+<!-- 防闪烁：在 CSS 加载前设置 data-theme -->
+<script>
+  (function(){
+    var t=localStorage.getItem('theme');
+    if(!t) t=window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';
+    document.documentElement.setAttribute('data-theme',t);
+  })();
+</script>
 <!-- 可替换首部 -->
 <th:block th:fragment="nav(currentPage)">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <style>
   .navbar-custom {
-    background-color: rgba(135, 206, 235, 0.8) !important;
+    background-color: var(--navbar-bg) !important;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
     position: relative;
     z-index: 100;
   }
+  /* 主题切换按钮 —— 无边框、无背景，仅图标变化 */
+  .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1.15rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease, transform 0.3s ease;
+    padding: 0;
+  }
+  .theme-toggle-btn:hover {
+    color: var(--accent);
+    transform: scale(1.15);
+  }
+  .theme-toggle-btn:active {
+    transform: scale(0.92);
+  }
   .navbar-brand {
-    color: #ffffff !important;
+    color: var(--brand-color) !important;
     font-weight: bold;
     font-size: 1.5rem;
   }
   .nav-link {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--nav-link-color) !important;
     transition: all 0.3s ease;
   }
   .nav-link:hover {
-    color: #ffffff !important;
+    color: var(--brand-color) !important;
   }
   .nav-link.active {
-    color: #ffffff !important;
+    color: var(--brand-color) !important;
     font-weight: bold;
-    border-bottom: 2px solid #ffffff;
+    border-bottom: 2px solid var(--nav-link-active-border);
   }
   .btn-write {
     background: linear-gradient(135deg, #87CEEB 0%, #5BA4CF 100%);
     border: none;
-    color: #ffffff !important;
+    color: var(--brand-color) !important;
     font-weight: bold;
     padding: 0.5rem 1.5rem;
     border-radius: 20px;
@@ -40,7 +70,7 @@
     background: linear-gradient(135deg, #5BA4CF 0%, #87CEEB 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(135, 206, 235, 0.6);
-    color: #ffffff !important;
+    color: var(--brand-color) !important;
   }
 
   /* 创作者中心下拉菜单 */
@@ -58,14 +88,14 @@
     top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%) translateY(-4px);
-    background: rgba(30, 35, 50, 0.97);
+    background: var(--dropdown-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(135, 206, 235, 0.2);
+    border: 1px solid var(--accent-20);
     border-radius: 12px;
     min-width: 180px;
     padding: 8px 0;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 32px var(--black-50);
     z-index: 9999;
     transition: opacity 0.25s ease,
                 transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -82,12 +112,12 @@
     transform: translateX(-50%) rotate(45deg);
     width: 14px;
     height: 14px;
-    background: rgba(30, 35, 50, 0.97);
+    background: var(--dropdown-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-radius: 2px 0 0 0;
-    border-top: 1px solid rgba(135, 206, 235, 0.2);
-    border-left: 1px solid rgba(135, 206, 235, 0.2);
+    border-top: 1px solid var(--accent-20);
+    border-left: 1px solid var(--accent-20);
     z-index: 1;
   }
 
@@ -122,7 +152,7 @@
     padding: 10px 6px 8px;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(135, 206, 235, 0.1);
+    border: 1px solid var(--accent-10);
     cursor: pointer;
     transition: all 0.25s ease;
     text-align: center;
@@ -131,7 +161,7 @@
   }
 
   .locker-item:hover {
-    background: rgba(135, 206, 235, 0.1);
+    background: var(--accent-10);
     border-color: rgba(135, 206, 235, 0.35);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(135, 206, 235, 0.15);
@@ -229,6 +259,11 @@
       <ul class="navbar-nav ms-auto">
         <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'index' ? 'active' : ''}" th:href="@{/}">首页</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${currentPage == 'game' ? 'active' : ''}" th:href="@{/game}">小游戏</a></li>
+        <li class="nav-item d-flex align-items-center ms-2">
+          <button id="themeToggle" class="theme-toggle-btn" title="切换主题">
+            <i class="bi bi-moon-fill"></i>
+          </button>
+        </li>
         <li class="nav-item ms-lg-3">
           <div class="creator-dropdown" id="creatorDropdown">
             <button class="btn btn-write" style="cursor: pointer;" onclick="toggleCreatorMenu(event)">
@@ -477,6 +512,7 @@
 <script src="/js/toast.js"></script>
 <script src="/js/auth.js"></script>
 <script src="/js/backgroundFix.js"></script>
+<script src="/js/theme.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
     // ===== 编辑资料模态框 =====

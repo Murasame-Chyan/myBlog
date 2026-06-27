@@ -44,6 +44,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             token = extractFromCookie(request);
         }
 
+        if (token == null) {
+            log.debug("No JWT found for request: {} {}", request.getMethod(), request.getRequestURI());
+        } else if (!jwtUtil.isValidToken(token)) {
+            log.debug("Invalid JWT for request: {} {}", request.getMethod(), request.getRequestURI());
+        } else if (!jwtUtil.isAccessToken(token)) {
+            log.debug("Non-access token for request: {} {}", request.getMethod(), request.getRequestURI());
+        }
+
         if (token != null && jwtUtil.isValidToken(token) && jwtUtil.isAccessToken(token)) {
             String jti = jwtUtil.getJti(token);
             if (jti != null && Boolean.TRUE.equals(redisTemplate.hasKey("jwt:blacklist:" + jti))) {

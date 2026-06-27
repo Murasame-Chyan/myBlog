@@ -4,10 +4,11 @@
     <meta charset="utf-8">
     <title>写博文</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="/css/theme.css">
 </head>
 <body>
     <!-- 1.header -->
@@ -97,13 +98,22 @@
     </main>
 
     <!-- 99.JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/editormd.min.js"></script>
     <script th:src="@{/js/writeBlog.js}"></script>
     <script th:inline="javascript">
         // 将服务端已有标签传给 JS
         var allTags = /*[[${allTags}]]*/ [];
         var preSelectedTagIds = /*[[${blog?.t_id?.tagList}]]*/ [];
+    </script>
+    <script>
+        // Bootstrap alert dismiss polyfill（避免加载完整 Bootstrap JS 与 Editor.md jQuery 冲突）
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-bs-dismiss="alert"]');
+            if (btn) {
+                var alert = btn.closest('.alert');
+                if (alert) alert.remove();
+            }
+        });
     </script>
 <footer th:replace="~{fragment/footer :: footer}"></footer>
 <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>
