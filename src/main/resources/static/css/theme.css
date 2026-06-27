@@ -1,0 +1,441 @@
+/* ============================================================
+   Theme CSS Variables — Dark (default) + Light mode
+   ============================================================ */
+
+/* ---- Dark Theme (default, matches current look) ---- */
+:root {
+  /* Accent: sky blue */
+  --accent: #87CEEB;
+  --accent-dark: #6BB5D9;
+  --accent-gradient: linear-gradient(135deg, #87CEEB 0%, #6BB5D9 100%);
+  --accent-gradient-reverse: linear-gradient(135deg, #6BB5D9 0%, #87CEEB 100%);
+  --accent-rgb: 135, 206, 235;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-primary-rgb: 255, 255, 255;
+  --text-disabled: #aaa;
+
+  /* Glass surfaces (white @ varying opacity) */
+  --glass-03: rgba(255, 255, 255, 0.03);
+  --glass-04: rgba(255, 255, 255, 0.04);
+  --glass-05: rgba(255, 255, 255, 0.05);
+  --glass-06: rgba(255, 255, 255, 0.06);
+  --glass-08: rgba(255, 255, 255, 0.08);
+  --glass-07: rgba(255, 255, 255, 0.07);
+  --glass-10: rgba(255, 255, 255, 0.1);
+  --glass-12: rgba(255, 255, 255, 0.12);
+  --glass-14: rgba(255, 255, 255, 0.14);
+  --glass-15: rgba(255, 255, 255, 0.15);
+  --glass-18: rgba(255, 255, 255, 0.18);
+  --glass-20: rgba(255, 255, 255, 0.2);
+  --glass-25: rgba(255, 255, 255, 0.25);
+  --glass-28: rgba(255, 255, 255, 0.28);
+  --glass-30: rgba(255, 255, 255, 0.3);
+  --glass-35: rgba(255, 255, 255, 0.35);
+  --glass-40: rgba(255, 255, 255, 0.4);
+  --glass-45: rgba(255, 255, 255, 0.45);
+  --glass-50: rgba(255, 255, 255, 0.5);
+  --glass-55: rgba(255, 255, 255, 0.55);
+  --glass-60: rgba(255, 255, 255, 0.6);
+  --glass-65: rgba(255, 255, 255, 0.65);
+  --glass-70: rgba(255, 255, 255, 0.7);
+  --glass-75: rgba(255, 255, 255, 0.75);
+  --glass-80: rgba(255, 255, 255, 0.8);
+  --glass-90: rgba(255, 255, 255, 0.9);
+  --glass-95: rgba(255, 255, 255, 0.95);
+
+  /* Accent @ varying opacity */
+  --accent-05: rgba(135, 206, 235, 0.05);
+  --accent-06: rgba(135, 206, 235, 0.06);
+  --accent-08: rgba(135, 206, 235, 0.08);
+  --accent-10: rgba(135, 206, 235, 0.1);
+  --accent-12: rgba(135, 206, 235, 0.12);
+  --accent-15: rgba(135, 206, 235, 0.15);
+  --accent-18: rgba(135, 206, 235, 0.18);
+  --accent-20: rgba(135, 206, 235, 0.2);
+  --accent-22: rgba(135, 206, 235, 0.22);
+  --accent-25: rgba(135, 206, 235, 0.25);
+  --accent-30: rgba(135, 206, 235, 0.3);
+  --accent-35: rgba(135, 206, 235, 0.35);
+  --accent-40: rgba(135, 206, 235, 0.4);
+  --accent-45: rgba(135, 206, 235, 0.45);
+  --accent-50: rgba(135, 206, 235, 0.5);
+  --accent-60: rgba(135, 206, 235, 0.6);
+  --accent-70: rgba(135, 206, 235, 0.7);
+  --accent-80: rgba(135, 206, 235, 0.8);
+
+  /* Shadows & overlays */
+  --black-20: rgba(0, 0, 0, 0.2);
+  --black-30: rgba(0, 0, 0, 0.3);
+  --black-40: rgba(0, 0, 0, 0.4);
+  --black-45: rgba(0, 0, 0, 0.45);
+  --black-50: rgba(0, 0, 0, 0.5);
+  --black-55: rgba(0, 0, 0, 0.55);
+  --black-60: rgba(0, 0, 0, 0.6);
+  --black-65: rgba(0, 0, 0, 0.65);
+  --black-70: rgba(0, 0, 0, 0.7);
+  --black-78: rgba(0, 0, 0, 0.78);
+  --black-80: rgba(0, 0, 0, 0.8);
+  --black-00: rgba(0, 0, 0, 0);
+  --overlay-gradient: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.78) 100%);
+
+  /* Surfaces (dropdowns, modals) */
+  --dropdown-bg: rgba(30, 35, 50, 0.97);
+  --modal-bg: #1a1e2b;
+  --input-text: #ccc;
+
+  /* Navbar */
+  --navbar-bg: rgba(135, 206, 235, 0.8);
+  --navbar-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --nav-link-color: rgba(255, 255, 255, 0.7);
+  --nav-link-hover: #ffffff;
+  --nav-link-active-border: #ffffff;
+  --brand-color: #ffffff;
+
+  /* Semantic */
+  --error: #ff6b6b;
+  --error-12: rgba(255, 80, 80, 0.12);
+  --error-18: rgba(255, 80, 80, 0.18);
+  --error-60: rgba(255, 80, 80, 0.6);
+  --error-border: rgba(255, 107, 107, 0.35);
+  --error-rgb: 255, 107, 107;
+  --error-light: rgba(255, 80, 80, 0.25);
+  --error-lighter: rgba(255, 80, 80, 0.35);
+  --error-20: rgba(255, 80, 80, 0.2);
+  --success: #6bd9a0;
+  --success-light: rgba(107, 217, 160, 0.35);
+
+  /* Toast */
+  --toast-success: rgba(46, 160, 67, 0.92);
+  --toast-error: rgba(200, 56, 56, 0.92);
+  --toast-info: rgba(30, 35, 50, 0.95);
+  --toast-warning: rgba(180, 120, 20, 0.92);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+
+  /* Text shadow */
+  --text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+
+  /* Misc */
+  --body-text: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.1);
+  --card-bg-hover: rgba(255, 255, 255, 0.15);
+  --card-border-hover: rgba(135, 206, 235, 0.3);
+  --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(135, 206, 235, 0.15);
+  --meta-color: rgba(255, 255, 255, 0.7);
+  --meta-icon: #87CEEB;
+  --divider: rgba(255, 255, 255, 0.2);
+  --tag-bg: rgba(135, 206, 235, 0.12);
+  --tag-border: rgba(135, 206, 235, 0.25);
+  --tag-hover-bg: rgba(135, 206, 235, 0.22);
+  --tag-hover-border: rgba(135, 206, 235, 0.45);
+  --tag-text: rgba(255, 255, 255, 0.8);
+  --tag-block-bg: rgba(255, 255, 255, 0.04);
+  --tag-block-border: rgba(255, 255, 255, 0.1);
+  --tag-pool-bg: rgba(255, 255, 255, 0.06);
+  --tag-pool-border: rgba(255, 255, 255, 0.15);
+  --tag-pool-color: rgba(255, 255, 255, 0.65);
+  --tag-add-btn-bg: rgba(135, 206, 235, 0.12);
+  --tag-add-btn-border: rgba(135, 206, 235, 0.3);
+  --tag-add-btn-color: #87CEEB;
+  --tag-add-btn-hover-bg: rgba(135, 206, 235, 0.25);
+  --tag-add-btn-hover-border: #87CEEB;
+
+  /* Sign-in */
+  --signin-gold: #FFD700;
+  --signin-exp: #4fc3f7;
+
+  /* Profile level colors */
+  --level-lv1: #8BC34A;
+  --level-lv2: #64B5F6;
+  --level-lv3: #FFD54F;
+  --level-lv4: #FFB74D;
+  --level-lv5: #EF5350;
+  --level-lv6: #F48FB1;
+  --level-lv7: #CE93D8;
+
+  /* Content card border */
+  --content-card-border: rgba(255, 255, 255, 0.05);
+
+  /* Link */
+  --link-color: #ffffff;
+  --link-hover: #87CEEB;
+
+  /* Write blog btn gradient */
+  --btn-write-gradient: linear-gradient(135deg, #87CEEB 0%, #5BA4CF 100%);
+  --btn-write-gradient-hover: linear-gradient(135deg, #5BA4CF 0%, #87CEEB 100%);
+  --btn-write-shadow: 0 2px 8px rgba(135, 206, 235, 0.4);
+  --btn-write-shadow-hover: 0 4px 12px rgba(135, 206, 235, 0.6);
+
+  /* Register btn */
+  --btn-register-gradient: linear-gradient(135deg, #DA70D6 0%, #FF69B4 100%);
+  --btn-register-gradient-end: #FF69B4;
+  --btn-register-color: #DA70D6;
+  --btn-register-shadow: 0 4px 15px rgba(218, 112, 214, 0.35);
+  --btn-register-shadow-hover: 0 6px 22px rgba(218, 112, 214, 0.5);
+  --btn-register-color: #DA70D6;
+  --btn-register-shadow: 0 4px 15px rgba(218, 112, 214, 0.35);
+  --btn-register-shadow-hover: 0 6px 22px rgba(218, 112, 214, 0.5);
+
+  /* Follow btn */
+  --btn-follow-gradient: linear-gradient(135deg, #FF6B9D, #D4467A);
+
+  /* Ambient glow */
+  --ambient-glow: rgba(0, 242, 254, 0.35);
+  --ambient-glow-strong: rgba(0, 242, 254, 0.4);
+
+  /* Skeleton */
+  --skeleton-base: rgba(255, 255, 255, 0.06);
+  --skeleton-shine: rgba(255, 255, 255, 0.11);
+
+  /* Filter dropdown */
+  --filter-bg: rgba(20, 24, 38, 0.96);
+  --tag-search-bg: #1e2a3a;
+
+  /* Backdrop */
+  --modal-backdrop: rgba(8, 10, 16, 0.78);
+  --lightbox-bg: rgba(0, 0, 0, 0.85);
+
+  /* Weather */
+  --weather-bg: rgba(255, 255, 255, 0.08);
+  --weather-border: rgba(135, 206, 235, 0.15);
+  --weather-temp: #ffffff;
+
+  /* Blog cover */
+  --cover-border: rgba(135, 206, 235, 0.35);
+
+  /* Accent light */
+  --accent-light-rgb: rgb(110, 190, 225);
+
+  /* Dropdown alt */
+  --dropdown-bg-alt: rgba(20, 20, 40, 0.95);
+
+  /* Follow btn extras */
+  --follow-color: #FF6B9D;
+  --follow-color-dark: #D4467A;
+  --follow-bg: rgba(255, 107, 157, 0.04);
+  --follow-border: rgba(255, 107, 157, 0.18);
+  --follow-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+
+  /* Warning */
+  --warning-border: rgba(255, 193, 60, 0.35);
+  --warning-icon: #ffc13c;
+
+  /* Sign-in extra */
+  --signin-gold-light: #FFD740;
+  --signin-orange: #ff9800;
+  --signin-yellow: #fee140;
+
+  /* Gold accent */
+  --gold-12: rgba(255, 215, 0, 0.12);
+  --gold-35: rgba(255, 215, 0, 0.35);
+  --gold-50: rgba(255, 215, 0, 0.5);
+  --gold-60: rgba(255, 215, 0, 0.6);
+  --gold-light-50: rgba(255, 215, 64, 0.5);
+  --gold-light-90: rgba(255, 215, 64, 0.9);
+  --gold-bright-35: rgba(254, 225, 64, 0.35);
+  --gold-bright-40: rgba(254, 225, 64, 0.4);
+
+  /* Transition */
+  --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ---- Light Theme ---- */
+[data-theme="light"] {
+  /* Accent: deeper blue for contrast on light bg */
+  --accent: #4a9bb5;
+  --accent-dark: #3a8ba5;
+  --accent-gradient: linear-gradient(135deg, #4a9bb5 0%, #3a8ba5 100%);
+  --accent-gradient-reverse: linear-gradient(135deg, #3a8ba5 0%, #4a9bb5 100%);
+  --accent-rgb: 74, 155, 181;
+
+  /* Text */
+  --text-primary: #1a1e2b;
+  --text-primary-rgb: 26, 30, 43;
+  --text-disabled: #999;
+
+  /* Glass surfaces — more opaque for light mode */
+  --glass-03: rgba(255, 255, 255, 0.5);
+  --glass-04: rgba(255, 255, 255, 0.55);
+  --glass-05: rgba(255, 255, 255, 0.6);
+  --glass-06: rgba(255, 255, 255, 0.65);
+  --glass-08: rgba(255, 255, 255, 0.7);
+  --glass-10: rgba(255, 255, 255, 0.75);
+  --glass-12: rgba(255, 255, 255, 0.78);
+  --glass-14: rgba(255, 255, 255, 0.8);
+  --glass-15: rgba(255, 255, 255, 0.82);
+  --glass-20: rgba(0, 0, 0, 0.08);
+  --glass-25: rgba(0, 0, 0, 0.12);
+  --glass-30: rgba(0, 0, 0, 0.15);
+  --glass-35: rgba(0, 0, 0, 0.2);
+  --glass-40: rgba(0, 0, 0, 0.3);
+  --glass-45: rgba(0, 0, 0, 0.35);
+  --glass-50: rgba(0, 0, 0, 0.4);
+  --glass-55: rgba(0, 0, 0, 0.45);
+  --glass-60: rgba(0, 0, 0, 0.5);
+  --glass-70: rgba(0, 0, 0, 0.6);
+  --glass-80: rgba(0, 0, 0, 0.7);
+  --glass-90: rgba(0, 0, 0, 0.8);
+  --glass-95: rgba(0, 0, 0, 0.9);
+
+  /* Accent @ varying opacity (adjusted for light bg) */
+  --accent-05: rgba(74, 155, 181, 0.06);
+  --accent-06: rgba(74, 155, 181, 0.08);
+  --accent-08: rgba(74, 155, 181, 0.1);
+  --accent-10: rgba(74, 155, 181, 0.12);
+  --accent-12: rgba(74, 155, 181, 0.14);
+  --accent-15: rgba(74, 155, 181, 0.16);
+  --accent-18: rgba(74, 155, 181, 0.2);
+  --accent-20: rgba(74, 155, 181, 0.22);
+  --accent-22: rgba(74, 155, 181, 0.25);
+  --accent-25: rgba(74, 155, 181, 0.28);
+  --accent-30: rgba(74, 155, 181, 0.32);
+  --accent-35: rgba(74, 155, 181, 0.36);
+  --accent-40: rgba(74, 155, 181, 0.4);
+  --accent-45: rgba(74, 155, 181, 0.45);
+  --accent-50: rgba(74, 155, 181, 0.5);
+  --accent-60: rgba(74, 155, 181, 0.6);
+  --accent-70: rgba(74, 155, 181, 0.7);
+  --accent-80: rgba(74, 155, 181, 0.85);
+
+  /* Shadows — lighter for light mode */
+  --black-20: rgba(0, 0, 0, 0.06);
+  --black-30: rgba(0, 0, 0, 0.08);
+  --black-40: rgba(0, 0, 0, 0.1);
+  --black-45: rgba(0, 0, 0, 0.12);
+  --black-50: rgba(0, 0, 0, 0.15);
+  --black-55: rgba(0, 0, 0, 0.18);
+  --black-60: rgba(0, 0, 0, 0.2);
+  --black-65: rgba(0, 0, 0, 0.25);
+  --black-70: rgba(0, 0, 0, 0.3);
+  --black-78: rgba(0, 0, 0, 0.35);
+  --black-80: rgba(0, 0, 0, 0.4);
+  --overlay-gradient: none;
+
+  /* Surfaces */
+  --dropdown-bg: rgba(255, 255, 255, 0.97);
+  --modal-bg: #ffffff;
+  --input-text: #333;
+
+  /* Navbar */
+  --navbar-bg: rgba(255, 255, 255, 0.92);
+  --navbar-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --nav-link-color: rgba(26, 30, 43, 0.65);
+  --nav-link-hover: #1a1e2b;
+  --nav-link-active-border: #4a9bb5;
+  --brand-color: #1a1e2b;
+
+  /* Semantic */
+  --error: #d32f2f;
+  --error-rgb: 211, 47, 47;
+  --error-light: rgba(211, 47, 47, 0.15);
+  --error-lighter: rgba(211, 47, 47, 0.2);
+  --success: #2e7d32;
+  --success-light: rgba(46, 125, 50, 0.15);
+
+  /* Toast */
+  --toast-success: rgba(46, 125, 50, 0.92);
+  --toast-error: rgba(211, 47, 47, 0.92);
+  --toast-info: rgba(255, 255, 255, 0.95);
+  --toast-warning: rgba(180, 100, 20, 0.92);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-track: rgba(0, 0, 0, 0.05);
+
+  /* Text shadow — removed for light mode */
+  --text-shadow: none;
+
+  /* Misc */
+  --body-text: #1a1e2b;
+  --card-bg: rgba(255, 255, 255, 0.75);
+  --card-bg-hover: rgba(255, 255, 255, 0.92);
+  --card-border-hover: rgba(74, 155, 181, 0.35);
+  --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1), 0 0 15px rgba(74, 155, 181, 0.12);
+  --meta-color: rgba(26, 30, 43, 0.6);
+  --meta-icon: #4a9bb5;
+  --divider: rgba(0, 0, 0, 0.1);
+  --tag-bg: rgba(74, 155, 181, 0.1);
+  --tag-border: rgba(74, 155, 181, 0.25);
+  --tag-hover-bg: rgba(74, 155, 181, 0.2);
+  --tag-hover-border: rgba(74, 155, 181, 0.45);
+  --tag-text: rgba(26, 30, 43, 0.7);
+  --tag-block-bg: rgba(0, 0, 0, 0.02);
+  --tag-block-border: rgba(0, 0, 0, 0.08);
+  --tag-pool-bg: rgba(0, 0, 0, 0.04);
+  --tag-pool-border: rgba(0, 0, 0, 0.1);
+  --tag-pool-color: rgba(26, 30, 43, 0.6);
+  --tag-add-btn-bg: rgba(74, 155, 181, 0.1);
+  --tag-add-btn-border: rgba(74, 155, 181, 0.3);
+  --tag-add-btn-color: #4a9bb5;
+  --tag-add-btn-hover-bg: rgba(74, 155, 181, 0.22);
+  --tag-add-btn-hover-border: #4a9bb5;
+
+  /* Sign-in */
+  --signin-gold: #c8a600;
+  --signin-exp: #039be5;
+
+  /* Profile level colors — slightly darker for light bg contrast */
+  --level-lv1: #689F38;
+  --level-lv2: #42A5F5;
+  --level-lv3: #F9A825;
+  --level-lv4: #FB8C00;
+  --level-lv5: #E53935;
+  --level-lv6: #EC407A;
+  --level-lv7: #AB47BC;
+
+  /* Content card border */
+  --content-card-border: rgba(0, 0, 0, 0.06);
+
+  /* Link */
+  --link-color: #1a1e2b;
+  --link-hover: #4a9bb5;
+
+  /* Write blog btn */
+  --btn-write-gradient: linear-gradient(135deg, #4a9bb5 0%, #3a8ba5 100%);
+  --btn-write-gradient-hover: linear-gradient(135deg, #3a8ba5 0%, #4a9bb5 100%);
+  --btn-write-shadow: 0 2px 8px rgba(74, 155, 181, 0.3);
+  --btn-write-shadow-hover: 0 4px 12px rgba(74, 155, 181, 0.45);
+
+  /* Register btn */
+  --btn-register-gradient: linear-gradient(135deg, #C060C0 0%, #E060A0 100%);
+  --btn-register-gradient-end: #FF69B4;
+  --btn-register-color: #DA70D6;
+  --btn-register-shadow: 0 4px 15px rgba(218, 112, 214, 0.35);
+  --btn-register-shadow-hover: 0 6px 22px rgba(218, 112, 214, 0.5);
+
+  /* Follow btn */
+  --btn-follow-gradient: linear-gradient(135deg, #E06080, #C04060);
+
+  /* Ambient glow */
+  --ambient-glow: rgba(74, 155, 181, 0.15);
+  --ambient-glow-strong: rgba(74, 155, 181, 0.2);
+
+  /* Skeleton */
+  --skeleton-base: rgba(0, 0, 0, 0.06);
+  --skeleton-shine: rgba(0, 0, 0, 0.1);
+
+  /* Filter dropdown */
+  --filter-bg: rgba(255, 255, 255, 0.97);
+  --tag-search-bg: #f0f4f8;
+
+  /* Backdrop */
+  --modal-backdrop: rgba(0, 0, 0, 0.4);
+  --lightbox-bg: rgba(0, 0, 0, 0.7);
+
+  /* Weather */
+  --weather-bg: rgba(0, 0, 0, 0.04);
+  --weather-border: rgba(74, 155, 181, 0.15);
+  --weather-temp: #1a1e2b;
+
+  /* Blog cover */
+  --cover-border: rgba(74, 155, 181, 0.35);
+}
+
+/* ---- Smooth transition on body ---- */
+body {
+  transition: var(--theme-transition);
+}

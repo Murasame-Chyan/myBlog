@@ -5,6 +5,7 @@ import com.murasame.service.CosUploadService;
 import com.murasame.util.ReturnUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,9 +29,11 @@ public class FileUploadController {
     @PostMapping("/image")
     @ResponseBody
     public Map<String, Object> uploadImage(@RequestParam("editormd-image-file") MultipartFile file,
-                                           HttpServletRequest request) {
+                                           HttpServletRequest request,
+                                           HttpServletResponse response) {
         Users currentUser = authHelper.getCurrentUser(request);
         if (currentUser == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             Map<String, Object> result = new HashMap<>();
             result.put("success", 0);
             result.put("message", "请先登录");
