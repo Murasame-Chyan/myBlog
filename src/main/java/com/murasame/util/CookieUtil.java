@@ -10,7 +10,7 @@ public class CookieUtil {
 
     public static final String ACCESS_TOKEN = "access_token";
     public static final String REFRESH_TOKEN = "refresh_token";
-    public static final String REFRESH_TOKEN_PATH = "/auth/refresh";
+    public static final String REFRESH_TOKEN_PATH = "/";
 
     private final boolean secure;
 

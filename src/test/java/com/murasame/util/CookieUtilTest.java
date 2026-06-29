@@ -31,7 +31,7 @@ class CookieUtilTest {
 
         Cookie c = resp.getCookie("refresh_token");
         assertNotNull(c);
-        assertEquals("/auth/refresh", c.getPath());
+        assertEquals("/", c.getPath());
         assertTrue(c.isHttpOnly());
         assertEquals(604800, c.getMaxAge());
     }
@@ -66,6 +66,6 @@ class CookieUtilTest {
         Cookie c = resp.getCookie("refresh_token");
         assertNotNull(c);
         assertEquals(0, c.getMaxAge());
-        assertEquals("/auth/refresh", c.getPath());
+        assertEquals("/", c.getPath());
     }
 }
