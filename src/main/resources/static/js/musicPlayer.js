@@ -81,7 +81,7 @@
   let panelTitle, panelArtist;
   let progressBar, progressFill, currentTimeEl, totalTimeEl;
   let lyricsContainer, playlistContainer;
-  let visualizerCanvas, visualizerCtx;
+  let visualizerCanvas, visualizerCtx, bassGif;
   let capsulePlayBtn, playBtn, prevBtn, nextBtn, panelCloseBtn, playModeBtn, vizModeBtn;
   let playlistSection, playlistHeader;
 
@@ -336,6 +336,15 @@
   function startVisualizer() {
     if (visualizerId) return;
     if (!visualizerCanvas) return;
+    // GIF 模式：显示 GIF，隐藏 Canvas
+    if (state.visualizerMode === "gif") {
+      visualizerCanvas.style.display = "none";
+      if (bassGif) bassGif.classList.add("active");
+      return;
+    }
+    // Canvas 模式：显示 Canvas，隐藏 GIF
+    visualizerCanvas.style.display = "";
+    if (bassGif) bassGif.classList.remove("active");
     const rect = visualizerCanvas.parentElement.getBoundingClientRect();
     visualizerCanvas.width = rect.width;
     visualizerCanvas.height = rect.height;
@@ -358,6 +367,10 @@
     if (visualizerCtx && visualizerCanvas) {
       visualizerCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
     }
+    // 恢复 Canvas，隐藏 GIF
+    if (visualizerCanvas) visualizerCanvas.style.display = "";
+    if (bassGif) bassGif.classList.remove("active");
+  }
   }
 
   // ==================== 封面旋转（仅迷你胶囊） ====================
@@ -630,18 +643,24 @@
   }
 
   // ==================== 可视化模式切换 ====================
-  const VIZ_MODES = ["bars", "ring", "particles", "kaleidoscope"];
-  const VIZ_ICONS = ["bi-bar-chart-fill", "bi-circle", "bi-stars", "bi-snow2"];
-  const VIZ_LABELS = ["柱状频谱", "环形频条", "粒子跳动", "万花筒"];
+  const VIZ_MODES = ["bars", "ring", "particles", "kaleidoscope", "gif"];
+  const VIZ_ICONS = ["bi-bar-chart-fill", "bi-circle", "bi-stars", "bi-snow2", "bi-file-earmark-music-fill"];
+  const VIZ_LABELS = ["柱状频谱", "环形频条", "粒子跳动", "万花筒", "Bass 演奏"];
 
   function cycleVisualizerMode() {
     var idx = VIZ_MODES.indexOf(state.visualizerMode);
     idx = (idx + 1) % VIZ_MODES.length;
+    var prevMode = state.visualizerMode;
     state.visualizerMode = VIZ_MODES[idx];
     if (state.visualizerMode === "particles") {
       if (visualizerCanvas) initParticles(visualizerCanvas.width, visualizerCanvas.height);
     } else if (state.visualizerMode === "kaleidoscope") {
       kaleidoOffset = 0;
+    }
+    // GIF 和 Canvas 模式切换时需要重启可视化
+    if (prevMode === "gif" || state.visualizerMode === "gif") {
+      stopVisualizer();
+      if (state.isPlaying && state.isPanelExpanded) startVisualizer();
     }
     updateVizModeUI();
     saveState();
@@ -1098,6 +1117,7 @@
     lyricsContainer = $("lyricsContainer");
     playlistContainer = $("playlistContainer");
     visualizerCanvas = $("visualizerCanvas");
+    bassGif = $("bassGif");
     capsulePlayBtn = $("capsulePlayBtn");
     playBtn = $("playBtn");
     prevBtn = $("prevBtn");

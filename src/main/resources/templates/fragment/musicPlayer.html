@@ -260,21 +260,20 @@
     border-radius: 10px;
   }
 
-  /* Bass 演奏动效 GIF，懒加载于频谱底层 */
+  /* Bass 演奏动效 GIF，作为可视化模式之一 */
   .bass-gif {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    opacity: 0;
+    display: none;
     pointer-events: none;
     border-radius: 10px;
-    transition: opacity 1.2s ease;
   }
 
-  .bass-gif.loaded {
-    opacity: 0.25;
+  .bass-gif.active {
+    display: block;
   }
 
   .viz-mode-btn {
@@ -665,9 +664,7 @@
     <img id="bassGif" class="bass-gif"
          src="/images/PlayBass_Clean.gif"
          alt="Bass演奏动效"
-         loading="lazy"
-         fetchpriority="low"
-         onload="this.classList.add('loaded')" />
+         loading="lazy" />
     <canvas id="visualizerCanvas"></canvas>
   </div>
 
