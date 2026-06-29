@@ -371,7 +371,6 @@
     if (visualizerCanvas) visualizerCanvas.style.display = "";
     if (bassGif) bassGif.classList.remove("active");
   }
-  }
 
   // ==================== 封面旋转（仅迷你胶囊） ====================
   function startCoverSpin() {
