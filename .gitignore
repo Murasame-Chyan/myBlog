@@ -72,9 +72,8 @@ docs/skill
 ### Docs: only screenshots are allowed (per project convention) ###
 docs/*.md
 
-### Music files: store on CDN or external storage, not in repo ###
+### Music files: MP3 binaries store on CDN, not in repo ###
 src/main/resources/static/music/*.mp3
-src/main/resources/static/music/*.lrc
 
 ### CSS build sources (not needed at runtime) ###
 src/main/resources/static/css/src/
