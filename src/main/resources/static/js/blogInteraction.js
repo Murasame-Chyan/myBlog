@@ -151,7 +151,7 @@ function shareComment(data) {
     document.getElementById('shareCardTitle').style.display = 'none';
 
     var div = document.createElement('div');
-    div.innerHTML = data.content || '';
+    div.textContent = data.content || '';
     var text = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
     text = text.length > 80 ? text.substring(0, 80) + '...' : text;
     document.getElementById('shareCardSnippet').textContent = text || '暂无内容';

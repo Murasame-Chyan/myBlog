@@ -2,6 +2,14 @@
 let currentBlogId = 0;
 let allComments = [];
 
+// HTML 实体转义（防止 XSS）
+function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 	currentBlogId = document.getElementById('getBlogId').value;
 	loadComments();
@@ -44,9 +52,11 @@ function renderComment(comment, level) {
 	commentDiv.style.marginLeft = (level * 20) + 'px';
 	commentDiv.setAttribute('data-comment-id', comment.id);
 
-	const authorName = comment.author_name || '用户' + comment.u_id;
+	const authorName = escapeHtml(comment.author_name || ('用户' + comment.u_id));
 	const avatarUrl = comment.author_avatar || '/images/default-avatar.png';
-	const avatarImg = '<img src="' + avatarUrl + '" class="author-avatar-mini" alt="" style="width:22px;height:22px;object-fit:cover;">';
+	// 防御 avatar URL 注入，只允许 https:// 或 / 开头的合法 URL
+	var safeAvatarUrl = (avatarUrl && (avatarUrl.startsWith('https://') || avatarUrl.startsWith('/'))) ? avatarUrl : '/images/default-avatar.png';
+	const avatarImg = '<img src="' + safeAvatarUrl + '" class="author-avatar-mini" alt="" style="width:22px;height:22px;object-fit:cover;">';
 
 	// LV 徽章
 	var lvBadge = '';
@@ -69,11 +79,11 @@ function renderComment(comment, level) {
 	var relTime = formatTime(comment.created_at);
 	var timeStr = fullTime + ' - ' + relTime;
 
-	var contentHtml = comment.content;
+	var contentHtml = escapeHtml(comment.content);
 	if (comment.parent_cid && comment.parent_cid !== comment.id) {
 		var parentComment = findCommentById(comment.parent_cid);
 		if (parentComment) {
-			var parentAuthor = parentComment.author_name || '用户' + parentComment.u_id;
+			var parentAuthor = escapeHtml(parentComment.author_name || ('用户' + parentComment.u_id));
 			contentHtml = '<span class="reply-to">回复 @' + parentAuthor + '：</span>' + contentHtml;
 		}
 	}
