@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <title>博客</title>
     <!-- Bootstrap 5 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/readBlog.css">
     <!-- KaTeX 数学公式渲染 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/badge-card.css">
 </head>
 <body>
     <!-- 1.header -->
@@ -21,8 +22,8 @@
         <!-- 标题 -->
         <input type="hidden" th:value="${blog != null ? blog.getId() : 0}" id="getBlogId">
         <h2 id="textTitle" th:text="${blog.title}">标题</h2>
-        <!--  meta 行  -->
-        <div class="text-muted mb-3">
+        <!--  meta 行 — 阅读量、评论数、时间 -->
+        <div class="text-muted mb-2 blog-meta-row">
             <span class="me-3">
                 <i class="bi bi-eye"></i>
                 <span th:text="${blog.read_count != null ? blog.read_count : 0}">0</span>
@@ -31,23 +32,57 @@
                 <i class="bi bi-chat"></i>
                 <span th:text="${commentCount != null ? commentCount : 0}">0</span>
             </span>
-            <span class="me-3">作者：
-                <a th:href="@{/user/profile(id=${blog.u_id})}" class="author-link">
-                    <img th:src="${authorAvatar != null ? authorAvatar : '/images/default-avatar.png'}"
-                         class="author-avatar-mini" alt="" style="width:22px;height:22px;object-fit:cover;">
-                    <span th:text="${authorName}">1</span>
-                </a>
-            </span>
             <span class="me-3">发布时间：
                 <span th:text="${#temporals.format(blog.created_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
             <span class="me-3">上次更新：
                 <span th:text="${#temporals.format(blog.updated_at,'yyyy/MM/dd HH:mm')}">2025-12-03 18:42</span>
             </span>
-            <span class="ms-3" th:if="${currentUser != null && currentUser.id == blog.u_id}">
-                <a th:href="@{/blogs/edit/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary">修改博客</a>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="deleteBlog()">删除博客</button>
+            <span class="ms-3 blog-owner-actions" th:if="${currentUser != null && currentUser.id == blog.u_id}">
+                <a th:href="@{/blogs/edit/{id}(id=${blog.id})}" class="btn btn-sm btn-outline-primary blog-action-btn" title="编辑博客">
+                    <i class="bi bi-pencil-square"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-danger blog-action-btn ms-2" onclick="deleteBlog()" title="删除博客">
+                    <i class="bi bi-trash"></i>
+                </button>
             </span>
+        </div>
+
+        <!-- 作者信息行 -->
+        <div class="author-detail-row mb-3">
+            <span class="author-detail-label">作者：</span>
+            <a th:href="@{/user/profile(id=${blog.u_id})}" class="author-link">
+                <img th:src="${authorAvatar != null ? authorAvatar : '/images/default-avatar.png'}"
+                     class="author-avatar-mini" alt="">
+                <span th:text="${authorName}">1</span>
+            </a>
+            <span class="author-lv-badge"
+                  th:if="${authorLevel != null}"
+                  th:attr="data-level=${authorLevel >= 6 ? 7 : (authorLevel >= 1 ? authorLevel : 1)}"
+                  th:text="'LV.' + ${authorLevel}">LV.1</span>
+            <!-- 成就徽章 -->
+            <th:block th:if="${hasAuthorBadge}">
+                <span class="author-badge-sep" aria-hidden="true"></span>
+                <th:block th:each="badge : ${authorDisplayBadges}">
+                    <button class="profile-badge-thumb author-badge-thumb"
+                            th:attr="data-badge-id=${badge.id}"
+                            th:title="${badge.name}"
+                            th:aria-label="'查看徽章：' + ${badge.name}">
+                        <img th:src="@{/images/badge/icon/} + ${badge.id} + '-icon.jpg'"
+                             th:alt="${badge.name}" loading="lazy"
+                             onerror="this.style.display='none'">
+                    </button>
+                </th:block>
+            </th:block>
+            <th:block th:unless="${hasAuthorBadge}">
+                <span class="author-badge-sep" aria-hidden="true"></span>
+                <div class="author-badge-empty" title="暂无成就徽章">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M10 2L12.5 7.5L18.5 8L14 12L15.5 18L10 15L4.5 18L6 12L1.5 8L7.5 7.5L10 2Z"
+                              stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </div>
+            </th:block>
         </div>
 
         <div class="mb-3" th:if="${blog.t_id != null and blog.t_id.tagList != null and !blog.t_id.tagList.isEmpty()}">
@@ -77,7 +112,7 @@
         <!-- 点赞和分享区域 -->
         <div class="interaction-section mt-4 mb-4">
             <div class="interaction-buttons">
-                <button type="button" class="btn btn-outline-primary me-2" id="likeButton" onclick="handleLike()">
+                <button type="button" class="btn btn-outline-primary like-btn me-2" id="likeButton" onclick="handleLike()">
                     <i class="bi bi-hand-thumbs-up" id="likeIcon"></i>
                     <span id="likeCount" th:text="${blog.like_count != null ? blog.like_count : 0}" class="ms-1">0</span>
                 </button>
@@ -96,16 +131,13 @@
             <!-- 发表评论 -->
             <div class="card mb-4">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">发表评论</h6>
+                    <h5 class="mb-3">评论</h5>
                     <div class="mb-3">
                         <label class="form-label">评论内容</label>
                         <textarea class="form-control" id="commentContent" rows="3" placeholder="请输入评论内容" maxlength="65535"></textarea>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-light me-2 btn-emoji" data-target="commentContent" title="插入表情">😊</button>
-                    <button type="button" class="btn btn-primary" onclick="submitComment()">发表评论</button>
-                    <button type="button" class="btn btn-secondary ms-2" id="cancelReply" style="display: none;" onclick="cancelReply()">取消回复</button>
-                    <input type="hidden" id="replyToCommentId" value="">
-                    <input type="hidden" id="replyToAuthor" value="">
+                    <button type="button" class="btn btn-accent" onclick="submitComment()">发表评论</button>
                 </div>
             </div>
 
@@ -121,26 +153,83 @@
         <a th:href="@{/}" class="btn btn-sm btn-outline-primary">← 返回首页</a>
     </main>
 
+    <!-- 分享卡片弹窗 -->
+    <div class="share-overlay" id="shareOverlay">
+        <div class="share-card">
+            <div class="share-card-header">
+                <span class="share-card-header-label"><i class="bi bi-share"></i> 分享卡片</span>
+                <button class="share-card-close" onclick="closeShareCard()" aria-label="关闭">&times;</button>
+            </div>
+            <div class="share-card-body">
+                <span class="share-card-type-label" id="shareCardTypeLabel"></span>
+                <div class="share-card-author">
+                    <img class="share-card-avatar" id="shareCardAvatar" src="" alt="">
+                    <div>
+                        <div class="share-card-author-name" id="shareCardAuthor"></div>
+                        <div class="share-card-time" id="shareCardTime"></div>
+                    </div>
+                </div>
+                <div class="share-card-title" id="shareCardTitle"></div>
+                <div class="share-card-snippet" id="shareCardSnippet"></div>
+                <div class="share-card-stats">
+                    <span class="share-card-stat"><i class="bi bi-eye"></i> <span id="shareCardReads"></span></span>
+                    <span class="share-card-stat"><i class="bi bi-hand-thumbs-up"></i> <span id="shareCardLikes"></span></span>
+                </div>
+                <div class="share-card-link-row" id="shareCardLinkRow">
+                    <div class="share-card-link-info">
+                        <span class="share-card-link-label">详情：</span>
+                        <span class="share-card-link-url" id="shareCardLinkUrl"></span>
+                    </div>
+                    <div class="share-card-qr" id="shareCardQr"></div>
+                </div>
+            </div>
+            <div class="share-card-footer">
+                <label class="share-card-checkbox"><input type="checkbox" id="shareCardIncludeLink" checked> 含链接</label>
+                <button class="btn btn-ghost btn-ghost-sm" onclick="closeShareCard()">关闭</button>
+                <button class="btn btn-accent btn-accent-sm" onclick="copyShareImage()"><i class="bi bi-image"></i> 复制图片</button>
+                <button class="btn btn-accent btn-accent-sm" onclick="copyShareLink()"><i class="bi bi-clipboard"></i> 复制链接</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 徽章全息预览模态框 -->
+    <div class="badge-modal" id="badgeModal" hidden aria-hidden="true" role="dialog" aria-label="徽章预览">
+        <div class="badge-modal__backdrop"></div>
+        <div class="badge-modal__content">
+            <div class="card">
+                <div class="card__rotator">
+                    <div class="card__front">
+                        <img id="badgeCardImg" src="" alt="" draggable="false">
+                        <div class="card__shine"></div>
+                        <div class="card__glare"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="badge-modal__name" id="badgeModalName"></div>
+        </div>
+        <button class="badge-modal__close" aria-label="关闭">&times;</button>
+    </div>
+
     <!-- 封面灯箱 -->
     <div class="blog-cover-lightbox" id="coverLightbox" onclick="closeCoverLightbox()">
         <img id="coverLightboxImg" src="" alt="封面原图">
     </div>
 
     <!-- 99.Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/confirm-dialog.js"></script>
     <script src="/js/comment.js"></script>
     <script src="/js/blogInteraction.js"></script>
+    <script src="/js/badge-card.js"></script>
+    <!-- html2canvas 分享图生成 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- QR 码生成 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
     <!-- KaTeX 数学公式渲染 -->
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <!-- Mermaid 流程图渲染 -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <!-- Flowchart.js + Sequence Diagram 渲染依赖（与 Editor.md 同版本） -->
-    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/raphael.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/flowchart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/jquery.flowchart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/underscore.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/sequence-diagram.min.js"></script>
     <script>
         // 封面灯箱
         function openCoverLightbox(src) {
@@ -182,38 +271,6 @@
                 mermaid.initialize({ startOnLoad: false, theme: 'dark' });
                 mermaid.run();
             }
-
-            // Flowchart.js 渲染（```flow 代码块）
-            document.querySelectorAll('.blog-content pre code.language-flow').forEach(function(block) {
-                var pre = block.parentElement;
-                var container = document.createElement('div');
-                container.className = 'flowchart-container';
-                try {
-                    var diagram = flowchart.parse(block.textContent);
-                    diagram.drawSVG(container);
-                    pre.parentElement.replaceChild(container, pre);
-                } catch (e) {
-                    container.textContent = '[流程图渲染失败]';
-                    container.style.color = '#ff6b6b';
-                    pre.parentElement.replaceChild(container, pre);
-                }
-            });
-
-            // Sequence Diagram 渲染（```seq 代码块）
-            document.querySelectorAll('.blog-content pre code.language-seq').forEach(function(block) {
-                var pre = block.parentElement;
-                var container = document.createElement('div');
-                container.className = 'sequence-diagram-container';
-                try {
-                    var diagram = Diagram.parse(block.textContent);
-                    diagram.drawSVG(container, { theme: 'simple' });
-                    pre.parentElement.replaceChild(container, pre);
-                } catch (e) {
-                    container.textContent = '[时序图渲染失败]';
-                    container.style.color = '#ff6b6b';
-                    pre.parentElement.replaceChild(container, pre);
-                }
-            });
 
             // Emoji 短码转 Unicode（遍历 .blog-content 文本节点）
             (function() {

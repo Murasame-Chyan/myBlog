@@ -1,43 +1,76 @@
-// 视差背景：延迟加载高清 WebP，避免阻塞首屏渲染
+// 双主题视差背景
 (function() {
-    var HD_URL = '/pics/background.jpg';
+    var DARK_URL = '/pics/background-2.jpg';
+    var LIGHT_URL = '/pics/background-1.jpg';
+    var loadedDark = null;
+    var loadedLight = null;
 
-    function applyBackground() {
-        var img = new Image();
-        img.onload = function() {
-            var vw = window.innerWidth;
-            var imgW = img.naturalWidth;
-            var imgH = img.naturalHeight;
-            var renderedHeight = vw * (imgH / imgW);
-            document.body.style.backgroundImage = 'url(' + HD_URL + ')';
-
-            function updateBg() {
-                var vh = window.innerHeight;
-                var scrollY = window.pageYOffset;
-                var bgY = -scrollY;
-                if (bgY + renderedHeight < vh) {
-                    bgY = vh - renderedHeight;
-                }
-                document.body.style.backgroundPositionY = bgY + 'px';
-            }
-            window.addEventListener('scroll', updateBg, {passive: true});
-            window.addEventListener('resize', function() {
-                vw = window.innerWidth;
-                renderedHeight = vw * (imgH / imgW);
-                updateBg();
-            }, {passive: true});
-            updateBg();
-        };
-        img.onerror = function() {
-            document.body.style.backgroundImage = 'url(' + HD_URL + ')';
-        };
-        img.src = HD_URL;
+    function getTheme() {
+        return document.documentElement.getAttribute('data-theme') || 'dark';
     }
 
-    // 延迟加载背景图：等页面首屏渲染完毕后再开始预加载高清图
+    function preload(url, callback) {
+        var img = new Image();
+        img.onload = function() { callback(img); };
+        img.onerror = function() { callback(null); };
+        img.src = url;
+    }
+
+    function applyBg(img) {
+        var vw = window.innerWidth;
+        var imgW = img.naturalWidth;
+        var imgH = img.naturalHeight;
+        var renderedHeight = vw * (imgH / imgW);
+
+        function updateBg() {
+            var vh = window.innerHeight;
+            var scrollY = window.pageYOffset;
+            var bgY = -scrollY;
+            if (bgY + renderedHeight < vh) {
+                bgY = vh - renderedHeight;
+            }
+            document.body.style.backgroundPositionY = bgY + 'px';
+        }
+
+        document.body.style.backgroundImage = 'url(' + img.src + ')';
+        window.addEventListener('scroll', updateBg, {passive: true});
+        window.addEventListener('resize', function() {
+            vw = window.innerWidth;
+            renderedHeight = vw * (imgH / imgW);
+            updateBg();
+        }, {passive: true});
+        updateBg();
+    }
+
+    function switchBackground() {
+        var theme = getTheme();
+        if (theme === 'light' && loadedLight) {
+            applyBg(loadedLight);
+        } else if (loadedDark) {
+            applyBg(loadedDark);
+        }
+    }
+
+    function init() {
+        preload(DARK_URL, function(img) {
+            loadedDark = img;
+            if (getTheme() !== 'light' || !loadedLight) applyBg(img);
+        });
+        preload(LIGHT_URL, function(img) {
+            loadedLight = img;
+            if (getTheme() === 'light') applyBg(img);
+        });
+
+        // 监听主题切换，实时更新背景
+        var observer = new MutationObserver(function() {
+            switchBackground();
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    }
+
     if (window.requestIdleCallback) {
-        requestIdleCallback(applyBackground, { timeout: 3000 });
+        requestIdleCallback(init, { timeout: 3000 });
     } else {
-        setTimeout(applyBackground, 500);
+        setTimeout(init, 500);
     }
 })();

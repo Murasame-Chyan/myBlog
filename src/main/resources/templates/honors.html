@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${profileUser.nickname} + ' 的荣誉墙'">荣誉墙</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/badge-card.css">
+    <link rel="stylesheet" href="/css/honors.css">
+</head>
+<body>
+    <header th:replace="~{fragment/header :: nav('index')}"></header>
+
+    <main class="container my-5 honors-page">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <!-- 页头 -->
+                <div class="honors-header">
+                    <a th:href="@{/user/profile(id=${profileUser.id})}" class="honors-back">
+                        <i class="bi bi-arrow-left"></i> 返回个人主页
+                    </a>
+                    <h1 class="honors-title" th:text="${profileUser.nickname} + ' 的荣誉墙'">荣誉墙</h1>
+                    <p class="honors-subtitle">
+                        共获得
+                        <strong th:text="${#lists.size(ownedIds)}">0</strong>
+                        /
+                        <span th:text="${#lists.size(achievements)}">0</span>
+                        项成就
+                    </p>
+                </div>
+
+                <!-- 成就网格 -->
+                <div class="honors-grid">
+                    <th:block th:if="${#lists.isEmpty(achievements)}">
+                        <div class="honors-empty">
+                            <i class="bi bi-trophy" style="font-size: 2.5rem; display: block; margin-bottom: 12px; opacity: 0.3;"></i>
+                            暂无成就数据
+                        </div>
+                    </th:block>
+                    <th:block th:each="ach : ${achievements}">
+                        <div class="honor-card"
+                             th:classappend="${ownedIds.contains(ach.id) ? 'honor-card--owned' : 'honor-card--locked'}"
+                             th:attr="data-achievement-id=${ach.id}"
+                             th:tabindex="${ownedIds.contains(ach.id) ? 0 : -1}"
+                             th:aria-label="${ach.name} + (${ownedIds.contains(ach.id)} ? '，已获得，点击查看详情' : '，未获得')">
+
+                            <!-- 已获得：显示图标 -->
+                            <div class="honor-card__icon" th:if="${ownedIds.contains(ach.id)}">
+                                <img th:src="@{/images/badge/icon/} + ${ach.id} + '-icon.jpg'"
+                                     th:alt="${ach.name}"
+                                     loading="lazy"
+                                     onerror="this.parentElement.innerHTML='<div class=\'honor-card__locked-icon\'><svg width=\'28\' height=\'28\' viewBox=\'0 0 20 20\' fill=\'none\'><path d=\'M10 2L12.5 7.5L18.5 8L14 12L15.5 18L10 15L4.5 18L6 12L1.5 8L7.5 7.5L10 2Z\' stroke=\'currentColor\' stroke-width=\'1.2\' stroke-linejoin=\'round\' fill=\'none\'/></svg></div>'">
+                            </div>
+
+                            <!-- 未获得：锁图标占位 -->
+                            <div class="honor-card__locked-icon" th:unless="${ownedIds.contains(ach.id)}">
+                                <svg width="24" height="24" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                    <rect x="5" y="9" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                                    <path d="M7 9V6a3 3 0 013-3v0a3 3 0 013 3v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+
+                            <div class="honor-card__name" th:text="${ach.name}">成就名称</div>
+                            <span class="honor-card__status"
+                                  th:text="${ownedIds.contains(ach.id)} ? '已获得' : '未获得'">状态</span>
+                        </div>
+                    </th:block>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- 徽章全息预览模态框 -->
+    <div class="badge-modal" id="badgeModal" hidden aria-hidden="true" role="dialog" aria-label="徽章预览">
+        <div class="badge-modal__backdrop"></div>
+        <div class="badge-modal__content">
+            <div class="card">
+                <div class="card__rotator">
+                    <div class="card__front">
+                        <img id="badgeCardImg" src="" alt="" draggable="false">
+                        <div class="card__shine"></div>
+                        <div class="card__glare"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="badge-modal__name" id="badgeModalName"></div>
+        </div>
+        <button class="badge-modal__close" aria-label="关闭">&times;</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/badge-card.js"></script>
+    <script src="/js/honors.js"></script>
+</body>
+</html>

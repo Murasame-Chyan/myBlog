@@ -2,11 +2,13 @@ package com.murasame.config;
 
 import com.murasame.entity.Users;
 import com.murasame.service.UserService;
+import com.murasame.util.CookieUtil;
 import com.murasame.util.JwtUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,18 +25,24 @@ class JwtAuthenticationFilterTest {
     private JwtAuthenticationFilter filter;
     private StringRedisTemplate redisTemplate;
     private UserService userService;
+    private CookieUtil cookieUtil;
 
     @BeforeEach
     void setUp() {
         props = new JwtProperties();
         props.setSecret("this-is-a-test-secret-that-is-at-least-256-bits-long-for-hs256!!");
         props.setAccessTokenExpiration(3600000); // 1 hour so tokens don't expire during test
+        props.setRefreshTokenExpiration(604800000);
         jwtUtil = new JwtUtil(props);
         redisTemplate = mock(StringRedisTemplate.class);
-        userService = mock(UserService.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> ops = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(ops);
         // 默认任何 key 都不在黑名单中
         when(redisTemplate.hasKey(anyString())).thenReturn(false);
-        filter = new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService);
+        userService = mock(UserService.class);
+        cookieUtil = mock(CookieUtil.class);
+        filter = new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService, cookieUtil, props);
         SecurityContextHolder.clearContext();
     }
 

@@ -68,6 +68,7 @@ docs/superpowers/
 docs/githubchart-api/
 docs/plan
 docs/skill
+docs/ref
 
 ### Docs: only screenshots are allowed (per project convention) ###
 docs/*.md

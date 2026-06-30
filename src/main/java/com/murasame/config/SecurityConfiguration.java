@@ -1,6 +1,7 @@
 package com.murasame.config;
 
 import com.murasame.service.UserService;
+import com.murasame.util.CookieUtil;
 import com.murasame.util.JwtUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +19,10 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @MapperScan("com.murasame.mapper")
@@ -27,19 +32,38 @@ public class SecurityConfiguration {
     private final JwtAuthenticationEntryPoint entryPoint;
     private final StringRedisTemplate redisTemplate;
     private final UserService userService;
+    private final CookieUtil cookieUtil;
+    private final JwtProperties jwtProperties;
 
     public SecurityConfiguration(JwtUtil jwtUtil, JwtAuthenticationEntryPoint entryPoint,
                                   StringRedisTemplate redisTemplate,
-                                  UserService userService) {
+                                  UserService userService,
+                                  CookieUtil cookieUtil,
+                                  JwtProperties jwtProperties) {
         this.jwtUtil = jwtUtil;
         this.entryPoint = entryPoint;
         this.redisTemplate = redisTemplate;
         this.userService = userService;
+        this.cookieUtil = cookieUtil;
+        this.jwtProperties = jwtProperties;
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(false);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> {
                     // 静态资源放行
                     auth.requestMatchers("/static/**", "/dist/**",
@@ -74,7 +98,7 @@ public class SecurityConfiguration {
                             response.getWriter().write("{\"code\":403,\"msg\":\"权限不足\"}");
                         }))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService, cookieUtil, jwtProperties), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
