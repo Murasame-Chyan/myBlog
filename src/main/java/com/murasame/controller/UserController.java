@@ -2,7 +2,9 @@ package com.murasame.controller;
 
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.domain.vo.CommentVO;
+import com.murasame.entity.Achievement;
 import com.murasame.entity.Users;
+import com.murasame.service.AchievementService;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
 import com.murasame.service.CosUploadService;
@@ -27,6 +29,7 @@ import com.murasame.util.AuthHelper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequestMapping("/user")
 @Controller
@@ -53,6 +56,9 @@ public class UserController {
 
 	@Resource
 	private FollowService followService;
+
+	@Resource
+	private AchievementService achievementService;
 
 	@ResponseBody
 	@PostMapping("/comment/add")
@@ -136,7 +142,11 @@ public class UserController {
 		model.addAttribute("githubUsername", profileUser.getGithubUsername());
 		// 关注状态（仅登录用户查看他人主页时查询）
 		if (currentUser != null && !isOwner) {
-			model.addAttribute("isFollowing", followService.isFollowing(currentUser.getId(), profileUserId));
+			boolean following = followService.isFollowing(currentUser.getId(), profileUserId);
+			model.addAttribute("isFollowing", following);
+			if (following) {
+				model.addAttribute("isMutual", followService.isFollowing(profileUserId, currentUser.getId()));
+			}
 		}
 		model.addAttribute("followerCount", followService.countFollowers(profileUserId));
 		model.addAttribute("followingCount", followService.countFollowing(profileUserId));
@@ -153,6 +163,16 @@ public class UserController {
 			model.addAttribute("isMaxLevel", isMaxLevel);
 			model.addAttribute("levelBarColor", getLevelBarColor(level, isMaxLevel));
 		}
+		// 成就徽章数据
+		List<Integer> userBadgeIds = achievementService.getUserAchievementIds(profileUserId);
+		List<Achievement> allAchievements = achievementService.getAllAchievements();
+		model.addAttribute("userBadgeIds", userBadgeIds);
+		model.addAttribute("hasAnyBadge", !userBadgeIds.isEmpty());
+		model.addAttribute("displayBadges", allAchievements.stream()
+				.filter(a -> userBadgeIds.contains(a.getId()))
+				.limit(3)
+				.collect(Collectors.toList()));
+		model.addAttribute("totalBadgeCount", userBadgeIds.size());
 		return "profile";
 	}
 
@@ -247,7 +267,10 @@ public class UserController {
 			return ReturnUtil.error("不能关注自己");
 		}
 		followService.follow(currentUser.getId(), followeeId);
-		return ReturnUtil.success("关注成功");
+		boolean mutual = followService.isFollowing(followeeId, currentUser.getId());
+		Map<String, Object> data = new HashMap<>();
+		data.put("mutual", mutual);
+		return ReturnUtil.success("关注成功", data);
 	}
 
 	@ResponseBody
@@ -305,6 +328,29 @@ public class UserController {
 		model.addAttribute("listType", "following");
 		model.addAttribute("pageTitle", "关注");
 		return "follow-list";
+	}
+
+	// 荣誉墙页面
+	@GetMapping("/honors")
+	public String honors(@RequestParam(required = false) Long id,
+	                     HttpServletRequest request, Model model) {
+		Users currentUser = authHelper.getCurrentUser(request);
+		Long profileUserId = (id != null) ? id
+				: (currentUser != null ? currentUser.getId() : null);
+		if (profileUserId == null) return "redirect:/";
+
+		Users profileUser = userService.getUserById(profileUserId);
+		if (profileUser == null) return "redirect:/";
+
+		List<Achievement> all = achievementService.getAllAchievements();
+		List<Integer> owned = achievementService.getUserAchievementIds(profileUserId);
+
+		model.addAttribute("profileUser", profileUser);
+		model.addAttribute("isLoggedIn", currentUser != null);
+		model.addAttribute("achievements", all);
+		model.addAttribute("ownedIds", owned);
+		model.addAttribute("pageTitle", "荣誉墙");
+		return "honors";
 	}
 
 	// 粉丝列表 JSON（附带当前用户对各粉丝的回关状态）

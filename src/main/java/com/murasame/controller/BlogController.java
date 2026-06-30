@@ -4,8 +4,10 @@ package com.murasame.controller;
 import com.murasame.domain.dto.TagWrapper;
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.domain.vo.CommentVO;
+import com.murasame.entity.Achievement;
 import com.murasame.entity.Blogs;
 import com.murasame.entity.Tag;
+import com.murasame.service.AchievementService;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
 import com.murasame.service.CosUploadService;
@@ -28,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.murasame.util.AuthHelper;
 
 @RequestMapping("/blogs")
@@ -49,6 +52,8 @@ public class BlogController {
 	private LikesService likesService;
 	@Resource
 	private CosUploadService cosUploadService;
+	@Resource
+	private AchievementService achievementService;
 
 	// From index 点击跳转文章正文 RESTful跟随文章id
 	@GetMapping("read/{id}")
@@ -77,6 +82,15 @@ public class BlogController {
 		model.addAttribute("commentCount", commentCount);
 		model.addAttribute("authorName", authorName);
 		model.addAttribute("authorAvatar", authorAvatar);
+		model.addAttribute("authorLevel", authorUser != null ? authorUser.getLevel() : null);
+		// 作者成就徽章数据
+		List<Integer> authorBadgeIds = authorUser != null ? achievementService.getUserAchievementIds(authorUser.getId()) : new ArrayList<>();
+		List<Achievement> allAchievements = achievementService.getAllAchievements();
+		model.addAttribute("hasAuthorBadge", !authorBadgeIds.isEmpty());
+		model.addAttribute("authorDisplayBadges", allAchievements.stream()
+				.filter(a -> authorBadgeIds.contains(a.getId()))
+				.limit(3)
+				.collect(Collectors.toList()));
 		return "readBlog";
 	}
 

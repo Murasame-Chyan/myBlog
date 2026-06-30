@@ -27,6 +27,7 @@
         .then(function (r) { return r.json(); })
         .then(function (d) {
             if (d.code === 200 && d.data && d.data.achievements) {
+                window.BADGES_BY_ID = {};
                 d.data.achievements.forEach(function (a) {
                     // Use achievement name as badgeId (kebab-cased)
                     var badgeId = a.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -37,6 +38,8 @@
                             count: 1
                         };
                     }
+                    // Also index by numeric ID for Thymeleaf data-badge-id lookups
+                    window.BADGES_BY_ID[a.id] = BADGES[badgeId];
                 });
                 window.BADGES = BADGES;
             }
@@ -89,7 +92,7 @@
 
     // ---------- Modal open/close ----------
     function openBadgeModal(badgeId, triggerEl) {
-        const badge = BADGES[badgeId];
+        var badge = BADGES[badgeId] || (window.BADGES_BY_ID && window.BADGES_BY_ID[badgeId]);
         if (!badge) return;
 
         lastTrigger = triggerEl || null;
@@ -294,4 +297,8 @@
         s.current = Object.assign({}, s.target);
         resetSpringVelocity(s);
     }
+
+    // Expose for external pages (e.g., honors page)
+    window.openBadgeModal = openBadgeModal;
+    window.closeBadgeModal = closeBadgeModal;
 })();

@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>个人主页</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/badge-card.css">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('index')}"></header>
@@ -34,6 +35,32 @@
                             <span class="profile-lv-badge"
                                   th:attr="data-level=${isMaxLevel ? 7 : (profileUser.level != null ? profileUser.level : 1)}"
                                   th:text="${isMaxLevel ? 'LV6+' : ('LV.' + (profileUser.level != null ? profileUser.level : 1))}">LV.6</span>
+                            <!-- 成就徽章展示区 -->
+                            <th:block th:if="${hasAnyBadge}">
+                                <span class="profile-badge-sep" aria-hidden="true"></span>
+                                <th:block th:each="badge : ${displayBadges}">
+                                    <button class="profile-badge-thumb"
+                                            th:attr="data-badge-id=${badge.id}"
+                                            th:title="${badge.name}"
+                                            th:aria-label="'查看徽章：' + ${badge.name}">
+                                        <img th:src="@{/images/badge/icon/} + ${badge.id} + '-icon.jpg'"
+                                             th:alt="${badge.name}" loading="lazy"
+                                             onerror="this.style.display='none'">
+                                    </button>
+                                </th:block>
+                            </th:block>
+                            <th:block th:unless="${hasAnyBadge}">
+                                <span class="profile-badge-sep" aria-hidden="true"></span>
+                                <div class="profile-badge-empty" title="暂无成就徽章，参与签到和互动获取">
+                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                        <path d="M10 2L12.5 7.5L18.5 8L14 12L15.5 18L10 15L4.5 18L6 12L1.5 8L7.5 7.5L10 2Z"
+                                              stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>
+                                    </svg>
+                                </div>
+                            </th:block>
+                            <a th:href="@{/user/honors(id=${profileUser.id})}" class="profile-badge-more">
+                                更多荣誉<span aria-hidden="true"> &gt;</span>
+                            </a>
                         </div>
                         <div class="profile-meta">
                             <span th:if="${profileUser.gender == 1}">♂ 男</span>
@@ -65,7 +92,7 @@
                         <div class="profile-follow-btn" th:if="${isLoggedIn && !isOwner}">
                             <button class="btn-follow" id="followBtn"
                                     th:classappend="${isFollowing ? 'followed' : ''}"
-                                    th:text="${isFollowing ? '✓ 已关注' : '+ 关注'}"
+                                    th:text="${isMutual ? '已互关' : (isFollowing ? '✓ 已关注' : '+ 关注')}"
                                     onclick="toggleFollow()">+ 关注</button>
                         </div>
                         <div class="profile-follow-counts">
@@ -199,12 +226,32 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- 徽章全息预览模态框 -->
+    <div class="badge-modal" id="badgeModal" hidden aria-hidden="true" role="dialog" aria-label="徽章预览">
+        <div class="badge-modal__backdrop"></div>
+        <div class="badge-modal__content">
+            <div class="card">
+                <div class="card__rotator">
+                    <div class="card__front">
+                        <img id="badgeCardImg" src="" alt="" draggable="false">
+                        <div class="card__shine"></div>
+                        <div class="card__glare"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="badge-modal__name" id="badgeModalName"></div>
+        </div>
+        <button class="badge-modal__close" aria-label="关闭">&times;</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/github.js"></script>
+    <script src="/js/badge-card.js"></script>
     <script th:inline="javascript">
         var profileUserId = /*[[${profileUser.id}]]*/ 0;
         var isOwner = /*[[${isOwner}]]*/ false;
         var isFollowing = /*[[${isFollowing != null ? isFollowing : false}]]*/ false;
+        var isMutual = /*[[${isMutual != null ? isMutual : false}]]*/ false;
         var currentSort = 'newest';
         var currentPage = 1;
         var totalPages = 1;
@@ -310,6 +357,7 @@
                 .then(function(data) {
                     if (data.code === 200) {
                         isFollowing = !isFollowing;
+                        isMutual = !!(data.data && data.data.mutual);
                         updateFollowButton();
                         loadFollowCounts();
                     } else if (data.code === 401) {
@@ -326,7 +374,10 @@
         function updateFollowButton() {
             var btn = document.getElementById('followBtn');
             if (!btn) return;
-            if (isFollowing) {
+            if (isMutual) {
+                btn.textContent = '已互关';
+                btn.classList.add('followed');
+            } else if (isFollowing) {
                 btn.textContent = '✓ 已关注';
                 btn.classList.add('followed');
             } else {
@@ -342,7 +393,18 @@
                     if (data.code === 200 && data.data) {
                         var countsEl = document.querySelector('.profile-follow-counts');
                         if (countsEl) {
-                            countsEl.innerHTML = data.data.followingCount + ' 关注 <span class="follow-count-divider">|</span> ' + data.data.followerCount + ' 粉丝';
+                            var fc = data.data.followingCount;
+                            var frc = data.data.followerCount;
+                            countsEl.innerHTML =
+                                '<a class="follow-count-col" href="/user/' + profileUserId + '/following">' +
+                                '<span class="follow-count-label">关注</span>' +
+                                '<span class="follow-count-value">' + fc + '</span>' +
+                                '</a>' +
+                                '<span class="follow-count-divider"></span>' +
+                                '<a class="follow-count-col" href="/user/' + profileUserId + '/followers">' +
+                                '<span class="follow-count-label">粉丝</span>' +
+                                '<span class="follow-count-value">' + frc + '</span>' +
+                                '</a>';
                         }
                     }
                 });

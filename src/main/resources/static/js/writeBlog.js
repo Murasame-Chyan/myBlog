@@ -17,7 +17,7 @@ $(function() {
                     "h1", "h2", "h3", "h4", "h5", "h6", "|",
                     "quote", "list-ul", "list-ol", "hr", "table", "checkbox", "|",
                     "link", "image", "code", "code-block", "|",
-                    "emoji", "tex", "flowchart", "sequence", "|",
+                    "emoji", "tex", "|",
                     "search-replace", "html-entities", "help", "|",
                     "watch", "preview", "fullscreen"];
         },

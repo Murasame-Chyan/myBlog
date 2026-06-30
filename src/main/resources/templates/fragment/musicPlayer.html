@@ -260,6 +260,22 @@
     border-radius: 10px;
   }
 
+  /* Bass 演奏动效 GIF，作为可视化模式之一 */
+  .bass-gif {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+    pointer-events: none;
+    border-radius: 10px;
+  }
+
+  .bass-gif.active {
+    display: block;
+  }
+
   .viz-mode-btn {
     position: absolute;
     right: 16px;
@@ -643,8 +659,12 @@
     </button>
   </div>
 
-  <!-- 封面：音频频谱可视化 -->
+  <!-- 封面：Bass 演奏动效 + 音频频谱可视化 -->
   <div class="panel-cover-section" id="coverSection">
+    <img id="bassGif" class="bass-gif"
+         src="/images/PlayBass_Clean.gif"
+         alt="Bass演奏动效"
+         loading="lazy" />
     <canvas id="visualizerCanvas"></canvas>
   </div>
 

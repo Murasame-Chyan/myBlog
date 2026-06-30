@@ -6,6 +6,7 @@ import com.murasame.entity.Comments;
 import com.murasame.entity.Users;
 import com.murasame.mapper.CommentMapper;
 import com.murasame.mapper.UserMapper;
+import com.murasame.service.AchievementService;
 import com.murasame.service.CommentService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ public class CommentServiceImpl implements CommentService {
 	private CommentMapper commentMapper;
 	@Resource
 	private UserMapper userMapper;
+	@Resource
+	private AchievementService achievementService;
 
 	/**
 	 * 添加评论，自动处理嵌套回复的归属逻辑：
@@ -128,6 +131,8 @@ public class CommentServiceImpl implements CommentService {
 			Users user = userCache.computeIfAbsent(comment.getU_id(), userMapper::getUserById);
 			vo.setAuthor_name(user != null ? user.getNickname() : "未知用户");
 			vo.setAuthor_avatar(user != null ? user.getAvatar() : null);
+			vo.setAuthorLevel(user != null ? user.getLevel() : null);
+			vo.setAuthorAchievementIds(user != null ? achievementService.getUserAchievementIds(user.getId()) : new ArrayList<>());
 			vo.setContent(comment.getContent());
 			vo.setCreated_at(comment.getCreated_at());
 			vos.add(vo);

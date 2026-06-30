@@ -2,21 +2,6 @@
     white-space: pre-wrap;  /* 读取文本时保留空格与换行，自动换行 */
 }
 
-/* Flowchart / Sequence Diagram 容器 */
-.flowchart-container,
-.sequence-diagram-container {
-    max-width: 100%;
-    overflow-x: auto;
-    margin: 1em 0;
-    text-align: center;
-}
-
-.flowchart-container svg,
-.sequence-diagram-container svg {
-    max-width: 100%;
-    height: auto;
-}
-
 /* 封面图片 —— 卡片画框式 */
 .blog-cover-card {
     max-width: 100%;
@@ -118,4 +103,23 @@
     display: block;
     overflow-x: auto;
     margin: 1em 0;
+}
+
+/* 博客作者操作图标按钮 */
+.blog-owner-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.blog-action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+.blog-action-btn i {
+    font-size: 0.9rem;
 }

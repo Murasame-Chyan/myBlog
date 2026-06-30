@@ -284,6 +284,11 @@ public class AuthController {
         }
         String jti = jwtUtil.getJti(refreshToken);
         if (jti != null && Boolean.TRUE.equals(stringRedisTemplate.hasKey("jwt:blacklist:" + jti))) {
+            // filter 可能已并发续期，尝试读 refresh-result 回退
+            String cached = stringRedisTemplate.opsForValue().get("jwt:refresh-result:" + jti);
+            if (cached != null) {
+                return ReturnUtil.success("令牌已刷新");
+            }
             return ReturnUtil.error("令牌已被撤销，请重新登录");
         }
         Long userId = jwtUtil.getUserIdFromToken(refreshToken);

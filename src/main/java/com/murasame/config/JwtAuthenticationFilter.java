@@ -2,6 +2,7 @@ package com.murasame.config;
 
 import com.murasame.entity.Users;
 import com.murasame.service.UserService;
+import com.murasame.util.CookieUtil;
 import com.murasame.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -17,22 +18,29 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
+    private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
 
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
     private final UserService userService;
+    private final CookieUtil cookieUtil;
+    private final JwtProperties jwtProperties;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil, StringRedisTemplate redisTemplate,
-                                   UserService userService) {
+                                   UserService userService, CookieUtil cookieUtil,
+                                   JwtProperties jwtProperties) {
         this.jwtUtil = jwtUtil;
         this.redisTemplate = redisTemplate;
         this.userService = userService;
+        this.cookieUtil = cookieUtil;
+        this.jwtProperties = jwtProperties;
     }
 
     @Override
@@ -82,7 +90,83 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
+        // 透明续期：access_token 无效但 refresh_token 有效时，自动签发新 token 对
+        if (request.getAttribute("currentUser") == null) {
+            trySilentRefresh(request, response);
+        }
+
         filterChain.doFilter(request, response);
+    }
+
+    // 尝试用 refresh_token 静默续期，成功则设置 currentUser 和 SecurityContext
+    private void trySilentRefresh(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshTokenFromCookie(request);
+        if (refreshToken == null || !jwtUtil.isValidToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
+            return;
+        }
+
+        String rtJti = jwtUtil.getJti(refreshToken);
+        if (rtJti == null) return;
+
+        Long userId = null;
+
+        try {
+            if (Boolean.TRUE.equals(redisTemplate.hasKey("jwt:blacklist:" + rtJti))) {
+                // 已被拉黑 → 可能是并发请求，尝试读取 refresh-result
+                String cached = redisTemplate.opsForValue().get("jwt:refresh-result:" + rtJti);
+                if (cached != null) {
+                    try {
+                        userId = Long.parseLong(cached);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            } else {
+                // 未被拉黑 → 执行续期
+                userId = jwtUtil.getUserIdFromToken(refreshToken);
+                if (userId != null) {
+                    // 先存结果（供并发请求回退读取）
+                    redisTemplate.opsForValue().set(
+                            "jwt:refresh-result:" + rtJti,
+                            userId.toString(),
+                            Duration.ofSeconds(30));
+                    // 再拉黑旧 refresh_token
+                    long remaining = jwtUtil.getRemainingMillis(refreshToken);
+                    if (remaining > 0) {
+                        redisTemplate.opsForValue().set(
+                                "jwt:blacklist:" + rtJti, "1",
+                                Duration.ofMillis(remaining));
+                    }
+                    // 签发新 token 对
+                    Users user = userService.getUserById(userId);
+                    if (user != null) {
+                        String newAT = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());
+                        String newRT = jwtUtil.generateRefreshToken(user.getId());
+                        cookieUtil.writeAccessToken(response, newAT, (int) (jwtProperties.getAccessTokenExpiration() / 1000));
+                        cookieUtil.writeRefreshToken(response, newRT, (int) (jwtProperties.getRefreshTokenExpiration() / 1000));
+                        log.debug("JWT silent refresh: userId={}", user.getId());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Redis 不可用时降级：跳过续期，用户需手动登录
+            log.warn("Silent refresh failed (Redis may be unavailable): {}", e.getMessage());
+            return;
+        }
+
+        // 认证用户
+        if (userId != null) {
+            try {
+                Users user = userService.getUserById(userId);
+                if (user != null) {
+                    request.setAttribute("currentUser", user);
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                            user, null, Collections.emptyList());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to load user during silent refresh: {}", e.getMessage());
+            }
+        }
     }
 
     private String extractFromHeader(HttpServletRequest request) {
@@ -98,6 +182,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (cookies != null) {
             for (Cookie c : cookies) {
                 if (ACCESS_TOKEN_COOKIE.equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if (REFRESH_TOKEN_COOKIE.equals(c.getName())) {
                     return c.getValue();
                 }
             }

@@ -435,6 +435,45 @@
   --cover-border: rgba(74, 155, 181, 0.35);
 }
 
+/* 亮色模式：顶栏 locker 文字改为灰色，双模式下可见 */
+[data-theme="light"] .locker-item span {
+  color: #777;
+}
+
+[data-theme="light"] .locker-status {
+  color: #888;
+}
+
+/* 亮色模式：音乐播放器 — 浅色基底 */
+[data-theme="light"] #musicMiniCapsule,
+[data-theme="light"] #musicFullPanel {
+  --mp-bg: rgba(240, 242, 248, 0.95);
+  --mp-text: #2d333b;
+  --mp-text-dim: rgba(0, 0, 0, 0.5);
+  --mp-text-faint: rgba(0, 0, 0, 0.25);
+  --mp-panel-bg: rgba(248, 250, 255, 0.97);
+}
+
+[data-theme="light"] #musicFullPanel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .panel-drag-handle span {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .panel-close-btn {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* 亮色模式：泛白半透明遮罩 */
+[data-theme="light"] body::before {
+  background: radial-gradient(ellipse at center,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.45) 100%);
+}
+
 /* ---- Smooth transition on body ---- */
 body {
   transition: var(--theme-transition);

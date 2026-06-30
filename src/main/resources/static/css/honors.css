@@ -1,0 +1,159 @@
+/* ===== 荣誉墙页面 ===== */
+.honors-page {
+    padding-bottom: 40px;
+}
+.honors-header {
+    text-align: center;
+    padding: 32px 0 24px;
+}
+.honors-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    color: var(--glass-45);
+    text-decoration: none;
+    margin-bottom: 12px;
+    transition: color 0.2s;
+}
+.honors-back:hover {
+    color: var(--accent);
+}
+.honors-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+}
+.honors-subtitle {
+    font-size: 0.85rem;
+    color: var(--glass-45);
+    margin: 0;
+}
+.honors-subtitle strong {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* 4 列网格 */
+.honors-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 0 4px;
+}
+@media (max-width: 992px) {
+    .honors-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+    .honors-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .honors-grid { grid-template-columns: 1fr; }
+}
+
+/* 荣誉卡片 */
+.honor-card {
+    background: var(--glass-05);
+    border: 1px solid var(--glass-08);
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+.honor-card--owned {
+    cursor: pointer;
+    border-color: var(--accent-15);
+    background: var(--glass-08);
+}
+.honor-card--owned::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, var(--accent-10) 0%, transparent 70%);
+    pointer-events: none;
+}
+.honor-card--owned:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-35);
+    box-shadow: 0 8px 24px var(--accent-08);
+}
+.honor-card--owned:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.honor-card--locked {
+    opacity: 0.5;
+    filter: grayscale(0.5);
+}
+.honor-card--locked:hover {
+    opacity: 0.7;
+    transform: translateY(-1px);
+}
+
+/* 卡片内图标 */
+.honor-card__icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--glass-05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.honor-card__icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.honor-card__locked-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 12px;
+    border-radius: 8px;
+    border: 1.5px dashed var(--glass-15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--glass-25);
+    background: var(--glass-03);
+}
+.honor-card__name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+    line-height: 1.3;
+}
+.honor-card--locked .honor-card__name {
+    color: var(--glass-50);
+}
+.honor-card__status {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.honor-card--owned .honor-card__status {
+    background: rgba(76, 175, 80, 0.15);
+    color: #81C784;
+}
+.honor-card--locked .honor-card__status {
+    background: var(--glass-06);
+    color: var(--glass-35);
+}
+
+/* 空状态 */
+.honors-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--glass-35);
+    font-size: 0.9rem;
+}
