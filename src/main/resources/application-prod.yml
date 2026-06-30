@@ -10,6 +10,13 @@ springdoc:
 logging:
   level:
     com.murasame: WARN
+  file:
+    path: ${LOGGING_FILE_PATH:/opt/myblog/logs}
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 500MB
 
 security:
   cookie:
