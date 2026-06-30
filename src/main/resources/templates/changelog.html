@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>更新日志 — MyBlog</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devicon@2.16.0/devicon.min.css" />
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/changelog.css">
+</head>
+<body>
+    <header th:replace="~{fragment/header :: nav('changelog')}"></header>
+
+    <main class="container-fluid my-4">
+        <!-- ========== 标题区 ========== -->
+        <div class="changelog-header-full">
+            <span class="icon">📋</span>
+            <h1>更新日志</h1>
+            <p class="subtitle">项目演进历程 — 记录每一次有意义的改变</p>
+            <hr class="changelog-header-divider">
+        </div>
+
+        <div class="row main-container">
+            <!-- ========== 左侧边栏：技术栈 ========== -->
+            <aside class="col-lg-2 col-md-3 mb-4">
+                <div class="sidebar-left">
+                    <div class="sidebar-card-header">
+                        <i class="bi bi-stack"></i>
+                        <span>技术栈</span>
+                    </div>
+            <ul class="sidebar-tech-list">
+                <li><a href="https://www.java.com/" target="_blank" rel="noopener" class="tech-item"><i class="devicon-java-plain colored"></i><span class="tech-name">Java 17</span></a></li>
+                <li><a href="https://spring.io/projects/spring-boot" target="_blank" rel="noopener" class="tech-item"><i class="devicon-spring-plain colored"></i><span class="tech-name">Spring Boot 3.5</span></a></li>
+                <li><a href="https://spring.io/projects/spring-security" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-shield-lock" style="color:#6bd970;"></i><span class="tech-name">Spring Security</span></a></li>
+                <li><a href="https://www.thymeleaf.org/" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-flower1" style="color:#5fa84e;"></i><span class="tech-name">Thymeleaf</span></a></li>
+                <li><a href="https://mybatis.org/" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-database-gear" style="color:#cd5c5c;"></i><span class="tech-name">MyBatis</span></a></li>
+                <li><a href="https://www.mysql.com/" target="_blank" rel="noopener" class="tech-item"><i class="devicon-mysql-plain colored"></i><span class="tech-name">MySQL</span></a></li>
+                <li><a href="https://redis.io/" target="_blank" rel="noopener" class="tech-item"><i class="devicon-redis-plain colored"></i><span class="tech-name">Redis</span></a></li>
+                <li><a href="https://maven.apache.org/" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-box-seam" style="color:#c71a36;"></i><span class="tech-name">Maven</span></a></li>
+                <li>
+    <span class="tech-item tech-item-group">
+        <span class="tech-group-icons">
+            <i class="devicon-html5-plain colored"></i>
+            <i class="devicon-css3-plain colored"></i>
+            <i class="devicon-javascript-plain colored"></i>
+        </span>
+        <span class="tech-text">
+            <span>HTML5</span>
+            <span>CSS3</span>
+            <span>JavaScript</span>
+        </span>
+    </span>
+</li>
+                <li><a href="https://git-scm.com/" target="_blank" rel="noopener" class="tech-item"><i class="devicon-git-plain colored"></i><span class="tech-name">Git</span></a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- ========== 中央内容 ========== -->
+    <div class="col-lg-8 col-md-6 mb-4">
+        <main class="changelog-container">
+
+        <!-- ============ 2026年6月 ============ -->
+        <div class="timeline-month open">
+            <button class="month-header" onclick="toggleMonth(this)" aria-expanded="true">
+                <span class="month-label">2026年6月</span>
+                <span class="entry-count">6</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="month-body">
+                <div class="timeline">
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">06-29</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">UI 增强合集</h3>
+                            <p class="entry-desc">新增分享卡片生成、全息徽章展示组件、通用确认对话框；实现 JWT 静默续期机制；安全图片代理防止 SSRF；全局 CORS 跨域支持；升级 Bootstrap 至 5.3.3 并引入 spring-boot-devtools 热更新。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">06-27</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">暗色/亮色主题切换</h3>
+                            <p class="entry-desc">实现双主题系统：暗色玻璃态（默认）与亮色模式，通过 CSS 自定义属性切换，主题偏好持久化至 localStorage，支持系统级 prefers-color-scheme 自动检测。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">06-27</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">音乐播放器悬浮组件</h3>
+                            <p class="entry-desc">新增全局悬浮音乐播放器：迷你胶囊形态与展开面板双模式，支持音频可视化 Canvas、Bass 演奏 GIF 动效、歌词同步滚动、播放列表管理。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">06-05</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">创作者数据分析中心</h3>
+                            <p class="entry-desc">为创作者提供数据洞察面板：GitHub 风格 SVG 发文热力图、标签使用统计饼图、阅读/点赞/评论趋势图、最受欢迎文章排行；含骨架屏加载态。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">06-02</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">签到升级系统</h3>
+                            <p class="entry-desc">每日签到获取经验值与连续签到奖励；等级系统含进度条与等级徽章（绿→蓝→黄→橙→红→粉→紫渐变色）；成就徽章解锁与展示墙；博客封面图上传功能。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">06-01</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">全息徽章卡片</h3>
+                            <p class="entry-desc">为成就徽章实现 3D 全息卡片效果：镭射箔纹理、彩虹光泽、指针驱动倾斜变换（弹簧物理缓动）、缩略图与模态框交互。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 2026年5月 ============ -->
+        <div class="timeline-month">
+            <button class="month-header" onclick="toggleMonth(this)" aria-expanded="false">
+                <span class="month-label">2026年5月</span>
+                <span class="entry-count">4</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="month-body">
+                <div class="timeline">
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">05-27</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">JWT 无状态认证体系</h3>
+                            <p class="entry-desc">全面迁移至 JWT 无状态认证：access token + refresh token 双令牌机制，refresh token 通过 HttpOnly Cookie 传输防止 XSS 窃取；authFetch 前端封装自动 401 续期；彻底禁用 JSESSIONID 与 Servlet 会话追踪，实现 STATELESS 安全策略。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">05-27</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">小游戏页面 + GitHub 并行获取</h3>
+                            <p class="entry-desc">新增休闲小游戏页面（easysurvivor）；GitHub 个人信息面板实现并行数据获取（热力图、成就、仓库列表），优化加载速度。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">05-13</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">Redis 点赞系统</h3>
+                            <p class="entry-desc">将博客点赞从 JSON 字段方案迁移至 Redis 缓存 + MySQL 持久化双层架构，提升高并发场景下点赞性能与数据一致性。</p>
+                            <div class="entry-badges"><span class="category-badge enhance">优化</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">05-12</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">个人主页重新设计</h3>
+                            <p class="entry-desc">全新个人主页布局：用户信息卡片、经验等级展示、我的文章列表、点赞收藏列表、编辑资料弹窗（含头像裁剪上传）。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 2026年3月 ============ -->
+        <div class="timeline-month">
+            <button class="month-header" onclick="toggleMonth(this)" aria-expanded="false">
+                <span class="month-label">2026年3月</span>
+                <span class="entry-count">4</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="month-body">
+                <div class="timeline">
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">03-29</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">互动指标系统</h3>
+                            <p class="entry-desc">新增博客点赞/点踩、阅读量计数功能；首页热门文章排行（按阅读量/点赞数排序）；修复作者显示为 ID 而非用户名的问题。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">03-27</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">标签筛选 + 天气组件</h3>
+                            <p class="entry-desc">博客标签系统（JSON 存储 + MySQL JSON_CONTAINS 查询）；首页按标签筛选博文；集成心知天气 API，侧边栏天气小部件（含地理位置、当前天气、多日预报）。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">03-25</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">归档管理系统</h3>
+                            <p class="entry-desc">博客回收站归档功能：已删除文章移入归档区，支持浏览与恢复；归档页面独立展示。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">03-24</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">评论与回复系统</h3>
+                            <p class="entry-desc">博客评论功能上线：支持发表评论与嵌套回复；评论树形展示与分页；页面 UI 整体改版（Bootstrap 卡片式布局）。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 2025年12月（项目初期） ============ -->
+        <div class="timeline-month">
+            <button class="month-header" onclick="toggleMonth(this)" aria-expanded="false">
+                <span class="month-label">2025年12月</span>
+                <span class="entry-count">5</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="month-body">
+                <div class="timeline">
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">12-17</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">性能调优与格式修复</h3>
+                            <p class="entry-desc">批量查询性能优化；博文阅读/编辑格式修复；标题长度限制漏洞修复。</p>
+                            <div class="entry-badges"><span class="category-badge fix">修复</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">12-15</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">回收站与安全防护</h3>
+                            <p class="entry-desc">博客软删除机制：移入回收站与从回收站恢复；使用 CommonMark + Jsoup 进行 HTML 净化，防止 XSS/HTML 注入攻击。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">12-10</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">Swagger API 文档</h3>
+                            <p class="entry-desc">集成 Springdoc OpenAPI，提供 Swagger UI 交互式 API 测试界面；自定义错误页面路由。</p>
+                            <div class="entry-badges"><span class="category-badge enhance">优化</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">12-05</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">文章发布功能</h3>
+                            <p class="entry-desc">实现博客文章创建与发布流程：Markdown 编辑、文本处理、数据库持久化。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-entry">
+                        <div class="entry-date">12-03</div>
+                        <div class="entry-card">
+                            <h3 class="entry-title">项目初始化</h3>
+                            <p class="entry-desc">基于 Spring Boot 3.5 + Thymeleaf + MyBatis + MySQL 搭建博客项目骨架：首页展示、基础 CRUD、MVC 三层架构。</p>
+                            <div class="entry-badges"><span class="category-badge feature">新功能</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <hr class="changelog-section-divider">
+
+        <!-- ========== Maven 依赖一览 ========== -->
+        <div class="timeline-month">
+            <button class="month-header" onclick="toggleMonth(this)" aria-expanded="false">
+                <span class="month-label">📦 Maven 依赖一览</span>
+                <span class="entry-count">18</span>
+                <span class="arrow">▼</span>
+            </button>
+            <div class="month-body">
+                <div class="deps-table-wrapper">
+                    <table class="deps-table">
+                        <thead>
+                            <tr>
+                                <th>依赖</th>
+                                <th>版本</th>
+                                <th>说明</th>
+                                <th>Scope</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>spring-boot-starter</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>Spring Boot 核心自动配置启动器</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-starter-web</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>Spring MVC RESTful Web 框架（内嵌 Tomcat）</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-starter-security</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>认证与授权安全框架</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-starter-thymeleaf</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>Thymeleaf 服务端模板引擎</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-starter-validation</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>Bean Validation 数据校验（Hibernate Validator）</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-starter-data-redis</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>Redis 缓存与数据存储（Lettuce 客户端）</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-starter-mail</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>Java Mail 邮件发送（注册验证码等）</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-devtools</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>开发热更新，生产环境自动排除</td>
+                                <td><span class="scope-tag scope-runtime">runtime</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>spring-boot-starter-test</code></td>
+                                <td><span class="dep-ver">3.5.7</span></td>
+                                <td>单元测试与集成测试（JUnit 5 + Mockito）</td>
+                                <td><span class="scope-tag scope-test">test</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>mybatis-spring-boot-starter</code></td>
+                                <td><span class="dep-ver">3.0.3</span></td>
+                                <td>MyBatis ORM 持久层框架（注解式 Mapper）</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>mysql-connector-j</code></td>
+                                <td><span class="dep-ver">9.5.0</span></td>
+                                <td>MySQL JDBC 数据库驱动</td>
+                                <td><span class="scope-tag scope-runtime">runtime</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>springdoc-openapi-starter-webmvc-ui</code></td>
+                                <td><span class="dep-ver">2.8.14</span></td>
+                                <td>Swagger / OpenAPI 3 交互式接口文档</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>jsoup</code></td>
+                                <td><span class="dep-ver">1.21.2</span></td>
+                                <td>HTML 解析与净化，防博文 XSS 注入</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>commonmark</code> + 4 扩展</td>
+                                <td><span class="dep-ver">0.27.0</span></td>
+                                <td>Markdown → HTML 解析（含表格/删除线/任务列表/自动链接扩展）</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>jjwt-api</code></td>
+                                <td><span class="dep-ver">0.12.6</span></td>
+                                <td>JWT 无状态令牌：签发、解析、验证</td>
+                                <td><span class="scope-tag scope-compile">compile</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>jjwt-impl</code></td>
+                                <td><span class="dep-ver">0.12.6</span></td>
+                                <td>JWT 实现层（RSA/HMAC 算法支持）</td>
+                                <td><span class="scope-tag scope-runtime">runtime</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>jjwt-jackson</code></td>
+                                <td><span class="dep-ver">0.12.6</span></td>
+                                <td>JWT Payload JSON 序列化/反序列化</td>
+                                <td><span class="scope-tag scope-runtime">runtime</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>lombok</code></td>
+                                <td><span class="dep-ver">1.18.42</span></td>
+                                <td>简化 Java 代码（@Data/@Builder/@Slf4j 等），编译期注解</td>
+                                <td><span class="scope-tag scope-provided">provided</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚标注 -->
+        <div class="changelog-footer">
+            <span class="ai-badge">🤖 本页面由 Claude Code 辅助整理</span>
+        </div>
+    </main>
+    </div><!-- /.col center -->
+
+    <!-- ========== 右侧边栏：外部 CDN / 组件 ========== -->
+    <aside class="col-lg-2 col-md-3 mb-4">
+        <div class="sidebar-right">
+            <div class="sidebar-card-header">
+                <i class="bi bi-box-arrow-up-right"></i>
+                <span>外部 CDN / 组件</span>
+            </div>
+            <ul class="sidebar-tech-list">
+                <li><a href="https://getbootstrap.com/" target="_blank" rel="noopener" class="tech-item"><i class="devicon-bootstrap-plain colored"></i><span class="tech-name">Bootstrap 5.3.3</span></a></li>
+                <li><a href="https://icons.getbootstrap.com/" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-grid-3x3-gap" style="color:#7952b3;"></i><span class="tech-name">Bootstrap Icons</span></a></li>
+                <li><a href="https://devicon.dev/" target="_blank" rel="noopener" class="tech-item"><i class="devicon-devicon-plain colored"></i><span class="tech-name">Devicon 图标库</span></a></li>
+                <li><a href="https://commonmark.org/" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-markdown" style="color:#5c9edc;"></i><span class="tech-text"><span class="tech-name">CommonMark</span><small class="tech-sub">Markdown 解析</small></span></a></li>
+                <li><a href="https://jsoup.org/" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-shield-check" style="color:#4caf50;"></i><span class="tech-text"><span class="tech-name">Jsoup</span><small class="tech-sub">HTML 净化 / XSS 防护</small></span></a></li>
+                <li><a href="https://springdoc.org/" target="_blank" rel="noopener" class="tech-item"><i class="bi bi-journal-code" style="color:#85ea2d;"></i><span class="tech-text"><span class="tech-name">Springdoc OpenAPI</span><small class="tech-sub">Swagger UI 文档</small></span></a></li>
+                <li><span class="tech-item tech-item-static"><i class="bi bi-cloud-sun" style="color:#ffa726;"></i><span class="tech-text"><span class="tech-name">心知天气 API</span><small class="tech-sub">天气小部件数据源</small></span></span></li>
+                <li><a href="https://docs.github.com/en/rest" target="_blank" rel="noopener" class="tech-item"><i class="devicon-github-original"></i><span class="tech-text"><span class="tech-name">GitHub REST API</span><small class="tech-sub">个人面板数据获取</small></span></a></li>
+            </ul>
+        </div>
+    </aside>
+
+    </div><!-- /.row -->
+    </main><!-- /.container-fluid -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        /** 切换月份面板展开/折叠 */
+        function toggleMonth(btn) {
+            const month = btn.parentElement;
+            const open = month.classList.toggle('open');
+            btn.setAttribute('aria-expanded', open);
+        }
+    </script>
+
+    <footer th:replace="~{fragment/footer :: footer}"></footer>
+    <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>
+</body>
+</html>
