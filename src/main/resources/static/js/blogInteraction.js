@@ -187,17 +187,32 @@ function generateQrCode(url) {
     }
 }
 
+var _copyShareImageRunning = false;
+var _copyShareImageTimer = null;
+
+// 对外入口：500ms 防抖，避免用户快速连点对储存桶发起大量代理请求
 function copyShareImage() {
+    clearTimeout(_copyShareImageTimer);
+    _copyShareImageTimer = setTimeout(_doCopyShareImage, 500);
+}
+
+function _doCopyShareImage() {
+    // 锁：防止并发调用导致图片 URL 被重复包裹代理
+    if (_copyShareImageRunning) return;
+    _copyShareImageRunning = true;
+
     var card = document.querySelector('.share-card');
-    if (!card) return;
+    if (!card) { _copyShareImageRunning = false; return; }
 
     var imgs = card.querySelectorAll('img');
     var swaps = [];
     var loadPromises = [];
 
     imgs.forEach(function(img) {
-        var src = img.src;
-        if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+        // 使用 getAttribute 获取原始属性值，避免浏览器将相对路径解析为 http://localhost:8080/...
+        // 或前一次代理调用残留的代理 URL 被再次包裹
+        var src = img.getAttribute('src');
+        if (src && src.startsWith('https://')) {
             swaps.push({ img: img, orig: src });
             // 先注册监听器，再改 src，防止 load 事件在监听器就位前触发
             loadPromises.push(new Promise(function(resolve) {
@@ -212,23 +227,34 @@ function copyShareImage() {
     });
 
     Promise.all(loadPromises).then(function() {
+        var isLight = document.documentElement.getAttribute('data-theme') === 'light';
         return html2canvas(card, {
-            backgroundColor: null,
+            // 用纯色填充画布，配合下方 overlay 透明，杜绝暗色边角
+            backgroundColor: isLight ? '#ffffff' : '#1e2235',
             scale: 2,
             onclone: function(clonedDoc) {
                 var clonedOverlay = clonedDoc.getElementById('shareOverlay');
                 var clonedCard = clonedDoc.querySelector('.share-card');
+
+                // html2canvas 不支持 backdrop-filter，须在两种模式下都关掉
                 if (clonedOverlay) {
                     clonedOverlay.style.setProperty('background', 'transparent', 'important');
                     clonedOverlay.style.setProperty('backdrop-filter', 'none', 'important');
                     clonedOverlay.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
                 }
                 if (clonedCard) {
-                    clonedCard.style.setProperty('background', 'linear-gradient(160deg, #1e2235 0%, #252838 100%)', 'important');
                     clonedCard.style.setProperty('backdrop-filter', 'none', 'important');
                     clonedCard.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
                     clonedCard.style.setProperty('border', 'none', 'important');
                     clonedCard.style.setProperty('box-shadow', 'none', 'important');
+
+                    // 纯色背景替代毛玻璃，按主题选色
+                    clonedCard.style.setProperty('background',
+                        isLight
+                            ? 'linear-gradient(160deg, #ffffff 0%, #f2f4f8 100%)'
+                            : 'linear-gradient(160deg, #1e2235 0%, #252838 100%)',
+                        'important');
+
                     var hdr = clonedCard.querySelector('.share-card-header');
                     var ftr = clonedCard.querySelector('.share-card-footer');
                     if (hdr) hdr.style.display = 'none';
@@ -264,6 +290,7 @@ function copyShareImage() {
             showToast('图片生成失败', 'error');
         }).finally(function() {
             swaps.forEach(function(item) { item.img.src = item.orig; });
+            _copyShareImageRunning = false;
         });
     });
 }
