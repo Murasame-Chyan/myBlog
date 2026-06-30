@@ -9,8 +9,8 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.Murasame</groupId>
-    <artifactId>myBlog</artifactId>
-    <version>1.0-alpha</version>
+    <artifactId>myblog</artifactId>
+    <version>1.0-beta</version>
     <name>myBlog</name>
     <description>myBlog</description>
     <url/>
@@ -169,6 +169,16 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <!-- 音乐文件由 Nginx 直出 /opt/myblog/media/music/，不打包进 jar -->
+                    <exclude>static/music/*.mp3</exclude>
+                    <exclude>static/music/*.lrc</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
