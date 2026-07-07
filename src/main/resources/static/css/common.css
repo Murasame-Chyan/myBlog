@@ -3865,3 +3865,57 @@ hr {
 .share-card-qr img {
     display: block;
 }
+
+/* ===== 发布进度弹窗 ===== */
+.publish-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--black-65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100000;
+    align-items: center;
+    justify-content: center;
+}
+.publish-overlay.active {
+    display: flex;
+}
+.publish-modal {
+    background: linear-gradient(160deg, var(--glass-12) 0%, var(--glass-06) 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 16px;
+    border: 1px solid var(--accent-20);
+    box-shadow: 0 8px 32px var(--black-40), 0 2px 8px var(--accent-08);
+    padding: 40px 48px;
+    text-align: center;
+    min-width: 280px;
+    animation: confirmModalIn 0.25s ease;
+}
+.publish-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid var(--glass-15);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: publishSpin 0.75s linear infinite;
+    margin: 0 auto 20px;
+}
+@keyframes publishSpin {
+    to { transform: rotate(360deg); }
+}
+@keyframes publishFadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+.publish-overlay.fading {
+    animation: publishFadeOut 0.2s ease forwards;
+}
+.publish-text {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.02em;
+}

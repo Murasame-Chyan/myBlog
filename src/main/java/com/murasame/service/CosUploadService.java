@@ -27,4 +27,13 @@ public interface CosUploadService {
      * @return 封面图片访问 URL
      */
     String uploadCoverImage(MultipartFile file) throws IOException;
+
+    /**
+     * 上传 base64 编码的图片（剪贴板粘贴场景自动转换）
+     * 支持从网页/Word/Markdown 粘贴时自动提取内嵌图片并转存 COS
+     *
+     * @param dataUrl 完整 data URL，如 "data:image/png;base64,iVBOR..."
+     * @return 图片访问 URL
+     */
+    String uploadBase64Image(String dataUrl) throws IOException;
 }

@@ -87,8 +87,19 @@
                 <i class="bi bi-send"></i>
                 <span th:text="${blog} ? '更新文章' : '立即发布'">立即发布</span>
             </button>
+            <button type="button" id="saveDraftBtn" class="btn btn-ghost">
+                <i class="bi bi-file-earmark"></i> 保存草稿
+            </button>
             <a th:href="@{/}" class="btn btn-link">返回首页</a>
         </form>
+
+        <!-- 发布进度弹窗 -->
+        <div id="publishOverlay" class="publish-overlay">
+            <div class="publish-modal">
+                <div class="publish-spinner"></div>
+                <p id="publishProgressText" class="publish-text">正在准备发布...</p>
+            </div>
+        </div>
 
         <!-- 结果提示 -->
         <div id="result" class="alert alert-dismissible fade show d-none mt-3">

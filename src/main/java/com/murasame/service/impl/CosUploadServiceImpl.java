@@ -20,6 +20,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Set;
 import java.util.UUID;
 
@@ -108,10 +109,108 @@ public class CosUploadServiceImpl implements CosUploadService {
         return uploadToCos(file, key, extension);
     }
 
+    // 单张 base64 图片解码后最大 5MB，避免 JSON body 超过 Nginx/Spring 传输限制
+    private static final int BASE64_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+    @Override
+    public String uploadBase64Image(String dataUrl) throws IOException {
+        // 1. 解析 data URL 格式：data:[<mime>][;base64],<data>
+        if (dataUrl == null || dataUrl.isEmpty()) {
+            throw new IllegalArgumentException("data URL 不能为空");
+        }
+        if (!dataUrl.startsWith("data:")) {
+            throw new IllegalArgumentException("不是有效的 data URL");
+        }
+
+        int commaIdx = dataUrl.indexOf(',');
+        if (commaIdx == -1) {
+            throw new IllegalArgumentException("data URL 格式无效，缺少逗号分隔符");
+        }
+
+        String header = dataUrl.substring(0, commaIdx);
+        String base64Data = dataUrl.substring(commaIdx + 1);
+
+        // 提取 MIME 类型
+        String mimeType = "image/png"; // 默认
+        boolean isBase64 = header.contains(";base64");
+        int mimeStart = "data:".length();
+        int mimeEnd = header.indexOf(';');
+        if (mimeEnd == -1) mimeEnd = header.length();
+        if (mimeEnd > mimeStart) {
+            mimeType = header.substring(mimeStart, mimeEnd);
+        }
+
+        // 2. 校验图片类型
+        String extension = mimeToExtension(mimeType);
+        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new IllegalArgumentException("不支持的图片类型: " + mimeType + "，仅支持: " + ALLOWED_EXTENSIONS);
+        }
+
+        // 3. 解码 base64
+        byte[] imageBytes;
+        if (isBase64) {
+            try {
+                imageBytes = Base64.getDecoder().decode(base64Data);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("base64 解码失败，数据可能已损坏");
+            }
+        } else {
+            // 极少见：data URL 也可能是原始二进制编码在 URL 中，这里不支持
+            throw new IllegalArgumentException("仅支持 base64 编码的 data URL");
+        }
+
+        // 4. 大小校验
+        if (imageBytes.length > BASE64_IMAGE_MAX_BYTES) {
+            throw new IllegalArgumentException(
+                    String.format("图片过大（%.1fMB），粘贴的图片不能超过 5MB，请压缩后重试",
+                            imageBytes.length / 1024.0 / 1024.0));
+        }
+
+        // 5. 校验魔术字节，防止非图片数据
+        validateImageBytes(imageBytes);
+
+        // 6. 生成唯一文件名并上传
+        String fileName = generateUniqueFileName(extension);
+        String key = cosConfig.getFolder() + "/" + fileName;
+        uploadBytes(imageBytes, key, mimeType);
+
+        return cosConfig.getBaseUrl() + "/" + key;
+    }
+
     /**
-     * 构建头像存储 key：用户目录 + 时间戳前缀 + 原始文件名（sanitized）
-     * 用户目录隔离跨用户冲突，时间戳避免同用户同名覆盖
+     * 根据 MIME 类型推断文件扩展名
      */
+    private String mimeToExtension(String mimeType) {
+        if (mimeType == null) return "png";
+        return switch (mimeType.toLowerCase()) {
+            case "image/jpeg", "image/jpg" -> "jpg";
+            case "image/png" -> "png";
+            case "image/gif" -> "gif";
+            case "image/webp" -> "webp";
+            default -> mimeType.contains("jpeg") || mimeType.contains("jpg") ? "jpg" : "png";
+        };
+    }
+
+    /**
+     * 对字节数组做图片魔术字节校验，复用现有逻辑
+     */
+    private void validateImageBytes(byte[] data) {
+        if (data == null || data.length < 4) {
+            throw new IllegalArgumentException("文件内容过短，不是有效的图片");
+        }
+        // PNG: 89 50 4E 47
+        if (data[0] == (byte) 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47) return;
+        // JPEG: FF D8 FF
+        if ((data[0] & 0xFF) == 0xFF && (data[1] & 0xFF) == 0xD8 && (data[2] & 0xFF) == 0xFF) return;
+        // GIF: 47 49 46 38
+        if (data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x38) return;
+        // WebP: 52 49 46 46 ... 57 45 42 50
+        if (data.length >= 12
+                && data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46
+                && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50) return;
+        throw new IllegalArgumentException("文件内容不是有效的图片格式（仅支持 PNG/JPEG/GIF/WebP）");
+    }
+
     private String buildAvatarKey(Long userId, String originalFilename) {
         int dotIdx = originalFilename.lastIndexOf('.');
         String baseName = dotIdx > 0 ? originalFilename.substring(0, dotIdx) : originalFilename;
