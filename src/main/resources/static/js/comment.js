@@ -15,6 +15,39 @@ document.addEventListener('DOMContentLoaded', function() {
 	loadComments();
 });
 
+// 评论跳转：首页点击评论后跳转到文章并滚动到对应评论，同时高亮
+function scrollToComment() {
+	var targetId = document.getElementById('targetCommentId');
+	if (!targetId) return;
+	var commentId = targetId.value;
+	if (!commentId || commentId === '0') return;
+
+	// 在评论列表中查找目标评论
+	var targetEl = document.querySelector('.comment-item[data-comment-id="' + commentId + '"]');
+	if (targetEl) {
+		// 滚动到评论处，居中显示
+		targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		// 添加高亮效果
+		targetEl.classList.add('comment-highlight');
+		// 高亮动画结束后清除 class
+		setTimeout(function() {
+			targetEl.classList.remove('comment-highlight');
+		}, 2100);
+	} else {
+		// 评论可能在子层级中，延迟重试
+		setTimeout(function() {
+			var retryEl = document.querySelector('.comment-item[data-comment-id="' + commentId + '"]');
+			if (retryEl) {
+				retryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				retryEl.classList.add('comment-highlight');
+				setTimeout(function() {
+					retryEl.classList.remove('comment-highlight');
+				}, 2100);
+			}
+		}, 600);
+	}
+}
+
 function loadComments() {
 	fetch(`/user/comment/list/${currentBlogId}`)
 		.then(response => response.json())
@@ -23,6 +56,8 @@ function loadComments() {
 				allComments = data.data;
 				renderComments();
 				updateCommentCount();
+				// 首页评论跳转：评论渲染完成后滚动到目标评论
+				setTimeout(function() { scrollToComment(); }, 200);
 			} else {
 				console.error('加载评论失败:', data.msg);
 			}

@@ -279,7 +279,7 @@
                                 </div>
                             </li>
                             <li th:each="comment : ${recentComments}">
-                                <a th:href="@{/blogs/read/{id}(id=${comment.b_id})}" class="sidebar-link">
+                                <a th:href="@{/blogs/read/{id}(id=${comment.b_id}, commentId=${comment.id})}" class="sidebar-link">
                                     <div class="comment-item">
                                         <div class="comment-user" th:text="${comment.author_name != null ? comment.author_name : '用户' + comment.u_id}">用户</div>
                                         <div class="comment-text">
