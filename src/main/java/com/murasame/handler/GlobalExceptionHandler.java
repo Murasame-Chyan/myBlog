@@ -1,5 +1,6 @@
 package com.murasame.handler;
 
+import com.murasame.security.PermissionDeniedException;
 import com.murasame.util.ReturnUtil;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -19,5 +20,11 @@ public class GlobalExceptionHandler {
                 .map(v -> v.getMessage())
                 .orElse("参数校验失败");
         return ReturnUtil.badRequest(message);
+    }
+
+    @ResponseBody
+    @ExceptionHandler(PermissionDeniedException.class)
+    public Map<String, Object> handlePermissionDenied(PermissionDeniedException e) {
+        return ReturnUtil.forbidden(e.getMessage());
     }
 }
