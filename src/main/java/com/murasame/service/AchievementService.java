@@ -14,4 +14,7 @@ public interface AchievementService {
 
     /** 授予成就 */
     boolean grantAchievement(Long userId, int achievementId);
+
+    /** 撤销成就 */
+    boolean revokeAchievement(Long userId, int achievementId);
 }
