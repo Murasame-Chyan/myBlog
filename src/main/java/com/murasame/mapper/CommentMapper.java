@@ -62,6 +62,27 @@ public interface CommentMapper {
 	int getCommentCountByBlogId(@Param("blogId") Long blogId);
 
 	/**
+	 * 管理端：全站评论分页（含博客标题、评论人昵称）
+	 * LEFT JOIN 博客表，博客被删时 blogTitle 为 null
+	 */
+	@Select("SELECT c.id, c.content, c.created_at, c.b_id AS blogId, " +
+			"b.title AS blogTitle, u.nickname AS authorName, c.u_id AS authorId " +
+			"FROM comments c " +
+			"LEFT JOIN blogs b ON c.b_id = b.id " +
+			"LEFT JOIN users u ON c.u_id = u.id " +
+			"ORDER BY c.created_at DESC " +
+			"LIMIT #{pageSize} OFFSET #{offset}")
+	List<Map<String, Object>> getAllCommentsPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
+
+	/** 管理端：全站评论总数 */
+	@Select("SELECT COUNT(*) FROM comments")
+	long countAllComments();
+
+	/** 删除单条评论 */
+	@Delete("DELETE FROM comments WHERE id = #{id}")
+	int deleteCommentById(@Param("id") Long id);
+
+	/**
 	 * 获取近N天每日评论数
 	 */
 	@Select("""

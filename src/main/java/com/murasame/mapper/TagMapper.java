@@ -1,6 +1,7 @@
 package com.murasame.mapper;
 
 import com.murasame.entity.Tag;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
@@ -23,4 +24,7 @@ public interface TagMapper {
     @Insert("INSERT INTO tag (tagName) VALUES (#{tagName})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertTag(Tag tag);
+
+    @Delete("DELETE FROM tag WHERE id = #{id}")
+    int deleteTag(@Param("id") Integer id);
 }

@@ -25,4 +25,25 @@ public interface SignInMapper {
 
     @Select("SELECT sign_date FROM sign_in_record WHERE user_id = #{userId} AND sign_date >= #{since} ORDER BY sign_date ASC")
     List<LocalDate> findSignDatesSince(@Param("userId") Long userId, @Param("since") LocalDate since);
+
+    /** 管理端：全站签到记录分页（含用户昵称） */
+    @Select("<script>" +
+            "SELECT s.*, u.nickname AS nickname " +
+            "FROM sign_in_record s " +
+            "LEFT JOIN users u ON s.user_id = u.id " +
+            "WHERE 1=1 " +
+            "<if test='userId != null'>AND s.user_id = #{userId} </if>" +
+            "ORDER BY s.sign_date DESC " +
+            "LIMIT #{pageSize} OFFSET #{offset}" +
+            "</script>")
+    List<java.util.Map<String, Object>> findAllPage(@Param("userId") Long userId,
+                                                     @Param("pageSize") int pageSize,
+                                                     @Param("offset") int offset);
+
+    /** 管理端：全站签到记录总数 */
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM sign_in_record WHERE 1=1 " +
+            "<if test='userId != null'>AND user_id = #{userId} </if>" +
+            "</script>")
+    long countAll(@Param("userId") Long userId);
 }

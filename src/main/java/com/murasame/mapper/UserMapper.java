@@ -8,6 +8,8 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 @Mapper
 public interface UserMapper {
 	@Select("SELECT * FROM users WHERE id=#{id}")
@@ -62,4 +64,30 @@ public interface UserMapper {
 
     @Select("SELECT achievement FROM users WHERE id = #{userId}")
     String getAchievementById(@Param("userId") Long userId);
+
+    /** 管理端：用户分页列表，可按昵称/邮箱搜索 */
+    @Select("<script>" +
+            "SELECT * FROM users WHERE 1=1 " +
+            "<if test='keyword != null and keyword != \"\"'>" +
+            "AND (nickname LIKE CONCAT('%',#{keyword},'%') OR email LIKE CONCAT('%',#{keyword},'%')) " +
+            "</if>" +
+            "ORDER BY id ASC " +
+            "LIMIT #{pageSize} OFFSET #{offset}" +
+            "</script>")
+    List<Users> findAllPage(@Param("keyword") String keyword,
+                            @Param("pageSize") int pageSize,
+                            @Param("offset") int offset);
+
+    /** 管理端：用户总数 */
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM users WHERE 1=1 " +
+            "<if test='keyword != null and keyword != \"\"'>" +
+            "AND (nickname LIKE CONCAT('%',#{keyword},'%') OR email LIKE CONCAT('%',#{keyword},'%')) " +
+            "</if>" +
+            "</script>")
+    long countAll(@Param("keyword") String keyword);
+
+    /** 更新用户状态（封号/解封） */
+    @Update("UPDATE users SET status = #{status} WHERE id = #{userId}")
+    int updateStatus(@Param("userId") Long userId, @Param("status") Integer status);
 }
