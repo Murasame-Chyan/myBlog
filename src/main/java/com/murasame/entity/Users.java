@@ -29,4 +29,5 @@ public class Users {
 	String achievement;     // MySQL JSON 列，存储成就ID数组，如 [1,3,5]
 	Integer followerCount;
 	Integer followingCount;
+	Integer status;         // 用户状态：0=正常 1=封禁（管理后台用）
 }
