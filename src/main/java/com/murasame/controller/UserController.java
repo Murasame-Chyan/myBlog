@@ -3,7 +3,9 @@ package com.murasame.controller;
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.domain.vo.CommentVO;
 import com.murasame.entity.Achievement;
+import com.murasame.entity.Comments;
 import com.murasame.entity.Users;
+import com.murasame.mapper.CommentMapper;
 import com.murasame.service.AchievementService;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
@@ -41,6 +43,9 @@ public class UserController {
 
 	@Resource
 	private CommentService commentService;
+
+	@Resource
+	private CommentMapper commentMapper;
 
 	@Resource
 	private CosUploadService cosUploadService;
@@ -93,6 +98,26 @@ public class UserController {
 	public Map<String, Object> getRecentComments(@RequestParam(defaultValue = "5") int limit) {
 		List<CommentVO> comments = commentService.getRecentComments(limit);
 		return ReturnUtil.success("获取成功", comments);
+	}
+
+	// 用户删除自己的评论（只能删自己的，ownership 校验）
+	@ResponseBody
+	@DeleteMapping("/comment/{id}")
+	public Map<String, Object> deleteComment(@PathVariable Long id, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		Comments comment = commentMapper.getCommentById(id);
+		if (comment == null) {
+			return ReturnUtil.notFound("评论不存在");
+		}
+		// 归属校验：只有评论作者本人能删除
+		if (!comment.getU_id().equals(currentUser.getId())) {
+			return ReturnUtil.forbidden("无权删除他人评论");
+		}
+		commentMapper.deleteCommentById(id);
+		return ReturnUtil.success("评论删除成功");
 	}
 
 	// 头像上传三步流程：1. COS云端上传 → 2. 数据库URL更新 → 3. Session同步刷新
