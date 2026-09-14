@@ -5,6 +5,7 @@ import com.murasame.entity.Users;
 import com.murasame.mapper.MenuMapper;
 import com.murasame.mapper.RoleMapper;
 import com.murasame.service.LoginAttemptService;
+import com.murasame.service.LoginLogService;
 import com.murasame.service.PermissionService;
 import com.murasame.service.UserService;
 import com.murasame.util.AuthHelper;
@@ -40,6 +41,7 @@ public class AdminAuthController {
     private final CookieUtil cookieUtil;
     private final JwtProperties jwtProperties;
     private final AuthHelper authHelper;
+    private final LoginLogService loginLogService;
 
     @Autowired
     public AdminAuthController(UserService userService,
@@ -51,7 +53,8 @@ public class AdminAuthController {
                                StringRedisTemplate stringRedisTemplate,
                                CookieUtil cookieUtil,
                                JwtProperties jwtProperties,
-                               AuthHelper authHelper) {
+                               AuthHelper authHelper,
+                               LoginLogService loginLogService) {
         this.userService = userService;
         this.permissionService = permissionService;
         this.roleMapper = roleMapper;
@@ -62,6 +65,7 @@ public class AdminAuthController {
         this.cookieUtil = cookieUtil;
         this.jwtProperties = jwtProperties;
         this.authHelper = authHelper;
+        this.loginLogService = loginLogService;
     }
 
     @PostMapping("/login")
@@ -75,7 +79,8 @@ public class AdminAuthController {
             @RequestParam String captchaCode,
             @NotBlank(message = "验证码令牌不能为空")
             @RequestParam String captchaToken,
-            HttpServletResponse response) {
+            HttpServletResponse response,
+            HttpServletRequest request) {
         String lockMsg = loginAttemptService.checkLocked(email);
         if (lockMsg != null) return ReturnUtil.error(lockMsg);
 
@@ -88,10 +93,12 @@ public class AdminAuthController {
         Users user = userService.login(email, password);
         if (user == null) {
             loginAttemptService.recordFailedAttempt(email);
+            loginLogService.recordLogin(null, email, 0, request);
             return ReturnUtil.error("邮箱或密码错误");
         }
 
         loginAttemptService.resetAttempts(email);
+        loginLogService.recordLogin(user.getId(), user.getEmail(), 1, request);
 
         // 双 Cookie 投递：access_token Path=/，refresh_token Path=/auth/refresh
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());

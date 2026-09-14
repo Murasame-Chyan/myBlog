@@ -9,3 +9,8 @@ export function listOperationLogs(params) {
 export function listSignInLogs(params) {
   return request.get('/admin/logs/sign-in', { params })
 }
+
+// 登录日志分页
+export function listLoginLogs(params) {
+  return request.get('/admin/logs/login', { params })
+}

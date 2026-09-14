@@ -1,5 +1,6 @@
 package com.murasame.controller.admin;
 
+import com.murasame.mapper.LoginLogMapper;
 import com.murasame.mapper.OperationLogMapper;
 import com.murasame.mapper.SignInMapper;
 import com.murasame.security.RequirePermission;
@@ -16,10 +17,14 @@ public class AdminLogController {
 
     private final OperationLogMapper operationLogMapper;
     private final SignInMapper signInMapper;
+    private final LoginLogMapper loginLogMapper;
 
-    public AdminLogController(OperationLogMapper operationLogMapper, SignInMapper signInMapper) {
+    public AdminLogController(OperationLogMapper operationLogMapper,
+                              SignInMapper signInMapper,
+                              LoginLogMapper loginLogMapper) {
         this.operationLogMapper = operationLogMapper;
         this.signInMapper = signInMapper;
+        this.loginLogMapper = loginLogMapper;
     }
 
     /**
@@ -58,6 +63,20 @@ public class AdminLogController {
         return ReturnUtil.success(Map.of(
                 "list", signInMapper.findAllPage(userId, pageSize, offset),
                 "total", signInMapper.countAll(userId)
+        ));
+    }
+
+    /** 登录日志分页查询（可按用户/邮箱筛选） */
+    @GetMapping("/login")
+    @RequirePermission("log:operation")
+    public Map<String, Object> loginLogs(@RequestParam(defaultValue = "1") int page,
+                                         @RequestParam(defaultValue = "20") int pageSize,
+                                         @RequestParam(required = false) Long userId,
+                                         @RequestParam(required = false) String email) {
+        int offset = (page - 1) * pageSize;
+        return ReturnUtil.success(Map.of(
+                "list", loginLogMapper.findAllPage(userId, email, pageSize, offset),
+                "total", loginLogMapper.count(userId, email)
         ));
     }
 }
