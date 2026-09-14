@@ -376,5 +376,11 @@ public interface BlogMapper {
             "<if test='keyword != null and keyword != \"\"'>AND title LIKE CONCAT('%',#{keyword},'%') </if>" +
             "</script>")
     long countBin(@Param("keyword") String keyword);
+
+    /** 管理端：全站近 N 天博客发布趋势 */
+    @Select("SELECT DATE(created_at) AS date, COUNT(*) AS count " +
+            "FROM blogs WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) " +
+            "GROUP BY DATE(created_at) ORDER BY date ASC")
+    List<Map<String, Object>> getBlogTrend(@Param("days") int days);
 }
 
