@@ -3479,6 +3479,37 @@ hr {
     text-decoration: underline;
 }
 
+/* ===== 评论置顶（仿 B 站） ===== */
+.btn-pin {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+.btn-pin:hover {
+    color: #ffa940;
+    text-decoration: underline;
+}
+.btn-pin-active {
+    color: #ffa940;
+}
+.comment-pin-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    font-size: 0.68rem;
+    color: #ffa940;
+    background: rgba(255, 169, 64, 0.12);
+    border: 1px solid rgba(255, 169, 64, 0.35);
+    border-radius: 4px;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
 /* ===== 内联回复表单 ===== */
 .inline-reply-form {
     margin: 0 0 12px 0;

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { listComments, deleteComment } from '@/api/comment'
+import { listComments, deleteComment, pinComment, unpinComment } from '@/api/comment'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const comments = ref([])
@@ -31,6 +31,18 @@ async function handleDelete(row) {
   fetchComments()
 }
 
+// 置顶/取消置顶
+async function handlePin(row) {
+  if (row.is_pinned === 1) {
+    await unpinComment(row.id)
+    ElMessage.success('已取消置顶')
+  } else {
+    await pinComment(row.id)
+    ElMessage.success('评论已置顶')
+  }
+  fetchComments()
+}
+
 onMounted(fetchComments)
 </script>
 
@@ -46,9 +58,24 @@ onMounted(fetchComments)
         </template>
       </el-table-column>
       <el-table-column prop="authorName" label="评论人" width="120" />
-      <el-table-column prop="created_at" label="时间" width="180" />
-      <el-table-column label="操作" width="90">
+      <el-table-column label="置顶" width="70">
         <template #default="{ row }">
+          <el-tag v-if="row.is_pinned === 1" type="warning" size="small">置顶</el-tag>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="created_at" label="时间" width="180" />
+      <el-table-column label="操作" width="160">
+        <template #default="{ row }">
+          <el-button
+            v-permission="'comment:pin'"
+            :type="row.is_pinned === 1 ? 'warning' : 'primary'"
+            size="small"
+            link
+            @click="handlePin(row)"
+          >
+            {{ row.is_pinned === 1 ? '取消置顶' : '置顶' }}
+          </el-button>
           <el-button
             v-permission="'comment:delete'"
             type="danger"

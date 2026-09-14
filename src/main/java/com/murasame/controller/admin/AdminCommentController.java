@@ -45,4 +45,28 @@ public class AdminCommentController {
         commentMapper.deleteCommentById(id);
         return ReturnUtil.success("评论删除成功");
     }
+
+    /** 置顶评论（全站） */
+    @OperationLog(module = "评论管理", action = "置顶评论")
+    @PostMapping("/{id}/pin")
+    @RequirePermission("comment:pin")
+    public Map<String, Object> pin(@PathVariable Long id) {
+        if (commentMapper.getCommentById(id) == null) {
+            return ReturnUtil.notFound("评论不存在");
+        }
+        commentMapper.updatePinned(id, 1);
+        return ReturnUtil.success("评论已置顶");
+    }
+
+    /** 取消置顶评论 */
+    @OperationLog(module = "评论管理", action = "取消置顶")
+    @PostMapping("/{id}/unpin")
+    @RequirePermission("comment:pin")
+    public Map<String, Object> unpin(@PathVariable Long id) {
+        if (commentMapper.getCommentById(id) == null) {
+            return ReturnUtil.notFound("评论不存在");
+        }
+        commentMapper.updatePinned(id, 0);
+        return ReturnUtil.success("已取消置顶");
+    }
 }

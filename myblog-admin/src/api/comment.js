@@ -9,3 +9,13 @@ export function listComments(params) {
 export function deleteComment(id) {
   return request.delete(`/admin/comments/${id}`)
 }
+
+// 置顶评论
+export function pinComment(id) {
+  return request.post(`/admin/comments/${id}/pin`)
+}
+
+// 取消置顶
+export function unpinComment(id) {
+  return request.post(`/admin/comments/${id}/unpin`)
+}

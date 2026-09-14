@@ -14,4 +14,5 @@ public class Comments {
 	@Size(max = 65535, message = "评论内容过长")
 	String content;
 	LocalDateTime created_at;
+	Integer is_pinned;  // 是否置顶：0=否 1=是（博主/管理员可置顶）
 }

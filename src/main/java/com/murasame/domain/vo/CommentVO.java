@@ -17,5 +17,6 @@ public class CommentVO {
 	List<Integer> authorAchievementIds;
 	String content;
 	LocalDateTime created_at;
+	Integer is_pinned;  // 是否置顶：0=否 1=是
 	List<CommentVO> children;
 }

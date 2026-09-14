@@ -21,9 +21,10 @@ public interface CommentMapper {
 		@Result(property = "parent_cid", column = "parent_cid"),
 		@Result(property = "u_id", column = "u_id"),
 		@Result(property = "content", column = "content"),
-		@Result(property = "created_at", column = "created_at")
+		@Result(property = "created_at", column = "created_at"),
+		@Result(property = "is_pinned", column = "is_pinned")
 	})
-	@Select("SELECT * FROM comments WHERE b_id=#{blogId} ORDER BY created_at ASC")
+	@Select("SELECT * FROM comments WHERE b_id=#{blogId} ORDER BY is_pinned DESC, created_at ASC")
 	List<Comments> getCommentsByBlogId(@Param("blogId") Long blogId);
 
 	@Results(id = "commentVOResultMap", value = {
@@ -65,7 +66,7 @@ public interface CommentMapper {
 	 * 管理端：全站评论分页（含博客标题、评论人昵称）
 	 * LEFT JOIN 博客表，博客被删时 blogTitle 为 null
 	 */
-	@Select("SELECT c.id, c.content, c.created_at, c.b_id AS blogId, " +
+	@Select("SELECT c.id, c.content, c.created_at, c.is_pinned, c.b_id AS blogId, " +
 			"b.title AS blogTitle, u.nickname AS authorName, c.u_id AS authorId " +
 			"FROM comments c " +
 			"LEFT JOIN blogs b ON c.b_id = b.id " +
@@ -81,6 +82,10 @@ public interface CommentMapper {
 	/** 删除单条评论 */
 	@Delete("DELETE FROM comments WHERE id = #{id}")
 	int deleteCommentById(@Param("id") Long id);
+
+	/** 置顶/取消置顶评论 */
+	@Update("UPDATE comments SET is_pinned = #{isPinned} WHERE id = #{id}")
+	int updatePinned(@Param("id") Long id, @Param("isPinned") Integer isPinned);
 
 	/**
 	 * 获取近N天每日评论数
@@ -115,5 +120,11 @@ public interface CommentMapper {
 	""")
 	List<Map<String, Object>> getDailyCommentTrendByRange(@Param("userId") Long userId,
 			@Param("startDate") String startDate, @Param("endDate") String endDate);
+
+	/** 管理端：全站近 N 天评论趋势 */
+	@Select("SELECT DATE(created_at) AS date, COUNT(*) AS count " +
+			"FROM comments WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) " +
+			"GROUP BY DATE(created_at) ORDER BY date ASC")
+	List<Map<String, Object>> getCommentTrend(@Param("days") int days);
 }
 
