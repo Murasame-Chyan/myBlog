@@ -1,6 +1,10 @@
 package com.murasame.controller.admin;
 
+import com.murasame.entity.SysAnnouncement;
+import com.murasame.entity.SysNotification;
 import com.murasame.entity.Users;
+import com.murasame.mapper.NotificationMapper;
+import com.murasame.mapper.UserMapper;
 import com.murasame.service.AnnouncementService;
 import com.murasame.security.OperationLog;
 import com.murasame.security.RequirePermission;
@@ -9,6 +13,7 @@ import com.murasame.util.ReturnUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -17,11 +22,17 @@ public class AdminAnnouncementController {
 
     private final AnnouncementService announcementService;
     private final AuthHelper authHelper;
+    private final NotificationMapper notificationMapper;
+    private final UserMapper userMapper;
 
     public AdminAnnouncementController(AnnouncementService announcementService,
-                                       AuthHelper authHelper) {
+                                       AuthHelper authHelper,
+                                       NotificationMapper notificationMapper,
+                                       UserMapper userMapper) {
         this.announcementService = announcementService;
         this.authHelper = authHelper;
+        this.notificationMapper = notificationMapper;
+        this.userMapper = userMapper;
     }
 
     /** 分页列表，可按状态筛选（status 不传则查全部） */
@@ -97,7 +108,27 @@ public class AdminAnnouncementController {
             return ReturnUtil.notFound("公告不存在");
         }
         announcementService.publish(id);
+        notifyAnnouncementPublished(id);
         return ReturnUtil.success("公告已发布");
+    }
+
+    /** 发布公告后给所有用户发通知（通知失败不影响发布） */
+    private void notifyAnnouncementPublished(Long id) {
+        try {
+            SysAnnouncement announcement = announcementService.getById(id);
+            String title = announcement != null ? announcement.getTitle() : "新公告";
+            List<Long> userIds = userMapper.findAllIds();
+            for (Long uid : userIds) {
+                SysNotification notification = new SysNotification();
+                notification.setUserId(uid);
+                notification.setTitle("新公告");
+                notification.setContent("发布了新公告：「" + title + "」");
+                notification.setType(3);
+                notificationMapper.insert(notification);
+            }
+        } catch (Exception e) {
+            // 通知失败不影响发布
+        }
     }
 
     /** 撤回公告 */

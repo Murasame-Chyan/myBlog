@@ -90,4 +90,8 @@ public interface UserMapper {
     /** 更新用户状态（封号/解封） */
     @Update("UPDATE users SET status = #{status} WHERE id = #{userId}")
     int updateStatus(@Param("userId") Long userId, @Param("status") Integer status);
+
+    /** 查所有用户 ID（公告等群发通知用） */
+    @Select("SELECT id FROM users")
+    List<Long> findAllIds();
 }

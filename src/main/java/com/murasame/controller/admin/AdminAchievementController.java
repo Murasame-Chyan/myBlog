@@ -1,7 +1,9 @@
 package com.murasame.controller.admin;
 
 import com.murasame.entity.Achievement;
+import com.murasame.entity.SysNotification;
 import com.murasame.mapper.AchievementMapper;
+import com.murasame.mapper.NotificationMapper;
 import com.murasame.security.OperationLog;
 import com.murasame.security.RequirePermission;
 import com.murasame.service.AchievementService;
@@ -16,11 +18,14 @@ public class AdminAchievementController {
 
     private final AchievementService achievementService;
     private final AchievementMapper achievementMapper;
+    private final NotificationMapper notificationMapper;
 
     public AdminAchievementController(AchievementService achievementService,
-                                      AchievementMapper achievementMapper) {
+                                      AchievementMapper achievementMapper,
+                                      NotificationMapper notificationMapper) {
         this.achievementService = achievementService;
         this.achievementMapper = achievementMapper;
+        this.notificationMapper = notificationMapper;
     }
 
     /** 成就目录列表（复用现有 Service） */
@@ -79,7 +84,27 @@ public class AdminAchievementController {
             return ReturnUtil.error("userId 和 achievementId 不能为空");
         }
         boolean ok = achievementService.grantAchievement(userId, achievementId);
-        return ok ? ReturnUtil.success("荣誉已授予") : ReturnUtil.error("用户已拥有该荣誉");
+        if (ok) {
+            notifyAchievementGranted(userId, achievementId);
+            return ReturnUtil.success("荣誉已授予");
+        }
+        return ReturnUtil.error("用户已拥有该荣誉");
+    }
+
+    /** 授予荣誉后给用户发通知（通知失败不影响授予） */
+    private void notifyAchievementGranted(Long userId, Integer achievementId) {
+        try {
+            Achievement achievement = achievementMapper.findById(achievementId);
+            String name = achievement != null ? achievement.getName() : "新荣誉";
+            SysNotification notification = new SysNotification();
+            notification.setUserId(userId);
+            notification.setTitle("获得新荣誉");
+            notification.setContent("你获得了荣誉「" + name + "」");
+            notification.setType(2);
+            notificationMapper.insert(notification);
+        } catch (Exception e) {
+            // 通知失败不影响授予荣誉
+        }
     }
 
     /** 撤销用户的荣誉 */
