@@ -109,7 +109,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.21.2</version>
+            <version>1.23.2</version>
         </dependency>
         <!-- GitHub 贡献热力图抓取（Java 重构版 githubchart-api） -->
         <dependency>
