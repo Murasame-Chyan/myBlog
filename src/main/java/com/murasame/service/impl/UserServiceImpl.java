@@ -120,6 +120,10 @@ public class UserServiceImpl implements UserService {
 		if (!passwordEncoder.matches(password, user.getPassword())) {
 			return null;
 		}
+		// 封禁用户禁止登录（返回 null 与"密码错误"一致，不泄露封号状态）
+		if (user.getStatus() != null && user.getStatus() == 1) {
+			return null;
+		}
 		return user;
 	}
 

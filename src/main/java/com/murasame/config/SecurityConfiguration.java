@@ -1,5 +1,6 @@
 package com.murasame.config;
 
+import com.murasame.service.PermissionService;
 import com.murasame.service.UserService;
 import com.murasame.util.CookieUtil;
 import com.murasame.util.JwtUtil;
@@ -34,18 +35,22 @@ public class SecurityConfiguration {
     private final UserService userService;
     private final CookieUtil cookieUtil;
     private final JwtProperties jwtProperties;
+    private final PermissionService permissionService;
 
-    public SecurityConfiguration(JwtUtil jwtUtil, JwtAuthenticationEntryPoint entryPoint,
-                                  StringRedisTemplate redisTemplate,
-                                  UserService userService,
-                                  CookieUtil cookieUtil,
-                                  JwtProperties jwtProperties) {
+    public SecurityConfiguration(JwtUtil jwtUtil,
+                                 JwtAuthenticationEntryPoint entryPoint,
+                                 StringRedisTemplate redisTemplate,
+                                 UserService userService,
+                                 CookieUtil cookieUtil,
+                                 JwtProperties jwtProperties,
+                                 PermissionService permissionService) {
         this.jwtUtil = jwtUtil;
         this.entryPoint = entryPoint;
         this.redisTemplate = redisTemplate;
         this.userService = userService;
         this.cookieUtil = cookieUtil;
         this.jwtProperties = jwtProperties;
+        this.permissionService = permissionService;
     }
 
     @Bean
@@ -68,6 +73,10 @@ public class SecurityConfiguration {
                     // 静态资源放行
                     auth.requestMatchers("/static/**", "/dist/**",
                             "/css/**", "/js/**", "/images/**", "/pics/**").permitAll();
+                    // 管理端登录接口放行（否则"未登录→不能调登录接口"死锁）
+                    auth.requestMatchers("/api/admin/auth/login").permitAll();
+                    // 管理端其他接口必须登录（更细粒度权限由 @RequirePermission + AOP 控制）
+                    auth.requestMatchers("/api/admin/**").authenticated();
                     // 写操作端点必须认证（替代原 UserInterceptor 路径拦截）
                     auth.requestMatchers(
                             "/blogs/publish/**",
@@ -98,7 +107,7 @@ public class SecurityConfiguration {
                             response.getWriter().write("{\"code\":403,\"msg\":\"权限不足\"}");
                         }))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService, cookieUtil, jwtProperties), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService, cookieUtil, jwtProperties, permissionService), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

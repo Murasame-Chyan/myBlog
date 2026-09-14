@@ -58,4 +58,19 @@ public class AchievementServiceImpl implements AchievementService {
             return false;
         }
     }
+
+    @Override
+    public boolean revokeAchievement(Long userId, int achievementId) {
+        List<Integer> ids = getUserAchievementIds(userId);
+        if (!ids.contains(achievementId)) return false;  // 未拥有
+        ids.remove(Integer.valueOf(achievementId));
+        try {
+            String json = mapper.writeValueAsString(ids);
+            userMapper.updateAchievement(userId, json);
+            return true;
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize achievement list for user {}", userId, e);
+            return false;
+        }
+    }
 }

@@ -3,6 +3,7 @@ package com.murasame.controller;
 import com.murasame.config.JwtProperties;
 import com.murasame.entity.Users;
 import com.murasame.service.LoginAttemptService;
+import com.murasame.service.LoginLogService;
 import com.murasame.service.MailService;
 import com.murasame.service.UserService;
 import com.murasame.util.CaptchaUtil;
@@ -42,6 +43,9 @@ public class AuthController {
     private LoginAttemptService loginAttemptService;
 
     @Resource
+    private LoginLogService loginLogService;
+
+    @Resource
     private MailService mailService;
 
     @Resource
@@ -69,7 +73,8 @@ public class AuthController {
             @RequestParam String captchaCode,
             @NotBlank(message = "验证码令牌不能为空")
             @RequestParam String captchaToken,
-            HttpServletResponse response) {
+            HttpServletResponse response,
+            HttpServletRequest request) {
 
         String lockMsg = loginAttemptService.checkLocked(email);
         if (lockMsg != null) return ReturnUtil.error(lockMsg);
@@ -83,10 +88,12 @@ public class AuthController {
         Users user = userService.login(email, password);
         if (user == null) {
             loginAttemptService.recordFailedAttempt(email);
+            loginLogService.recordLogin(null, email, 0, request);
             return ReturnUtil.error("邮箱或密码错误");
         }
 
         loginAttemptService.resetAttempts(email);
+        loginLogService.recordLogin(user.getId(), user.getEmail(), 1, request);
 
         // 双 Cookie 投递：access_token Path=/，refresh_token Path=/auth/refresh
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getNickname());

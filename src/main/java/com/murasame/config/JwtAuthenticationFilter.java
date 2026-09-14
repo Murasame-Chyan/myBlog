@@ -1,6 +1,7 @@
 package com.murasame.config;
 
 import com.murasame.entity.Users;
+import com.murasame.service.PermissionService;
 import com.murasame.service.UserService;
 import com.murasame.util.CookieUtil;
 import com.murasame.util.JwtUtil;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -32,15 +34,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserService userService;
     private final CookieUtil cookieUtil;
     private final JwtProperties jwtProperties;
+    private final PermissionService permissionService;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil, StringRedisTemplate redisTemplate,
                                    UserService userService, CookieUtil cookieUtil,
-                                   JwtProperties jwtProperties) {
+                                   JwtProperties jwtProperties, PermissionService permissionService) {
         this.jwtUtil = jwtUtil;
         this.redisTemplate = redisTemplate;
         this.userService = userService;
         this.cookieUtil = cookieUtil;
         this.jwtProperties = jwtProperties;
+        this.permissionService = permissionService;
     }
 
     @Override
@@ -83,7 +87,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // 将认证写入 SecurityContext，使 Spring Security URL 规则（authenticated()）生效
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        user, null, Collections.emptyList());
+                        user, null,
+                        permissionService.getUserPermissionCodes(user.getId())
+                                .stream()
+                                .map(SimpleGrantedAuthority::new)
+                                .toList());
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
                 log.debug("JWT authenticated: userId={}", user.getId());
@@ -160,7 +169,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (user != null) {
                     request.setAttribute("currentUser", user);
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                            user, null, Collections.emptyList());
+                            user, null,
+                            permissionService.getUserPermissionCodes(user.getId())
+                                    .stream()
+                                    .map(SimpleGrantedAuthority::new)
+                                    .toList());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             } catch (Exception e) {

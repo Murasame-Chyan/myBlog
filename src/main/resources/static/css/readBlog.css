@@ -123,3 +123,17 @@
 .blog-action-btn i {
     font-size: 0.9rem;
 }
+
+/* 评论跳转高亮动画：天蓝色闪烁两次 */
+.comment-highlight {
+    animation: comment-flash 2.4s ease-in-out;
+}
+
+@keyframes comment-flash {
+    0%   { background-color: transparent; }
+    15%  { background-color: rgba(var(--accent-rgb), 0.3); }
+    30%  { background-color: transparent; }
+    45%  { background-color: rgba(var(--accent-rgb), 0.3); }
+    60%  { background-color: transparent; }
+    100% { background-color: transparent; }
+}

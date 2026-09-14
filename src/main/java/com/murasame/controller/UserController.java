@@ -3,7 +3,10 @@ package com.murasame.controller;
 import com.murasame.domain.vo.BlogBriefVO;
 import com.murasame.domain.vo.CommentVO;
 import com.murasame.entity.Achievement;
+import com.murasame.entity.Blogs;
+import com.murasame.entity.Comments;
 import com.murasame.entity.Users;
+import com.murasame.mapper.CommentMapper;
 import com.murasame.service.AchievementService;
 import com.murasame.service.BlogService;
 import com.murasame.service.CommentService;
@@ -41,6 +44,9 @@ public class UserController {
 
 	@Resource
 	private CommentService commentService;
+
+	@Resource
+	private CommentMapper commentMapper;
 
 	@Resource
 	private CosUploadService cosUploadService;
@@ -93,6 +99,67 @@ public class UserController {
 	public Map<String, Object> getRecentComments(@RequestParam(defaultValue = "5") int limit) {
 		List<CommentVO> comments = commentService.getRecentComments(limit);
 		return ReturnUtil.success("获取成功", comments);
+	}
+
+	// 用户删除自己的评论（只能删自己的，ownership 校验）
+	@ResponseBody
+	@DeleteMapping("/comment/{id}")
+	public Map<String, Object> deleteComment(@PathVariable Long id, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		Comments comment = commentMapper.getCommentById(id);
+		if (comment == null) {
+			return ReturnUtil.notFound("评论不存在");
+		}
+		// 归属校验：只有评论作者本人能删除
+		if (!comment.getU_id().equals(currentUser.getId())) {
+			return ReturnUtil.forbidden("无权删除他人评论");
+		}
+		commentMapper.deleteCommentById(id);
+		return ReturnUtil.success("评论删除成功");
+	}
+
+	// 博主置顶自己博客的评论（ownership 校验：评论所属博客必须属于当前用户）
+	@ResponseBody
+	@PostMapping("/comment/pin/{id}")
+	public Map<String, Object> pinComment(@PathVariable Long id, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		Comments comment = commentMapper.getCommentById(id);
+		if (comment == null) {
+			return ReturnUtil.notFound("评论不存在");
+		}
+		// 归属校验：评论所属的博客必须是当前用户的
+		Blogs blog = blogService.getBlogById(comment.getB_id());
+		if (blog == null || !blog.getU_id().equals(currentUser.getId())) {
+			return ReturnUtil.forbidden("无权置顶他人博客的评论");
+		}
+		commentMapper.updatePinned(id, 1);
+		return ReturnUtil.success("评论已置顶");
+	}
+
+	// 博主取消置顶
+	@ResponseBody
+	@PostMapping("/comment/unpin/{id}")
+	public Map<String, Object> unpinComment(@PathVariable Long id, HttpServletRequest request) {
+		Users currentUser = authHelper.getCurrentUser(request);
+		if (currentUser == null) {
+			return ReturnUtil.unauthorized("请先登录");
+		}
+		Comments comment = commentMapper.getCommentById(id);
+		if (comment == null) {
+			return ReturnUtil.notFound("评论不存在");
+		}
+		Blogs blog = blogService.getBlogById(comment.getB_id());
+		if (blog == null || !blog.getU_id().equals(currentUser.getId())) {
+			return ReturnUtil.forbidden("无权操作他人博客的评论");
+		}
+		commentMapper.updatePinned(id, 0);
+		return ReturnUtil.success("已取消置顶");
 	}
 
 	// 头像上传三步流程：1. COS云端上传 → 2. 数据库URL更新 → 3. Session同步刷新

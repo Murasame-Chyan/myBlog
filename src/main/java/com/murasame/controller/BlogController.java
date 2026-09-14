@@ -57,7 +57,9 @@ public class BlogController {
 
 	// From index 点击跳转文章正文 RESTful跟随文章id
 	@GetMapping("read/{id}")
-	public String readBlog(@PathVariable Long id, Model model) {
+	public String readBlog(@PathVariable Long id,
+	                       @RequestParam(required = false) Long commentId,
+	                       Model model) {
 		Blogs blog = blogService.getBlogById(id);
 		if (blog == null) {
 			String errorInf = "您访问的博客不存在！";
@@ -80,6 +82,7 @@ public class BlogController {
 		model.addAttribute("comments", comments);
 		model.addAttribute("allTags", allTags);
 		model.addAttribute("commentCount", commentCount);
+		model.addAttribute("targetCommentId", commentId);
 		model.addAttribute("authorName", authorName);
 		model.addAttribute("authorAvatar", authorAvatar);
 		model.addAttribute("authorLevel", authorUser != null ? authorUser.getLevel() : null);

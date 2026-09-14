@@ -1,6 +1,7 @@
 package com.murasame.config;
 
 import com.murasame.entity.Users;
+import com.murasame.service.PermissionService;
 import com.murasame.service.UserService;
 import com.murasame.util.CookieUtil;
 import com.murasame.util.JwtUtil;
@@ -15,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import jakarta.servlet.http.Cookie;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -26,6 +29,7 @@ class JwtAuthenticationFilterTest {
     private StringRedisTemplate redisTemplate;
     private UserService userService;
     private CookieUtil cookieUtil;
+    private PermissionService permissionService;
 
     @BeforeEach
     void setUp() {
@@ -42,7 +46,10 @@ class JwtAuthenticationFilterTest {
         when(redisTemplate.hasKey(anyString())).thenReturn(false);
         userService = mock(UserService.class);
         cookieUtil = mock(CookieUtil.class);
-        filter = new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService, cookieUtil, props);
+        permissionService = mock(PermissionService.class);
+        // 默认返回空权限集合，避免 null.stream() 触发 NPE
+        when(permissionService.getUserPermissionCodes(anyLong())).thenReturn(Collections.emptySet());
+        filter = new JwtAuthenticationFilter(jwtUtil, redisTemplate, userService, cookieUtil, props, permissionService);
         SecurityContextHolder.clearContext();
     }
 

@@ -21,6 +21,8 @@
     <main class="container my-4">
         <!-- 标题 -->
         <input type="hidden" th:value="${blog != null ? blog.getId() : 0}" id="getBlogId">
+        <input type="hidden" th:value="${currentUser != null and blog != null and blog.u_id == currentUser.id}" id="isBlogOwner">
+        <input type="hidden" th:value="${targetCommentId != null ? targetCommentId : 0}" id="targetCommentId">
         <h2 id="textTitle" th:text="${blog.title}">标题</h2>
         <!--  meta 行 — 阅读量、评论数、时间 -->
         <div class="text-muted mb-2 blog-meta-row">

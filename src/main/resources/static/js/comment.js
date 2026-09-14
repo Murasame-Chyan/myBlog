@@ -1,6 +1,7 @@
 // 博客评论交互：加载、渲染嵌套评论、提交、内联回复、删除
 let currentBlogId = 0;
 let allComments = [];
+let isBlogOwner = false; // 当前用户是否为博主（决定是否显示置顶按钮）
 
 // HTML 实体转义（防止 XSS）
 function escapeHtml(str) {
@@ -12,8 +13,43 @@ function escapeHtml(str) {
 
 document.addEventListener('DOMContentLoaded', function() {
 	currentBlogId = document.getElementById('getBlogId').value;
+	var ownerEl = document.getElementById('isBlogOwner');
+	isBlogOwner = ownerEl ? ownerEl.value === 'true' : false;
 	loadComments();
 });
+
+// 评论跳转：首页点击评论后跳转到文章并滚动到对应评论，同时高亮
+function scrollToComment() {
+	var targetId = document.getElementById('targetCommentId');
+	if (!targetId) return;
+	var commentId = targetId.value;
+	if (!commentId || commentId === '0') return;
+
+	// 在评论列表中查找目标评论
+	var targetEl = document.querySelector('.comment-item[data-comment-id="' + commentId + '"]');
+	if (targetEl) {
+		// 滚动到评论处，居中显示
+		targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		// 添加高亮效果
+		targetEl.classList.add('comment-highlight');
+		// 高亮动画结束后清除 class
+		setTimeout(function() {
+			targetEl.classList.remove('comment-highlight');
+		}, 2100);
+	} else {
+		// 评论可能在子层级中，延迟重试
+		setTimeout(function() {
+			var retryEl = document.querySelector('.comment-item[data-comment-id="' + commentId + '"]');
+			if (retryEl) {
+				retryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				retryEl.classList.add('comment-highlight');
+				setTimeout(function() {
+					retryEl.classList.remove('comment-highlight');
+				}, 2100);
+			}
+		}, 600);
+	}
+}
 
 function loadComments() {
 	fetch(`/user/comment/list/${currentBlogId}`)
@@ -23,6 +59,8 @@ function loadComments() {
 				allComments = data.data;
 				renderComments();
 				updateCommentCount();
+				// 首页评论跳转：评论渲染完成后滚动到目标评论
+				setTimeout(function() { scrollToComment(); }, 200);
 			} else {
 				console.error('加载评论失败:', data.msg);
 			}
@@ -79,6 +117,23 @@ function renderComment(comment, level) {
 	var relTime = formatTime(comment.created_at);
 	var timeStr = fullTime + ' - ' + relTime;
 
+	// 置顶标识（仿 B 站，仅置顶评论显示）
+	var pinBadge = '';
+	if (comment.is_pinned === 1) {
+		pinBadge = '<span class="comment-pin-badge"><i class="bi bi-pin-angle-fill"></i> 置顶</span>';
+	}
+
+	// 置顶按钮（仅博主可见，且仅根评论可置顶）
+	var pinButton = '';
+	var isRootComment = (comment.parent_cid === comment.id);
+	if (isBlogOwner && isRootComment) {
+		if (comment.is_pinned === 1) {
+			pinButton = '<button class="btn-pin btn-pin-active" onclick="togglePinComment(' + comment.id + ', 0)"><i class="bi bi-pin-angle"></i> 取消置顶</button>';
+		} else {
+			pinButton = '<button class="btn-pin" onclick="togglePinComment(' + comment.id + ', 1)"><i class="bi bi-pin-angle"></i> 置顶</button>';
+		}
+	}
+
 	var contentHtml = escapeHtml(comment.content);
 	if (comment.parent_cid && comment.parent_cid !== comment.id) {
 		var parentComment = findCommentById(comment.parent_cid);
@@ -94,6 +149,7 @@ function renderComment(comment, level) {
 				'<div class="comment-header-row">' +
 					'<div class="comment-author-left">' +
 						authorLinkHtml +
+						pinBadge +
 					'</div>' +
 					'<div class="comment-time-right">' +
 						'<span class="text-muted comment-time-text">' + timeStr + '</span>' +
@@ -101,6 +157,7 @@ function renderComment(comment, level) {
 				'</div>' +
 				'<p class="comment-content mb-2">' + contentHtml + '</p>' +
 				'<div class="comment-actions">' +
+					pinButton +
 					'<button class="btn-forward" onclick="forwardComment(' + comment.id + ')" title="转发/打印此评论">' +
 						'<i class="bi bi-share"></i> 转发' +
 					'</button>' +
@@ -388,6 +445,24 @@ function updateCommentCount() {
         popup.style.zIndex = 9999;
     });
 })();
+
+// 置顶/取消置顶评论（仅博主）
+function togglePinComment(commentId, isPinned) {
+	var url = isPinned === 1 ? '/user/comment/pin/' + commentId : '/user/comment/unpin/' + commentId;
+	authFetch(url, { method: 'POST' })
+		.then(function(r) { return r.json(); })
+		.then(function(data) {
+			if (data.code === 200) {
+				showToast(isPinned === 1 ? '评论已置顶' : '已取消置顶', 'success');
+				loadComments();
+			} else {
+				showToast(data.msg || '操作失败', 'error');
+			}
+		})
+		.catch(function() {
+			showToast('操作失败，请稍后重试', 'error');
+		});
+}
 
 // 软删除（移入回收箱），使用自定义确认对话框
 async function deleteBlog() {

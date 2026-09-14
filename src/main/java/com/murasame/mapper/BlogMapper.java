@@ -355,5 +355,32 @@ public interface BlogMapper {
     """)
     List<Map<String, Object>> getTrendDataByRange(@Param("userId") Long userId,
             @Param("startDate") String startDate, @Param("endDate") String endDate);
+
+    /** 管理端：全站回收站分页列表（含作者昵称） */
+    @Select("<script>" +
+            "SELECT b.id, b.u_id, b.title, LEFT(b.content, 100) AS brief, b.created_at, b.deleted_at, " +
+            "u.nickname AS author " +
+            "FROM blogsBin b LEFT JOIN users u ON b.u_id = u.id " +
+            "WHERE 1=1 " +
+            "<if test='keyword != null and keyword != \"\"'>AND b.title LIKE CONCAT('%',#{keyword},'%') </if>" +
+            "ORDER BY b.deleted_at DESC " +
+            "LIMIT #{pageSize} OFFSET #{offset}" +
+            "</script>")
+    List<Map<String, Object>> findBinPage(@Param("keyword") String keyword,
+                                          @Param("pageSize") int pageSize,
+                                          @Param("offset") int offset);
+
+    /** 管理端：全站回收站总数 */
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM blogsBin WHERE 1=1 " +
+            "<if test='keyword != null and keyword != \"\"'>AND title LIKE CONCAT('%',#{keyword},'%') </if>" +
+            "</script>")
+    long countBin(@Param("keyword") String keyword);
+
+    /** 管理端：全站近 N 天博客发布趋势 */
+    @Select("SELECT DATE(created_at) AS date, COUNT(*) AS count " +
+            "FROM blogs WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) " +
+            "GROUP BY DATE(created_at) ORDER BY date ASC")
+    List<Map<String, Object>> getBlogTrend(@Param("days") int days);
 }
 

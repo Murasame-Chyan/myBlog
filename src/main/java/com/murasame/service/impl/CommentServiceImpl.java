@@ -135,6 +135,7 @@ public class CommentServiceImpl implements CommentService {
 			vo.setAuthorAchievementIds(user != null ? achievementService.getUserAchievementIds(user.getId()) : new ArrayList<>());
 			vo.setContent(comment.getContent());
 			vo.setCreated_at(comment.getCreated_at());
+			vo.setIs_pinned(comment.getIs_pinned());
 			vos.add(vo);
 		}
 		return vos;
