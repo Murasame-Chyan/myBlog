@@ -76,10 +76,11 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         String channel = normalizeChannelFilter(q.getChannel());
         boolean overdue = Boolean.TRUE.equals(q.getOverdue());
         String sortBy = normalizeSortBy(q.getSortBy());
+        String sortOrder = normalizeSortOrder(q.getSortOrder());
         LocalDate today = today();
 
         List<JobApplication> rows = jobApplicationMapper.selectPage(
-                userId, keyword, status, channel, overdue, sortBy, today, offset, pageSize);
+                userId, keyword, status, channel, overdue, sortBy, sortOrder, today, offset, pageSize);
         long total = jobApplicationMapper.countPage(userId, keyword, status, channel, overdue, today);
 
         JobApplicationPageVO vo = new JobApplicationPageVO();
@@ -536,7 +537,12 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     private static String normalizeSortBy(String sortBy) {
         String value = blankToNull(sortBy);
-        return ("followUp".equals(value) || "updated".equals(value)) ? value : null;
+        return ("applied".equals(value) || "followUp".equals(value) || "updated".equals(value)) ? value : null;
+    }
+
+    private static String normalizeSortOrder(String sortOrder) {
+        String value = blankToNull(sortOrder);
+        return "asc".equalsIgnoreCase(value) ? "asc" : "desc";
     }
 
     /** 把 [{code, cnt}] 转成 code -> count（列名大小写不敏感，兼容不同驱动） */

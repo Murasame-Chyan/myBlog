@@ -23,6 +23,7 @@
         channel: '',
         overdueOnly: false,
         sortBy: '',
+        sortOrder: 'desc',
         total: 0,
         list: [],
         currentId: null,
@@ -354,6 +355,53 @@
         }).catch(noop);
     }
 
+    // ==================== 表头排序 / 筛选联动 ====================
+    function updateSortIndicators() {
+        var headers = document.querySelectorAll(".career-th-sort");
+        Array.prototype.forEach.call(headers, function (th) {
+            var field = th.getAttribute("data-sort");
+            var icon = th.querySelector("i");
+            th.classList.remove("sort-asc", "sort-desc");
+            if (!icon) {
+                return;
+            }
+            if (state.sortBy && field === state.sortBy) {
+                var isAsc = state.sortOrder === "asc";
+                th.classList.add(isAsc ? "sort-asc" : "sort-desc");
+                icon.className = isAsc ? "bi bi-arrow-up" : "bi bi-arrow-down";
+            } else {
+                icon.className = "bi bi-arrow-down-up";
+            }
+        });
+    }
+
+    function handleSortClick(field) {
+        if (!field) {
+            return;
+        }
+        if (state.sortBy === field) {
+            state.sortOrder = state.sortOrder === "asc" ? "desc" : "asc";
+        } else {
+            state.sortBy = field;
+            state.sortOrder = "asc";
+        }
+        updateSortIndicators();
+        loadList(1);
+    }
+
+    function syncFilterSelects() {
+        var status = valueOf("statusFilter");
+        var channel = valueOf("channelFilter");
+        var statusMobile = $("statusFilterMobile");
+        var channelMobile = $("channelFilterMobile");
+        if (statusMobile) {
+            statusMobile.value = status || "";
+        }
+        if (channelMobile) {
+            channelMobile.value = channel || "";
+        }
+    }
+
     // ==================== 列表 ====================
     function syncFilters() {
         state.keyword = trimmedValueOf('keywordInput');
@@ -361,7 +409,6 @@
         state.channel = valueOf('channelFilter') || '';
         var overdueEl = $('overdueOnly');
         state.overdueOnly = !!(overdueEl && overdueEl.checked);
-        state.sortBy = valueOf('sortBy') || '';
     }
 
     function buildQuery() {
@@ -382,6 +429,7 @@
         }
         if (state.sortBy) {
             params.set('sortBy', state.sortBy);
+            params.set('sortOrder', state.sortOrder || 'desc');
         }
         return params.toString();
     }
@@ -630,24 +678,17 @@
 
     function renderDeleted(items) {
         var box = $('deletedList');
-        var group = $('groupDeleted');
         var empty = $('deletedEmpty');
         if (!box) {
             return;
         }
         box.innerHTML = '';
         setText('deletedCount', items.length);
-        if (!items.length) {
-            if (group) {
-                group.style.display = 'none';
-            }
-            return;
-        }
-        if (group) {
-            group.style.display = '';
-        }
         if (empty) {
-            empty.style.display = 'none';
+            empty.style.display = items.length ? 'none' : '';
+        }
+        if (!items.length) {
+            return;
         }
         items.forEach(function (app) {
             var item = document.createElement('div');
@@ -1100,11 +1141,14 @@
             setValue('keywordInput', '');
             setValue('statusFilter', '');
             setValue('channelFilter', '');
-            setValue('sortBy', '');
             var overdueEl = $('overdueOnly');
             if (overdueEl) {
                 overdueEl.checked = false;
             }
+            state.sortBy = '';
+            state.sortOrder = 'desc';
+            syncFilterSelects();
+            updateSortIndicators();
             loadList(1);
         });
         on($('keywordInput'), 'keydown', function (event) {
@@ -1113,9 +1157,26 @@
                 loadList(1);
             }
         });
-        ['statusFilter', 'channelFilter', 'sortBy'].forEach(function (id) {
+        ['statusFilter', 'channelFilter'].forEach(function (id) {
             on($(id), 'change', function () {
+                syncFilterSelects();
                 loadList(1);
+            });
+        });
+        ['statusFilterMobile', 'channelFilterMobile'].forEach(function (id) {
+            on($(id), 'change', function () {
+                var sourceId = (id === 'statusFilterMobile') ? 'statusFilter' : 'channelFilter';
+                var source = $(sourceId);
+                var current = $(id);
+                if (source && current) {
+                    source.value = current.value;
+                }
+                loadList(1);
+            });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('.career-th-sort'), function (th) {
+            on(th, 'click', function () {
+                handleSortClick(th.getAttribute('data-sort'));
             });
         });
         on($('overdueOnly'), 'change', function () {
@@ -1224,6 +1285,8 @@
     function init() {
         fillLabelMaps();
         bindEvents();
+        syncFilterSelects();
+        updateSortIndicators();
         loadStats();
         loadList(1);
         loadDeleted();

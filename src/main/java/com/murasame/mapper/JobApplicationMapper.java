@@ -39,7 +39,10 @@ public interface JobApplicationMapper {
             "<if test='channel != null'>AND channel = #{channel} </if>" +
             "<if test='overdue'>AND follow_up_at IS NOT NULL AND follow_up_at &lt; #{today} AND `status` NOT IN ('offer','rejected','dropped','archived') </if>" +
             "<choose>" +
-            "<when test='sortBy == \"followUp\"'>ORDER BY follow_up_at IS NULL, follow_up_at ASC, id DESC </when>" +
+            "<when test='sortBy == \"applied\"'>ORDER BY applied_at " +
+            "<choose><when test='sortOrder == \"asc\"'>ASC</when><otherwise>DESC</otherwise></choose>, id DESC </when>" +
+            "<when test='sortBy == \"followUp\"'>ORDER BY follow_up_at IS NULL, follow_up_at " +
+            "<choose><when test='sortOrder == \"asc\"'>ASC</when><otherwise>DESC</otherwise></choose>, id DESC </when>" +
             "<when test='sortBy == \"updated\"'>ORDER BY updated_at DESC, id DESC </when>" +
             "<otherwise>ORDER BY applied_at DESC, id DESC </otherwise>" +
             "</choose>" +
@@ -51,6 +54,7 @@ public interface JobApplicationMapper {
                                     @Param("channel") String channel,
                                     @Param("overdue") boolean overdue,
                                     @Param("sortBy") String sortBy,
+                                    @Param("sortOrder") String sortOrder,
                                     @Param("today") LocalDate today,
                                     @Param("offset") int offset,
                                     @Param("pageSize") int pageSize);

@@ -13,8 +13,10 @@ public class JobApplicationQueryDTO {
     private String channel;
     /** 只看逾期：1/true 生效 */
     private Boolean overdue;
-    /** 排序：followUp / updated / 缺省按投递时间倒序 */
+    /** 排序字段：applied / followUp / updated（缺省按投递时间倒序） */
     private String sortBy;
+    /** 排序方向：asc / desc（缺省 desc） */
+    private String sortOrder;
     private Integer page = 1;
     private Integer pageSize = 10;
 }

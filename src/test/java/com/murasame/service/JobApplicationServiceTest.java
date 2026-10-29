@@ -163,7 +163,7 @@ class JobApplicationServiceTest {
 
     @Test
     void pageList_computesOffsetAndNormalizesParams() {
-        when(appMapper.selectPage(any(), any(), any(), any(), anyBoolean(), any(), any(), anyInt(), anyInt()))
+        when(appMapper.selectPage(any(), any(), any(), any(), anyBoolean(), any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(new ArrayList<>());
         when(appMapper.countPage(any(), any(), any(), any(), anyBoolean(), any())).thenReturn(25L);
         when(appMapper.selectDueToday(any(), any(), anyInt())).thenReturn(new ArrayList<>());
@@ -179,7 +179,7 @@ class JobApplicationServiceTest {
 
         // 空白 keyword / 非法 status 归一化为 null；offset=(3-1)*10=20
         verify(appMapper).selectPage(eq(USER_ID), isNull(), isNull(), isNull(), eq(false), isNull(),
-                eq(TODAY), eq(20), eq(10));
+                eq("desc"), eq(TODAY), eq(20), eq(10));
         assertEquals(25L, page.getTotal());
         assertEquals(3, page.getPage());
         assertEquals(10, page.getPageSize());
@@ -190,7 +190,7 @@ class JobApplicationServiceTest {
         abnormal.setPageSize(999);
         service.pageList(USER_ID, abnormal);
         verify(appMapper).selectPage(eq(USER_ID), isNull(), isNull(), isNull(), eq(false), isNull(),
-                eq(TODAY), eq(0), eq(100));
+                eq("desc"), eq(TODAY), eq(0), eq(100));
     }
 
     // ==================== 6. 软删除：以 Mapper 影响行数为准 ====================

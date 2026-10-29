@@ -1118,11 +1118,7 @@ body.career-drawer-open {
     border-top: 1px solid var(--divider);
 }
 
-/* ===== 回收站分组 ===== */
-.career-group-deleted {
-    display: none;
-}
-
+/* ===== 回收站分组（常显） ===== */
 .career-group-deleted .career-group-count {
     background: var(--error-12);
     color: var(--error);
@@ -1130,6 +1126,65 @@ body.career-drawer-open {
 
 .career-group-deleted .career-mini-item button {
     flex-shrink: 0;
+}
+
+/* ===== 表头筛选 / 排序 ===== */
+.career-th-filter {
+    white-space: nowrap;
+}
+
+.career-th-select {
+    display: block;
+    width: 100%;
+    max-width: 118px;
+    margin-top: 5px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--career-input-border);
+    background: var(--career-input-bg);
+    color: var(--text-primary);
+    font-size: 0.7rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.career-th-select:focus {
+    border-color: var(--accent-60);
+}
+
+.career-th-sort {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.career-th-sort:hover {
+    color: var(--accent);
+}
+
+.career-th-sort i {
+    margin-left: 3px;
+    font-size: 0.65rem;
+    opacity: 0.55;
+}
+
+.career-th-sort.sort-asc i,
+.career-th-sort.sort-desc i {
+    opacity: 1;
+    color: var(--accent);
+}
+
+/* ===== 移动端筛选（桌面隐藏） ===== */
+.career-mobile-filters {
+    display: none;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.career-mobile-filters .career-select {
+    flex: 1;
+    min-width: 130px;
 }
 
 /* ===== 草稿提示条（仅新增模式显示） ===== */
@@ -1172,6 +1227,10 @@ body.career-drawer-open {
     }
 
     .career-cards {
+        display: flex;
+    }
+
+    .career-mobile-filters {
         display: flex;
     }
 
