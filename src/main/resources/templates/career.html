@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/career.css?v=1">
+    <link rel="stylesheet" href="/css/career.css?v=2">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('career')}"></header>
@@ -112,7 +112,7 @@
             <section class="career-list-wrap">
                 <div class="career-loading" id="listLoading" hidden>加载中…</div>
 
-                <div class="career-empty" id="listEmpty" hidden>
+                <div class="career-empty" id="listEmpty">
                     <i class="bi bi-inbox"></i>
                     <p>还没有投递记录，点右上角「新增投递」开始记录</p>
                 </div>
@@ -281,7 +281,7 @@
     <!-- ===== 8. 脚本 ===== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/confirm-dialog.js"></script>
-    <script src="/js/career.js?v=1"></script>
+    <script src="/js/career.js?v=2"></script>
 
     <footer th:replace="~{fragment/footer :: footer}"></footer>
     <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>

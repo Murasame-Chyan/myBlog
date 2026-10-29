@@ -17,6 +17,10 @@
 
     function openDrawer(mode, title) {
         if (!drawer || !mask) return;
+        // 抽屉位于导航栏下方：按导航栏实际底边动态计算偏移（滚动后会自动归 0）
+        var nav = document.querySelector('.navbar-custom');
+        var offset = nav ? Math.max(0, Math.round(nav.getBoundingClientRect().bottom)) : 72;
+        document.documentElement.style.setProperty('--career-nav-offset', offset + 'px');
         if (drawerTitle) drawerTitle.textContent = title;
         drawer.classList.remove('mode-create', 'mode-detail');
         drawer.classList.add('mode-' + mode);

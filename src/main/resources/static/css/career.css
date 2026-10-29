@@ -1022,6 +1022,75 @@ body.career-drawer-open {
     padding: 4px 0 8px;
 }
 
+
+/* ==========================================================================
+   v1.1 样式修正（2026-10-30）
+   1) 输入框默认可见边界（此前只有聚焦才明显）
+   2) 抽屉与遮罩层级调整：位于 MyBlog 导航栏下方，而不是覆盖整页
+   ========================================================================== */
+
+:root {
+    /* 导航栏下方偏移，P0-5 JS 会按实际导航栏高度动态覆盖 */
+    --career-nav-offset: 72px;
+    /* 表单控件 */
+    --career-input-bg: var(--glass-06);
+    --career-input-bg-focus: var(--glass-10);
+    --career-input-border: rgba(255, 255, 255, 0.24);
+}
+
+[data-theme="light"] {
+    --career-input-bg: rgba(255, 252, 244, 0.9);
+    --career-input-bg-focus: #fffdf7;
+    --career-input-border: rgba(120, 96, 60, 0.32);
+}
+
+.career-field-search input,
+.career-select,
+.career-form-item input,
+.career-form-item select,
+.career-form-item textarea,
+.career-inline-form input,
+.career-inline-form select {
+    background: var(--career-input-bg);
+    border-color: var(--career-input-border);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.career-field-search input:hover,
+.career-select:hover,
+.career-form-item input:hover,
+.career-form-item select:hover,
+.career-form-item textarea:hover,
+.career-inline-form input:hover,
+.career-inline-form select:hover {
+    border-color: var(--accent-40);
+}
+
+.career-field-search input:focus,
+.career-select:focus,
+.career-form-item input:focus,
+.career-form-item select:focus,
+.career-form-item textarea:focus,
+.career-inline-form input:focus,
+.career-inline-form select:focus {
+    background: var(--career-input-bg-focus);
+    border-color: var(--accent-60);
+}
+
+/* 抽屉从导航栏下方开始；遮罩也不覆盖导航栏（header 片段里 navbar z-index:100） */
+.career-drawer-mask {
+    top: var(--career-nav-offset, 72px);
+    z-index: 80;
+}
+
+.career-drawer {
+    top: var(--career-nav-offset, 72px);
+    bottom: 0;
+    height: auto;
+    z-index: 90;
+    border-top: 1px solid var(--divider);
+}
+
 /* ===== 响应式 ===== */
 @media (max-width: 991.98px) {
     .career-stats {
