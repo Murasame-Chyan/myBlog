@@ -94,4 +94,14 @@ public interface UserMapper {
     /** 查所有用户 ID（公告等群发通知用） */
     @Select("SELECT id FROM users")
     List<Long> findAllIds();
+
+    /**
+     * 管理端编辑用户：只更新昵称、简介、邮箱三个字段。
+     * 不触碰 github_token，避免把库中已加密的 token 二次加密。
+     */
+    @Update("UPDATE users SET nickname = #{nickname}, intro = #{intro}, email = #{email} WHERE id = #{id}")
+    int updateAdminFields(@Param("id") Long id,
+                          @Param("nickname") String nickname,
+                          @Param("intro") String intro,
+                          @Param("email") String email);
 }

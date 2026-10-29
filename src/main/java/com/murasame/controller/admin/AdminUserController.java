@@ -36,7 +36,7 @@ public class AdminUserController {
         ));
     }
 
-    /** 编辑用户昵称/简介 */
+    /** 编辑用户昵称、简介、邮箱 */
     @OperationLog(module = "用户管理", action = "编辑用户")
     @PutMapping("/{id}")
     @RequirePermission("user:update")
@@ -46,14 +46,33 @@ public class AdminUserController {
         if (user == null) {
             return ReturnUtil.notFound("用户不存在");
         }
-        // 只改昵称和简介，其他字段保持不变
-        if (body.containsKey("nickname") && body.get("nickname") != null) {
-            user.setNickname(body.get("nickname"));
+
+        String nickname = user.getNickname();
+        String intro = user.getIntro();
+        String email = user.getEmail();
+
+        if (body.containsKey("nickname") && body.get("nickname") != null
+                && !body.get("nickname").isBlank()) {
+            nickname = body.get("nickname").trim();
         }
         if (body.containsKey("intro")) {
-            user.setIntro(body.get("intro"));
+            intro = body.get("intro");
         }
-        userService.updateProfile(user);
+        // 邮箱：校验格式与唯一性
+        if (body.containsKey("email") && body.get("email") != null
+                && !body.get("email").isBlank()) {
+            String newEmail = body.get("email").trim();
+            if (!newEmail.matches("^[\\w.+-]+@[\\w-]+\\.[\\w.]+$")) {
+                return ReturnUtil.error("邮箱格式不正确");
+            }
+            Users existing = userService.getUserByEmail(newEmail);
+            if (existing != null && !existing.getId().equals(id)) {
+                return ReturnUtil.error("该邮箱已被其他用户使用");
+            }
+            email = newEmail;
+        }
+
+        userMapper.updateAdminFields(id, nickname, intro, email);
         return ReturnUtil.success("用户信息更新成功");
     }
 

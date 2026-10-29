@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { listUsers, updateUser, updateUserStatus, grantExp } from '@/api/user'
-import { ElMessage } from 'element-plus'
+import { listUsers, updateUser, updateUserStatus, grantExp, clearAvatar } from '@/api/user'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const users = ref([])
 const loading = ref(false)
@@ -57,12 +57,31 @@ function formatExpText(row) {
 
 // ===== 编辑用户 =====
 const dialogVisible = ref(false)
-const form = ref({ id: null, nickname: '', intro: '' })
+const form = ref({ id: null, nickname: '', intro: '', email: '', avatar: '' })
 
 function openEdit(row) {
   // 预填当前行数据，避免空表单
-  form.value = { id: row.id, nickname: row.nickname, intro: row.intro }
+  form.value = {
+    id: row.id,
+    nickname: row.nickname,
+    intro: row.intro,
+    email: row.email,
+    avatar: row.avatar,
+  }
   dialogVisible.value = true
+}
+
+// 清空违规头像（重置为默认头像）
+async function handleClearAvatar() {
+  await ElMessageBox.confirm('确定清空该用户的头像吗？', '清空确认', {
+    type: 'warning',
+    confirmButtonText: '清空',
+    cancelButtonText: '取消',
+  })
+  await clearAvatar(form.value.id)
+  form.value.avatar = ''
+  ElMessage.success('头像已清空')
+  fetchUsers()
 }
 
 async function handleSubmit() {
@@ -70,7 +89,15 @@ async function handleSubmit() {
     ElMessage.warning('请输入昵称')
     return
   }
-  await updateUser(form.value.id, { nickname: form.value.nickname, intro: form.value.intro })
+  if (form.value.email && !/^[\w.+-]+@[\w-]+\.[\w.]+$/.test(form.value.email)) {
+    ElMessage.warning('邮箱格式不正确')
+    return
+  }
+  await updateUser(form.value.id, {
+    nickname: form.value.nickname,
+    intro: form.value.intro,
+    email: form.value.email,
+  })
   ElMessage.success('用户信息更新成功')
   dialogVisible.value = false
   fetchUsers() // 刷新列表
@@ -193,8 +220,27 @@ onMounted(fetchUsers)
     <!-- 编辑弹窗 -->
     <el-dialog v-model="dialogVisible" title="编辑用户" width="480px">
       <el-form label-width="80px">
+        <el-form-item label="头像">
+          <div class="avatar-edit-row">
+            <el-avatar :size="56" :src="form.avatar">
+              {{ form.nickname?.charAt(0) }}
+            </el-avatar>
+            <el-button
+              v-permission="'user:update'"
+              type="warning"
+              size="small"
+              plain
+              @click="handleClearAvatar"
+            >
+              清空头像
+            </el-button>
+          </div>
+        </el-form-item>
         <el-form-item label="昵称">
           <el-input v-model="form.nickname" />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="form.email" placeholder="用户登录邮箱" />
         </el-form-item>
         <el-form-item label="简介">
           <el-input v-model="form.intro" type="textarea" :rows="3" />
@@ -230,6 +276,11 @@ onMounted(fetchUsers)
 </template>
 
 <style scoped>
+.avatar-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .toolbar {
   display: flex;
   gap: 12px;
