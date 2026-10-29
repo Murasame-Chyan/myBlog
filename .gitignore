@@ -85,3 +85,9 @@ src/main/resources/static/css/src/
 ### Temporary scripts (ephemeral) ###
 screenshot_script.py
 /bin
+
+### 只允许求职模块建表脚本入库（bin/ 其余内容保持忽略） ###
+!/bin/
+/bin/*
+!/bin/sql/
+!/bin/sql/career.sql
