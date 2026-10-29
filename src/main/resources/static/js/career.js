@@ -29,7 +29,8 @@
         currentId: null,
         detail: null,
         view: 'list',
-        dragId: null
+        dragId: null,
+        boardMap: {}
     };
 
     var lastStats = null;
@@ -436,6 +437,8 @@
         }
         var days = (app.appliedDays === 0) ? '今天' : (app.appliedDays + ' 天');
         card.innerHTML =
+            '<button type="button" class="career-board-more" data-action="move" draggable="false"' +
+            ' title="移动到其他状态（手机端也可长按卡片）"><i class="bi bi-three-dots"></i></button>' +
             '<div class="career-board-company">' + escapeHtml(app.company) + '</div>' +
             '<div class="career-board-position">' + escapeHtml(app.position) + '</div>' +
             '<div class="career-board-meta">' +
@@ -452,6 +455,7 @@
             return;
         }
         box.innerHTML = '';
+        state.boardMap = {};
         BOARD_STATUSES.forEach(function (status) {
             var column = document.createElement('div');
             column.className = 'career-board-col';
@@ -470,6 +474,7 @@
                 body.appendChild(empty);
             } else {
                 cards.forEach(function (app) {
+                    state.boardMap[app.id] = app;
                     body.appendChild(buildBoardCard(app));
                 });
             }
@@ -498,6 +503,64 @@
         }).catch(function () {
             loadBoard();
         });
+    }
+
+    // ==================== 看板卡片：移动到状态（手机长按 / ⋯ 按钮） ====================
+    var sheetAppId = null;
+    var suppressCardClickUntil = 0;
+    var longPressTimer = null;
+    var longPressStart = null;
+
+    function openStatusSheet(id) {
+        var app = state.boardMap ? state.boardMap[id] : null;
+        if (!app) {
+            return;
+        }
+        sheetAppId = id;
+        var title = $('statusSheetTitle');
+        if (title) {
+            title.textContent = (app.company || '') + ' · ' + (app.position || '');
+        }
+        var box = $('statusSheetOptions');
+        if (box) {
+            box.innerHTML = '';
+            Object.keys(STATUS_LABELS).forEach(function (code) {
+                var option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'career-sheet-option' + (code === app.status ? ' is-current' : '');
+                option.setAttribute('data-status', code);
+                option.innerHTML =
+                    '<span class="career-status" data-status="' + escapeHtml(code) + '">' +
+                    escapeHtml(STATUS_LABELS[code]) + '</span>' +
+                    (code === app.status ? '<span style="margin-left:auto;font-size:0.72rem;">当前</span>' : '');
+                box.appendChild(option);
+            });
+        }
+        var sheet = $('statusSheet');
+        var mask = $('statusSheetMask');
+        if (sheet) {
+            sheet.hidden = false;
+        }
+        if (mask) {
+            mask.hidden = false;
+        }
+    }
+
+    function closeStatusSheet() {
+        var sheet = $('statusSheet');
+        var mask = $('statusSheetMask');
+        if (sheet) {
+            sheet.hidden = true;
+        }
+        if (mask) {
+            mask.hidden = true;
+        }
+        sheetAppId = null;
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        longPressStart = null;
     }
 
     // 看板自定义横向滚动条（隐藏原生滚动条，提供显式拖动条）
@@ -1531,6 +1594,7 @@
         on($('drawerMask'), 'click', closeDrawer);
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
+                closeStatusSheet();
                 closeDrawer();
             }
         });
@@ -1679,12 +1743,81 @@
                 moveCardToStatus(id, toStatus);
             });
             on(boardBox, 'click', function (event) {
+                var more = event.target.closest ? event.target.closest('button[data-action="move"]') : null;
+                if (more) {
+                    var moreCard = more.closest('.career-board-card');
+                    if (moreCard) {
+                        suppressCardClickUntil = Date.now() + 600;
+                        openStatusSheet(Number(moreCard.getAttribute('data-id')));
+                    }
+                    return;
+                }
                 var card = event.target.closest ? event.target.closest('.career-board-card') : null;
-                if (card) {
+                if (card && Date.now() >= suppressCardClickUntil) {
                     openDetail(Number(card.getAttribute('data-id')));
                 }
             });
+            // 手机端：长按卡片 450ms 弹出状态菜单
+            on(boardBox, 'touchstart', function (event) {
+                var card = event.target.closest ? event.target.closest('.career-board-card') : null;
+                if (!card || !event.touches || !event.touches[0]) {
+                    return;
+                }
+                var touch = event.touches[0];
+                longPressStart = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    id: Number(card.getAttribute('data-id'))
+                };
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                }
+                longPressTimer = setTimeout(function () {
+                    longPressTimer = null;
+                    if (longPressStart) {
+                        suppressCardClickUntil = Date.now() + 600;
+                        openStatusSheet(longPressStart.id);
+                    }
+                }, 450);
+            });
+            on(boardBox, 'touchmove', function (event) {
+                if (!longPressStart || !event.touches || !event.touches[0]) {
+                    return;
+                }
+                var touch = event.touches[0];
+                if (Math.abs(touch.clientX - longPressStart.x) > 10 ||
+                        Math.abs(touch.clientY - longPressStart.y) > 10) {
+                    if (longPressTimer) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                    }
+                    longPressStart = null;
+                }
+            });
+            on(boardBox, 'touchend', function () {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                longPressStart = null;
+            });
         }
+
+        // 状态移动弹层
+        on($('statusSheetClose'), 'click', closeStatusSheet);
+        on($('statusSheetMask'), 'click', closeStatusSheet);
+        on($('statusSheetOptions'), 'click', function (event) {
+            var option = event.target.closest ? event.target.closest('.career-sheet-option') : null;
+            if (!option) {
+                return;
+            }
+            var toStatus = option.getAttribute('data-status');
+            var id = sheetAppId;
+            closeStatusSheet();
+            if (id) {
+                moveCardToStatus(id, toStatus);
+            }
+        });
 
         // 表格行操作（事件委托）
         on($('applicationTableBody'), 'click', function (event) {

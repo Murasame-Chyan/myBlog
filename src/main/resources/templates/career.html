@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/career.css?v=10">
+    <link rel="stylesheet" href="/css/career.css?v=11">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('career')}"></header>
@@ -209,6 +209,16 @@
         </div>
     </main>
 
+    <!-- ===== 移动端：看板卡片「移动到状态」弹层 ===== -->
+    <div class="career-sheet-mask" id="statusSheetMask" hidden></div>
+    <div class="career-sheet" id="statusSheet" hidden>
+        <div class="career-sheet-head">
+            <span id="statusSheetTitle">移动到状态</span>
+            <button type="button" class="career-drawer-close" id="statusSheetClose" aria-label="关闭">&times;</button>
+        </div>
+        <div class="career-sheet-body" id="statusSheetOptions"></div>
+    </div>
+
     <!-- ===== 6. 抽屉遮罩 ===== -->
     <div class="career-drawer-mask" id="drawerMask" hidden></div>
 
@@ -357,7 +367,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/confirm-dialog.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-    <script src="/js/career.js?v=12"></script>
+    <script src="/js/career.js?v=13"></script>
 
     <footer th:replace="~{fragment/footer :: footer}"></footer>
     <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>

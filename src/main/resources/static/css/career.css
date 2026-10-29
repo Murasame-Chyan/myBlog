@@ -1358,10 +1358,11 @@ body.career-drawer-open {
 }
 
 .career-board-card {
+    position: relative;
     background: var(--glass-06);
     border: 1px solid var(--glass-12);
     border-radius: 10px;
-    padding: 10px;
+    padding: 10px 30px 10px 10px;
     cursor: grab;
     transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1420,6 +1421,103 @@ body.career-drawer-open {
 /* 看板模式下显示筛选栏（表头筛选在列表视图里，看板没有表头） */
 body.career-board-mode .career-mobile-filters {
     display: flex;
+}
+
+/* ===== 看板卡片「移动到状态」弹层 ===== */
+.career-sheet-mask {
+    position: fixed;
+    inset: 0;
+    background: var(--black-50);
+    backdrop-filter: blur(2px);
+    z-index: 1060;
+}
+
+.career-sheet {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: min(440px, 100%);
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--modal-bg);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--divider);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 40px var(--black-40);
+    z-index: 1070;
+    padding-bottom: 12px;
+}
+
+.career-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--divider);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.career-sheet-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.career-sheet-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: var(--glass-06);
+    color: var(--text-primary);
+    font-size: 0.84rem;
+    cursor: pointer;
+    text-align: left;
+}
+
+.career-sheet-option:hover {
+    border-color: var(--accent-45);
+    background: var(--glass-10);
+}
+
+.career-sheet-option.is-current {
+    border-color: var(--accent-45);
+    background: var(--accent-12);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* 卡片右上角 ⋯ 按钮 */
+.career-board-more {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-disabled);
+    font-size: 0.8rem;
+    cursor: pointer;
+    opacity: 0.75;
+}
+
+.career-board-more:hover {
+    background: var(--glass-12);
+    color: var(--accent);
+    opacity: 1;
 }
 
 /* ===== 草稿提示条（仅新增模式显示） ===== */
