@@ -27,7 +27,9 @@
         total: 0,
         list: [],
         currentId: null,
-        detail: null
+        detail: null,
+        view: 'list',
+        dragId: null
     };
 
     var lastStats = null;
@@ -360,6 +362,142 @@
         }).catch(noop);
     }
 
+    // ==================== 看板视图 ====================
+    var BOARD_STATUSES = ['to_apply', 'applied', 'communicating', 'written_test', 'interviewing', 'offer'];
+
+    function applyView(view) {
+        state.view = (view === 'board') ? 'board' : 'list';
+        try {
+            window.localStorage.setItem('career_view', state.view);
+        } catch (e) {
+            // localStorage 不可用时忽略
+        }
+        document.body.classList.toggle('career-board-mode', state.view === 'board');
+        Array.prototype.forEach.call(document.querySelectorAll('#viewSwitch button[data-view]'), function (btn) {
+            btn.classList.toggle('is-active', btn.getAttribute('data-view') === state.view);
+        });
+        var boardSection = $('boardSection');
+        var listSection = $('listSection');
+        var pagination = $('pagination');
+        var totalText = $('listTotalText');
+        if (boardSection) {
+            boardSection.hidden = state.view !== 'board';
+        }
+        if (listSection) {
+            listSection.hidden = state.view === 'board';
+        }
+        if (pagination) {
+            pagination.style.display = state.view === 'board' ? 'none' : '';
+        }
+        if (totalText) {
+            totalText.style.display = state.view === 'board' ? 'none' : '';
+        }
+        if (state.view === 'board') {
+            loadBoard();
+        } else {
+            loadList(state.page);
+        }
+    }
+
+    function loadBoard() {
+        syncFilters();
+        var params = new URLSearchParams();
+        params.set('page', '1');
+        params.set('pageSize', '100');
+        if (state.keyword) {
+            params.set('keyword', state.keyword);
+        }
+        if (state.channel) {
+            params.set('channel', state.channel);
+        }
+        if (state.overdueOnly) {
+            params.set('overdue', '1');
+        }
+        return httpGet('/api/career/applications?' + params.toString()).then(function (data) {
+            renderBoard(data.list || [], data.total || 0);
+        }).catch(noop);
+    }
+
+    function buildBoardCard(app) {
+        var card = document.createElement('div');
+        card.className = 'career-board-card';
+        card.setAttribute('draggable', 'true');
+        card.setAttribute('data-id', String(app.id));
+        card.setAttribute('data-status', app.status || '');
+        var flags = '';
+        if (app.overdue) {
+            flags += '<span class="career-chip is-overdue">逾期</span>';
+        } else if (app.dueToday) {
+            flags += '<span class="career-chip is-today">今日</span>';
+        }
+        if (app.priority === 'high') {
+            flags += '<span class="career-chip is-priority-high">高优</span>';
+        }
+        var days = (app.appliedDays === 0) ? '今天' : (app.appliedDays + ' 天');
+        card.innerHTML =
+            '<div class="career-board-company">' + escapeHtml(app.company) + '</div>' +
+            '<div class="career-board-position">' + escapeHtml(app.position) + '</div>' +
+            '<div class="career-board-meta">' +
+            '<span>' + escapeHtml(fmtDate(app.appliedAt)) + ' · ' + escapeHtml(days) + '</span>' +
+            (app.followUpAt ? '<span>跟进 ' + escapeHtml(fmtDate(app.followUpAt)) + '</span>' : '') +
+            '</div>' +
+            (flags ? '<div class="career-board-flags">' + flags + '</div>' : '');
+        return card;
+    }
+
+    function renderBoard(list, total) {
+        var box = $('boardColumns');
+        if (!box) {
+            return;
+        }
+        box.innerHTML = '';
+        BOARD_STATUSES.forEach(function (status) {
+            var column = document.createElement('div');
+            column.className = 'career-board-col';
+            column.setAttribute('data-status', status);
+            column.innerHTML =
+                '<div class="career-board-col-head"><span>' + escapeHtml(labelOf(STATUS_LABELS, status)) +
+                '</span><span class="career-board-count">' +
+                list.filter(function (app) { return app.status === status; }).length + '</span></div>' +
+                '<div class="career-board-col-body" data-status="' + status + '"></div>';
+            var body = column.querySelector('.career-board-col-body');
+            var cards = list.filter(function (app) { return app.status === status; });
+            if (!cards.length) {
+                var empty = document.createElement('div');
+                empty.className = 'career-board-empty';
+                empty.textContent = '拖到这里';
+                body.appendChild(empty);
+            } else {
+                cards.forEach(function (app) {
+                    body.appendChild(buildBoardCard(app));
+                });
+            }
+            box.appendChild(column);
+        });
+        var hint = $('boardHint');
+        if (hint) {
+            hint.textContent = '共 ' + total + ' 条未删除记录' +
+                (total > 100 ? '（看板仅展示前 100 条）' : '') +
+                '；已结束（拒绝 / 放弃 / 归档）的记录请在列表视图查看。拖拽卡片可修改状态。';
+        }
+    }
+
+    function moveCardToStatus(id, toStatus) {
+        if (!id || !toStatus) {
+            return Promise.resolve();
+        }
+        return httpSend('/api/career/applications/' + id + '/status', 'POST', {
+            toStatus: toStatus,
+            note: null
+        }).then(function () {
+            toast('已移动到「' + labelOf(STATUS_LABELS, toStatus) + '」');
+            loadBoard();
+            loadStats();
+        }).catch(function () {
+            loadBoard();
+        });
+    }
+
     // ==================== 统计图表（ECharts，复用 creatorAnalytics 的同一 CDN） ====================
     function cssVar(name, fallback) {
         try {
@@ -617,6 +755,9 @@
     }
 
     function loadList(page) {
+        if (state.view === 'board') {
+            return loadBoard();
+        }
         state.page = page || state.page || 1;
         syncFilters();
         setLoading(true);
@@ -1372,6 +1513,80 @@
             loadList(1);
         });
 
+        // 视图切换
+        on($('viewSwitch'), 'click', function (event) {
+            var button = event.target.closest ? event.target.closest('button[data-view]') : null;
+            if (button) {
+                applyView(button.getAttribute('data-view'));
+            }
+        });
+
+        // 看板拖拽
+        var boardBox = $('boardColumns');
+        if (boardBox) {
+            on(boardBox, 'dragstart', function (event) {
+                var card = event.target.closest ? event.target.closest('.career-board-card') : null;
+                if (!card) {
+                    return;
+                }
+                state.dragId = Number(card.getAttribute('data-id'));
+                try {
+                    event.dataTransfer.setData('text/plain', String(state.dragId));
+                    event.dataTransfer.effectAllowed = 'move';
+                } catch (e) {
+                    // 忽略浏览器差异
+                }
+                card.classList.add('is-dragging');
+            });
+            on(boardBox, 'dragend', function () {
+                Array.prototype.forEach.call(boardBox.querySelectorAll('.is-dragging'), function (card) {
+                    card.classList.remove('is-dragging');
+                });
+                Array.prototype.forEach.call(boardBox.querySelectorAll('.is-over'), function (col) {
+                    col.classList.remove('is-over');
+                });
+            });
+            on(boardBox, 'dragover', function (event) {
+                var body = event.target.closest ? event.target.closest('.career-board-col-body') : null;
+                if (!body || !state.dragId) {
+                    return;
+                }
+                event.preventDefault();
+                try {
+                    event.dataTransfer.dropEffect = 'move';
+                } catch (e) {
+                    // 忽略
+                }
+                body.parentNode.classList.add('is-over');
+            });
+            on(boardBox, 'dragleave', function (event) {
+                var body = event.target.closest ? event.target.closest('.career-board-col-body') : null;
+                if (body) {
+                    body.parentNode.classList.remove('is-over');
+                }
+            });
+            on(boardBox, 'drop', function (event) {
+                var body = event.target.closest ? event.target.closest('.career-board-col-body') : null;
+                if (!body) {
+                    return;
+                }
+                event.preventDefault();
+                Array.prototype.forEach.call(boardBox.querySelectorAll('.is-over'), function (col) {
+                    col.classList.remove('is-over');
+                });
+                var toStatus = body.getAttribute('data-status');
+                var id = state.dragId;
+                state.dragId = null;
+                moveCardToStatus(id, toStatus);
+            });
+            on(boardBox, 'click', function (event) {
+                var card = event.target.closest ? event.target.closest('.career-board-card') : null;
+                if (card) {
+                    openDetail(Number(card.getAttribute('data-id')));
+                }
+            });
+        }
+
         // 表格行操作（事件委托）
         on($('applicationTableBody'), 'click', function (event) {
             var button = event.target.closest ? event.target.closest('button[data-action]') : null;
@@ -1478,7 +1693,13 @@
         updateSortIndicators();
         watchChartTheme();
         loadStats();
-        loadList(1);
+        var storedView = 'list';
+        try {
+            storedView = window.localStorage.getItem('career_view') || 'list';
+        } catch (e) {
+            storedView = 'list';
+        }
+        applyView(storedView);
         loadDeleted();
         window.CAREER_MODULE_READY = true;
     }

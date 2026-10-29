@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/career.css?v=8">
+    <link rel="stylesheet" href="/css/career.css?v=9">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('career')}"></header>
@@ -105,6 +105,14 @@
 
             <!-- ===== 4. 工具栏 ===== -->
             <section class="career-toolbar">
+                <div class="career-view-switch" id="viewSwitch" role="group" aria-label="视图切换">
+                    <button type="button" class="career-view-btn is-active" data-view="list">
+                        <i class="bi bi-list-ul"></i> 列表
+                    </button>
+                    <button type="button" class="career-view-btn" data-view="board">
+                        <i class="bi bi-kanban"></i> 看板
+                    </button>
+                </div>
                 <div class="career-field career-field-search">
                     <i class="bi bi-search"></i>
                     <input type="text" id="keywordInput" placeholder="搜索公司 / 岗位" maxlength="100" autocomplete="off">
@@ -141,7 +149,7 @@
             <p class="career-total-text" id="listTotalText"></p>
 
             <!-- ===== 5. 列表 ===== -->
-            <section class="career-list-wrap">
+            <section class="career-list-wrap" id="listSection">
                 <div class="career-loading" id="listLoading" hidden>加载中…</div>
 
                 <div class="career-table-wrap">
@@ -188,6 +196,12 @@
                 </div>
 
                 <nav class="career-pagination" id="pagination" aria-label="分页"></nav>
+            </section>
+
+            <!-- ===== 6. 看板视图 ===== -->
+            <section class="career-board" id="boardSection" hidden>
+                <div class="career-board-columns" id="boardColumns"></div>
+                <p class="career-board-hint" id="boardHint"></p>
             </section>
         </div>
     </main>
@@ -340,7 +354,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/confirm-dialog.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-    <script src="/js/career.js?v=10"></script>
+    <script src="/js/career.js?v=11"></script>
 
     <footer th:replace="~{fragment/footer :: footer}"></footer>
     <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>
