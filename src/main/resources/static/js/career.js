@@ -484,7 +484,7 @@
         if (hint) {
             hint.textContent = '共 ' + total + ' 条未删除记录' +
                 (total > 100 ? '（看板仅展示前 100 条）' : '') +
-                '；已结束（拒绝 / 放弃 / 归档）的记录请在列表视图查看。拖拽卡片可修改状态。';
+                '；已结束（拒绝 / 放弃 / 归档）的记录请在列表视图查看。拖拽卡片可修改状态。手机端长按可进行移动。';
         }
         requestAnimationFrame(updateBoardScrollbar);
     }
