@@ -418,6 +418,18 @@
     opacity: 0.6;
 }
 
+/* 表格内的空状态行：不显示列边框/内边距，让提示语正好落在表头下方 */
+.career-table tbody tr#tableEmptyRow td,
+.career-table tbody tr.career-empty-row td {
+    padding: 0;
+    border-bottom: none;
+}
+
+.career-table tbody tr#tableEmptyRow:hover,
+.career-table tbody tr.career-empty-row:hover {
+    background: transparent;
+}
+
 .career-empty p {
     margin: 0;
 }
