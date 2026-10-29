@@ -5,6 +5,7 @@ import com.murasame.domain.dto.JobApplicationEventCreateDTO;
 import com.murasame.domain.dto.JobApplicationQueryDTO;
 import com.murasame.domain.dto.JobApplicationStatusChangeDTO;
 import com.murasame.domain.dto.JobApplicationUpdateDTO;
+import com.murasame.domain.vo.JobApplicationBriefVO;
 import com.murasame.domain.vo.JobApplicationDetailVO;
 import com.murasame.domain.vo.JobApplicationEventVO;
 import com.murasame.domain.vo.JobApplicationPageVO;
