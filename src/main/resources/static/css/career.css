@@ -1118,6 +1118,20 @@ body.career-drawer-open {
     border-top: 1px solid var(--divider);
 }
 
+/* ===== 回收站分组 ===== */
+.career-group-deleted {
+    display: none;
+}
+
+.career-group-deleted .career-group-count {
+    background: var(--error-12);
+    color: var(--error);
+}
+
+.career-group-deleted .career-mini-item button {
+    flex-shrink: 0;
+}
+
 /* ===== 草稿提示条（仅新增模式显示） ===== */
 .career-draft-bar {
     display: none;

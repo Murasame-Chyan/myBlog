@@ -138,4 +138,21 @@ public interface JobApplicationMapper {
     List<JobApplication> selectDueToday(@Param("userId") Long userId,
                                         @Param("today") LocalDate today,
                                         @Param("limit") int limit);
+
+    /** 导出用：当前用户全部未删除记录（按投递日期倒序） */
+    @Select("SELECT * FROM job_application WHERE u_id = #{userId} AND deleted_at IS NULL " +
+            "ORDER BY applied_at DESC, id DESC")
+    List<JobApplication> selectAllForExport(@Param("userId") Long userId);
+
+    /** 回收站：当前用户已软删除的记录（按删除时间倒序，最多 200 条） */
+    @Select("SELECT * FROM job_application WHERE u_id = #{userId} AND deleted_at IS NOT NULL " +
+            "ORDER BY deleted_at DESC, id DESC LIMIT 200")
+    List<JobApplication> selectDeleted(@Param("userId") Long userId);
+
+    /** 恢复软删除记录 */
+    @Update("UPDATE job_application SET deleted_at = NULL, updated_at = #{updatedAt} " +
+            "WHERE id = #{id} AND u_id = #{userId} AND deleted_at IS NOT NULL")
+    int restore(@Param("id") Long id,
+                @Param("userId") Long userId,
+                @Param("updatedAt") LocalDateTime updatedAt);
 }

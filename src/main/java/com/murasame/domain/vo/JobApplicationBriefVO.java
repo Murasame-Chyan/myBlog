@@ -35,4 +35,6 @@ public class JobApplicationBriefVO {
     private Boolean overdue;
     /** 是否今日跟进 */
     private Boolean dueToday;
+    /** 软删除时间（仅回收站列表使用） */
+    private LocalDateTime deletedAt;
 }

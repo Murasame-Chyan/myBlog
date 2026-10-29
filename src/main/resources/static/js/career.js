@@ -621,6 +621,62 @@
         box.appendChild(pageButton('下一页', state.page + 1, state.page >= totalPages, false));
     }
 
+    // ==================== 回收站（软删恢复） ====================
+    function loadDeleted() {
+        return httpGet('/api/career/applications/deleted').then(function (data) {
+            renderDeleted(data || []);
+        }).catch(noop);
+    }
+
+    function renderDeleted(items) {
+        var box = $('deletedList');
+        var group = $('groupDeleted');
+        var empty = $('deletedEmpty');
+        if (!box) {
+            return;
+        }
+        box.innerHTML = '';
+        setText('deletedCount', items.length);
+        if (!items.length) {
+            if (group) {
+                group.style.display = 'none';
+            }
+            return;
+        }
+        if (group) {
+            group.style.display = '';
+        }
+        if (empty) {
+            empty.style.display = 'none';
+        }
+        items.forEach(function (app) {
+            var item = document.createElement('div');
+            item.className = 'career-mini-item';
+            item.setAttribute('data-id', String(app.id));
+            item.innerHTML =
+                '<div class="career-mini-main">' +
+                '<div class="career-mini-title">' + escapeHtml(app.company) + ' · ' + escapeHtml(app.position) + '</div>' +
+                '<div class="career-mini-sub">删除于 ' + escapeHtml(fmtDateTime(app.deletedAt)) +
+                ' · ' + escapeHtml(app.statusLabel || labelOf(STATUS_LABELS, app.status)) + '</div>' +
+                '</div>' +
+                '<button type="button" class="career-link-btn" data-action="restore">恢复</button>';
+            box.appendChild(item);
+        });
+    }
+
+    function restoreById(id) {
+        confirmAction('恢复这条投递记录？').then(function (ok) {
+            if (!ok) {
+                return;
+            }
+            return httpSend('/api/career/applications/' + id + '/restore', 'POST').then(function () {
+                toast('已恢复');
+                refreshAll();
+                loadDeleted();
+            });
+        }).catch(noop);
+    }
+
     // ==================== 抽屉 ====================
     function measureNavOffset() {
         var nav = document.querySelector('.navbar-custom');
@@ -1007,6 +1063,7 @@
     function refreshAll() {
         loadStats();
         loadList(state.page);
+        loadDeleted();
     }
 
     // ==================== 事件绑定 ====================
@@ -1128,6 +1185,29 @@
             toast('草稿已清空', 'info');
         });
 
+        // 回收站：折叠 + 恢复
+        on($('toggleDeleted'), 'click', function () {
+            var group = $('groupDeleted');
+            if (!group) {
+                return;
+            }
+            group.classList.toggle('collapsed');
+            var button = $('toggleDeleted');
+            if (button) {
+                button.setAttribute('aria-expanded', String(!group.classList.contains('collapsed')));
+            }
+        });
+        on($('deletedList'), 'click', function (event) {
+            var button = event.target.closest ? event.target.closest('button[data-action="restore"]') : null;
+            if (!button) {
+                return;
+            }
+            var item = button.closest('.career-mini-item[data-id]');
+            if (item) {
+                restoreById(Number(item.getAttribute('data-id')));
+            }
+        });
+
         // 详情操作
         on($('btnChangeStatus'), 'click', handleChangeStatus);
         on($('btnFollowUp'), 'click', handleFollowUp);
@@ -1146,6 +1226,7 @@
         bindEvents();
         loadStats();
         loadList(1);
+        loadDeleted();
         window.CAREER_MODULE_READY = true;
     }
 

@@ -48,4 +48,13 @@ public interface JobApplicationService {
 
     /** 时间线事件列表；主记录不存在或越权返回 null */
     List<JobApplicationEventVO> listEvents(Long userId, Long id);
+
+    /** 导出 CSV 文本（不含 BOM，仅当前用户未删除记录；字段已做 CSV 转义） */
+    String exportCsv(Long userId);
+
+    /** 回收站列表（已软删除，按删除时间倒序） */
+    List<JobApplicationBriefVO> deletedList(Long userId);
+
+    /** 恢复软删除记录；不存在或越权返回 false */
+    boolean restore(Long userId, Long id);
 }

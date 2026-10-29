@@ -236,6 +236,50 @@ class JobApplicationServiceTest {
         assertEquals(APP_ID, event.getApplicationId());
     }
 
+    // ==================== 8. CSV 导出：表头 + 特殊字符转义 ====================
+
+    @Test
+    void exportCsv_containsHeaderAndEscapesSpecialChars() {
+        String quote = String.valueOf((char) 34);
+        JobApplication app = application("applied", LocalDate.of(2026, 12, 1), null);
+        app.setCompany("测试,公司" + quote + "甲" + quote);
+        app.setNotes("第一行" + System.lineSeparator() + "第二行");
+        when(appMapper.selectAllForExport(USER_ID)).thenReturn(java.util.List.of(app));
+
+        String csv = service.exportCsv(USER_ID);
+
+        assertTrue(csv.startsWith("公司,岗位"));
+        assertTrue(csv.contains(quote + "测试,公司" + quote + quote + "甲" + quote + quote + quote));
+        assertTrue(csv.contains("第一行" + System.lineSeparator() + "第二行"));
+        assertTrue(csv.endsWith(System.lineSeparator()));
+    }
+
+    // ==================== 9. 恢复软删除 ====================
+
+    @Test
+    void restore_returnsMapperResult() {
+        when(appMapper.restore(eq(APP_ID), eq(USER_ID), any())).thenReturn(1);
+        assertTrue(service.restore(USER_ID, APP_ID));
+
+        when(appMapper.restore(eq(APP_ID), eq(USER_ID), any())).thenReturn(0);
+        assertFalse(service.restore(USER_ID, APP_ID));
+    }
+
+    // ==================== 10. 回收站列表：带删除时间 ====================
+
+    @Test
+    void deletedList_mapsDeletedAt() {
+        JobApplication app = application("applied", LocalDate.of(2026, 12, 1), null);
+        app.setDeletedAt(LocalDateTime.of(2026, 12, 20, 10, 30));
+        when(appMapper.selectDeleted(USER_ID)).thenReturn(java.util.List.of(app));
+
+        java.util.List<com.murasame.domain.vo.JobApplicationBriefVO> list = service.deletedList(USER_ID);
+
+        assertEquals(1, list.size());
+        assertEquals(app.getDeletedAt(), list.get(0).getDeletedAt());
+        assertEquals(app.getCompany(), list.get(0).getCompany());
+    }
+
     // ==================== 测试数据构造 ====================
 
     private JobApplication application(String status, LocalDate appliedAt, LocalDate followUpAt) {

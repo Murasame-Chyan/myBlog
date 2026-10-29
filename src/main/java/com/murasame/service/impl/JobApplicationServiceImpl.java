@@ -307,6 +307,59 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return jobApplicationMapper.softDelete(id, userId, now()) > 0;
     }
 
+    @Override
+    public boolean restore(Long userId, Long id) {
+        return jobApplicationMapper.restore(id, userId, now()) > 0;
+    }
+
+    @Override
+    public List<JobApplicationBriefVO> deletedList(Long userId) {
+        LocalDate today = today();
+        return toBriefList(jobApplicationMapper.selectDeleted(userId), today);
+    }
+
+    @Override
+    public String exportCsv(Long userId) {
+        List<JobApplication> rows = jobApplicationMapper.selectAllForExport(userId);
+        String lineSeparator = System.lineSeparator();
+        StringBuilder builder = new StringBuilder();
+        builder.append("公司,岗位,渠道,城市,投递日期,状态,优先级,薪资区间,简历版本,联系方式,下一步,跟进日期,JD链接,备注,创建时间,更新时间")
+                .append(lineSeparator);
+        for (JobApplication app : rows) {
+            builder.append(csv(app.getCompany())).append(',')
+                    .append(csv(app.getPosition())).append(',')
+                    .append(csv(CareerEnums.channelLabel(app.getChannel()))).append(',')
+                    .append(csv(app.getLocation())).append(',')
+                    .append(csv(app.getAppliedAt())).append(',')
+                    .append(csv(CareerEnums.statusLabel(app.getStatus()))).append(',')
+                    .append(csv(CareerEnums.priorityLabel(app.getPriority()))).append(',')
+                    .append(csv(app.getSalaryRange())).append(',')
+                    .append(csv(app.getResumeVersion())).append(',')
+                    .append(csv(app.getContact())).append(',')
+                    .append(csv(app.getNextAction())).append(',')
+                    .append(csv(app.getFollowUpAt())).append(',')
+                    .append(csv(app.getJobUrl())).append(',')
+                    .append(csv(app.getNotes())).append(',')
+                    .append(csv(app.getCreatedAt())).append(',')
+                    .append(csv(app.getUpdatedAt()))
+                    .append(lineSeparator);
+        }
+        return builder.toString();
+    }
+
+    /** CSV 字段转义：含逗号/引号/换行时用双引号包裹，内部双引号翻倍 */
+    private static String csv(Object value) {
+        if (value == null) {
+            return "";
+        }
+        String text = String.valueOf(value);
+        String quote = String.valueOf((char) 34);
+        if (text.indexOf(',') >= 0 || text.indexOf(quote) >= 0
+                || text.indexOf(10) >= 0 || text.indexOf(13) >= 0) {
+            text = quote + text.replace(quote, quote + quote) + quote;
+        }
+        return text;
+    }
     // ==================== 统计 ====================
 
     @Override
@@ -344,177 +397,3 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     // ==================== 转换辅助 ====================
 
-    private List<JobApplicationBriefVO> toBriefList(List<JobApplication> rows, LocalDate today) {
-        if (rows == null) {
-            return new ArrayList<>();
-        }
-        return rows.stream().map(row -> toBrief(row, today)).collect(Collectors.toList());
-    }
-
-    private JobApplicationBriefVO toBrief(JobApplication app, LocalDate today) {
-        JobApplicationBriefVO vo = new JobApplicationBriefVO();
-        vo.setId(app.getId());
-        vo.setUId(app.getUId());
-        vo.setCompany(app.getCompany());
-        vo.setPosition(app.getPosition());
-        vo.setChannel(app.getChannel());
-        vo.setChannelLabel(CareerEnums.channelLabel(app.getChannel()));
-        vo.setStatus(app.getStatus());
-        vo.setStatusLabel(CareerEnums.statusLabel(app.getStatus()));
-        vo.setPriority(app.getPriority());
-        vo.setPriorityLabel(CareerEnums.priorityLabel(app.getPriority()));
-        vo.setLocation(app.getLocation());
-        vo.setJobUrl(app.getJobUrl());
-        vo.setAppliedAt(app.getAppliedAt());
-        vo.setFollowUpAt(app.getFollowUpAt());
-        vo.setNextAction(app.getNextAction());
-        vo.setCreatedAt(app.getCreatedAt());
-        vo.setUpdatedAt(app.getUpdatedAt());
-        vo.setAppliedDays(daysBetween(app.getAppliedAt(), today));
-        fillFollowUpFlags(vo, app, today);
-        return vo;
-    }
-
-    private JobApplicationDetailVO toDetail(JobApplication app, LocalDate today) {
-        JobApplicationDetailVO vo = new JobApplicationDetailVO();
-        vo.setId(app.getId());
-        vo.setUId(app.getUId());
-        vo.setCompany(app.getCompany());
-        vo.setPosition(app.getPosition());
-        vo.setChannel(app.getChannel());
-        vo.setChannelLabel(CareerEnums.channelLabel(app.getChannel()));
-        vo.setLocation(app.getLocation());
-        vo.setJobUrl(app.getJobUrl());
-        vo.setAppliedAt(app.getAppliedAt());
-        vo.setStatus(app.getStatus());
-        vo.setStatusLabel(CareerEnums.statusLabel(app.getStatus()));
-        vo.setPriority(app.getPriority());
-        vo.setPriorityLabel(CareerEnums.priorityLabel(app.getPriority()));
-        vo.setSalaryRange(app.getSalaryRange());
-        vo.setResumeVersion(app.getResumeVersion());
-        vo.setContact(app.getContact());
-        vo.setNextAction(app.getNextAction());
-        vo.setFollowUpAt(app.getFollowUpAt());
-        vo.setNotes(app.getNotes());
-        vo.setCreatedAt(app.getCreatedAt());
-        vo.setUpdatedAt(app.getUpdatedAt());
-        vo.setAppliedDays(daysBetween(app.getAppliedAt(), today));
-        vo.setOverdue(isOverdue(app, today));
-        vo.setDueToday(isDueToday(app, today));
-        return vo;
-    }
-
-    private JobApplicationEventVO toEventVO(JobApplicationEvent event) {
-        JobApplicationEventVO vo = new JobApplicationEventVO();
-        vo.setId(event.getId());
-        vo.setType(event.getType());
-        vo.setTypeLabel(CareerEnums.eventTypeLabel(event.getType()));
-        vo.setOccurredAt(event.getOccurredAt());
-        vo.setFromStatus(event.getFromStatus());
-        vo.setFromStatusLabel(CareerEnums.statusLabel(event.getFromStatus()));
-        vo.setToStatus(event.getToStatus());
-        vo.setToStatusLabel(CareerEnums.statusLabel(event.getToStatus()));
-        vo.setTitle(event.getTitle());
-        vo.setContent(event.getContent());
-        vo.setMeta(event.getMeta());
-        vo.setCreatedAt(event.getCreatedAt());
-        return vo;
-    }
-
-    private void fillFollowUpFlags(JobApplicationBriefVO vo, JobApplication app, LocalDate today) {
-        vo.setOverdue(isOverdue(app, today));
-        vo.setDueToday(isDueToday(app, today));
-    }
-
-    /** 逾期：跟进日期已过、且状态不是结束类 */
-    private boolean isOverdue(JobApplication app, LocalDate today) {
-        return app.getFollowUpAt() != null && app.getFollowUpAt().isBefore(today) && isOpen(app);
-    }
-
-    /** 今日跟进：跟进日期正好是今天、且状态不是结束类 */
-    private boolean isDueToday(JobApplication app, LocalDate today) {
-        return app.getFollowUpAt() != null && app.getFollowUpAt().isEqual(today) && isOpen(app);
-    }
-
-    private boolean isOpen(JobApplication app) {
-        return !CareerEnums.isClosedStatus(app.getStatus());
-    }
-
-    private int daysBetween(LocalDate from, LocalDate to) {
-        if (from == null || to == null) {
-            return 0;
-        }
-        long days = ChronoUnit.DAYS.between(from, to);
-        return days < 0 ? 0 : (int) days;
-    }
-
-    private int daysBetween(LocalDateTime from, LocalDate to) {
-        return from == null ? 0 : daysBetween(from.toLocalDate(), to);
-    }
-
-    // ==================== 参数归一化 ====================
-
-    private static String blankToNull(String value) {
-        return (value == null || value.isBlank()) ? null : value.trim();
-    }
-
-    private static int normalizePage(Integer page) {
-        return (page == null || page < 1) ? 1 : page;
-    }
-
-    private static int normalizePageSize(Integer pageSize) {
-        if (pageSize == null || pageSize < 1) {
-            return DEFAULT_PAGE_SIZE;
-        }
-        return Math.min(pageSize, MAX_PAGE_SIZE);
-    }
-
-    private static String normalizeStatusFilter(String status) {
-        String value = blankToNull(status);
-        return value != null && CareerEnums.isValidStatus(value) ? value : null;
-    }
-
-    private static String normalizeChannelFilter(String channel) {
-        String value = blankToNull(channel);
-        return value != null && CareerEnums.isValidChannel(value) ? value : null;
-    }
-
-    private static String normalizeSortBy(String sortBy) {
-        String value = blankToNull(sortBy);
-        return ("followUp".equals(value) || "updated".equals(value)) ? value : null;
-    }
-
-    /** 把 [{code, cnt}] 转成 code -> count（列名大小写不敏感，兼容不同驱动） */
-    private static Map<String, Long> toCountMap(List<Map<String, Object>> rows) {
-        Map<String, Long> result = new LinkedHashMap<>();
-        if (rows == null) {
-            return result;
-        }
-        for (Map<String, Object> row : rows) {
-            String code = stringValue(row, "code");
-            String count = stringValue(row, "cnt");
-            if (code == null || code.isBlank()) {
-                continue;
-            }
-            long value = 0L;
-            if (count != null) {
-                try {
-                    value = Long.parseLong(count);
-                } catch (NumberFormatException ignored) {
-                    value = 0L;
-                }
-            }
-            result.put(code, value);
-        }
-        return result;
-    }
-
-    private static String stringValue(Map<String, Object> row, String key) {
-        for (Map.Entry<String, Object> entry : row.entrySet()) {
-            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(key)) {
-                return entry.getValue() == null ? null : String.valueOf(entry.getValue());
-            }
-        }
-        return null;
-    }
-}

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/career.css?v=5">
+    <link rel="stylesheet" href="/css/career.css?v=6">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('career')}"></header>
@@ -79,6 +79,16 @@
                     <div class="career-group-body" id="overdueList"></div>
                     <div class="career-group-empty" id="overdueEmpty">没有逾期的投递，保持住</div>
                 </div>
+
+                <div class="career-group career-group-deleted" id="groupDeleted" style="display: none;">
+                    <button type="button" class="career-group-head" id="toggleDeleted" aria-expanded="true">
+                        <span class="career-group-title"><i class="bi bi-trash3"></i> 已删除记录（可恢复）</span>
+                        <span class="career-group-count" id="deletedCount">0</span>
+                        <i class="bi bi-chevron-down career-group-arrow"></i>
+                    </button>
+                    <div class="career-group-body" id="deletedList"></div>
+                    <div class="career-group-empty" id="deletedEmpty">暂无已删除记录</div>
+                </div>
             </section>
 
             <!-- ===== 4. 工具栏 ===== -->
@@ -105,6 +115,9 @@
                 </select>
                 <button type="button" class="career-btn" id="btnSearch">查询</button>
                 <button type="button" class="career-btn career-btn-ghost" id="btnReset">重置</button>
+                <a class="career-btn career-btn-ghost" id="btnExportCsv" href="/api/career/export.csv" download>
+                    <i class="bi bi-download"></i> 导出 CSV
+                </a>
             </section>
             <p class="career-total-text" id="listTotalText"></p>
 
@@ -297,7 +310,7 @@
     <!-- ===== 8. 脚本 ===== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/confirm-dialog.js"></script>
-    <script src="/js/career.js?v=6"></script>
+    <script src="/js/career.js?v=7"></script>
 
     <footer th:replace="~{fragment/footer :: footer}"></footer>
     <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>

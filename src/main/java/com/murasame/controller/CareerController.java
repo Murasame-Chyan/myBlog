@@ -15,6 +15,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -239,6 +244,50 @@ public class CareerController {
         } catch (IllegalArgumentException e) {
             return ReturnUtil.badRequest(e.getMessage());
         }
+    }
+
+    // ==================== 导出 / 回收站 ====================
+
+    /** 导出 CSV：UTF-8（带 BOM，Excel 直接打开不乱码），仅当前用户未删除记录 */
+    @GetMapping("/api/career/export.csv")
+    public ResponseEntity<byte[]> exportCsv(HttpServletRequest request) {
+        Users user = authHelper.getCurrentUser(request);
+        if (user == null) {
+            return new ResponseEntity<>(new byte[0], HttpStatus.UNAUTHORIZED);
+        }
+        String csv = jobApplicationService.exportCsv(user.getId());
+        String bom = String.valueOf((char) 0xFEFF);
+        byte[] body = (bom + csv).getBytes(StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
+        headers.set(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=career-applications-" + LocalDate.now() + ".csv");
+        return new ResponseEntity<>(body, headers, HttpStatus.OK);
+    }
+
+    /** 回收站：已软删除的记录（可恢复） */
+    @ResponseBody
+    @GetMapping("/api/career/applications/deleted")
+    public Map<String, Object> deletedList(HttpServletRequest request) {
+        Users user = authHelper.getCurrentUser(request);
+        if (user == null) {
+            return ReturnUtil.unauthorized("请先登录");
+        }
+        return ReturnUtil.success(jobApplicationService.deletedList(user.getId()));
+    }
+
+    /** 恢复软删除记录 */
+    @ResponseBody
+    @PostMapping("/api/career/applications/{id}/restore")
+    public Map<String, Object> restore(HttpServletRequest request, @PathVariable Long id) {
+        Users user = authHelper.getCurrentUser(request);
+        if (user == null) {
+            return ReturnUtil.unauthorized("请先登录");
+        }
+        if (!jobApplicationService.restore(user.getId(), id)) {
+            return ReturnUtil.notFound("记录不存在");
+        }
+        return ReturnUtil.success("已恢复");
     }
 
     // ==================== 辅助 ====================
