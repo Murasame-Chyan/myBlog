@@ -394,6 +394,7 @@
         }
         if (state.view === 'board') {
             loadBoard();
+            requestAnimationFrame(updateBoardScrollbar);
         } else {
             loadList(state.page);
         }
@@ -480,6 +481,7 @@
                 (total > 100 ? '（看板仅展示前 100 条）' : '') +
                 '；已结束（拒绝 / 放弃 / 归档）的记录请在列表视图查看。拖拽卡片可修改状态。';
         }
+        requestAnimationFrame(updateBoardScrollbar);
     }
 
     function moveCardToStatus(id, toStatus) {
@@ -495,6 +497,103 @@
             loadStats();
         }).catch(function () {
             loadBoard();
+        });
+    }
+
+    // 看板自定义横向滚动条（隐藏原生滚动条，提供显式拖动条）
+    var boardThumbLeft = 0;
+    var boardDrag = null;
+
+    function updateBoardScrollbar() {
+        var wrap = $('boardColumns');
+        var bar = $('boardScrollbar');
+        var thumb = $('boardThumb');
+        var boardSection = $('boardSection');
+        if (!wrap || !bar || !thumb) {
+            return;
+        }
+        if (boardSection && boardSection.hidden) {
+            bar.hidden = true;
+            return;
+        }
+        var maxScroll = wrap.scrollWidth - wrap.clientWidth;
+        if (maxScroll <= 2) {
+            bar.hidden = true;
+            return;
+        }
+        bar.hidden = false;
+        var trackWidth = bar.clientWidth;
+        if (trackWidth <= 0) {
+            return;
+        }
+        var thumbWidth = Math.max(36, Math.round(trackWidth * wrap.clientWidth / wrap.scrollWidth));
+        thumbWidth = Math.min(thumbWidth, trackWidth);
+        var maxLeft = Math.max(1, trackWidth - thumbWidth);
+        boardThumbLeft = Math.round((wrap.scrollLeft / maxScroll) * maxLeft);
+        thumb.style.width = thumbWidth + 'px';
+        thumb.style.transform = 'translateX(' + boardThumbLeft + 'px)';
+    }
+
+    function scrollBoardToThumb() {
+        var wrap = $('boardColumns');
+        var bar = $('boardScrollbar');
+        var thumb = $('boardThumb');
+        if (!wrap || !bar || !thumb) {
+            return;
+        }
+        var maxLeft = Math.max(1, bar.clientWidth - thumb.offsetWidth);
+        var maxScroll = wrap.scrollWidth - wrap.clientWidth;
+        wrap.scrollLeft = (boardThumbLeft / maxLeft) * maxScroll;
+    }
+
+    function onBoardThumbMove(event) {
+        if (!boardDrag) {
+            return;
+        }
+        var bar = $('boardScrollbar');
+        var thumb = $('boardThumb');
+        if (!bar || !thumb) {
+            return;
+        }
+        var maxLeft = Math.max(1, bar.clientWidth - thumb.offsetWidth);
+        boardThumbLeft = Math.max(0, Math.min(maxLeft, boardDrag.startLeft + (event.clientX - boardDrag.startX)));
+        thumb.style.transform = 'translateX(' + boardThumbLeft + 'px)';
+        scrollBoardToThumb();
+    }
+
+    function stopBoardThumbDrag() {
+        boardDrag = null;
+        document.removeEventListener('pointermove', onBoardThumbMove);
+        document.removeEventListener('pointerup', stopBoardThumbDrag);
+        document.removeEventListener('pointercancel', stopBoardThumbDrag);
+    }
+
+    function bindBoardScrollbar() {
+        var wrap = $('boardColumns');
+        var bar = $('boardScrollbar');
+        var thumb = $('boardThumb');
+        if (!wrap || !bar || !thumb) {
+            return;
+        }
+        on(wrap, 'scroll', updateBoardScrollbar);
+        on(window, 'resize', updateBoardScrollbar);
+        on(bar, 'click', function (event) {
+            if (event.target === thumb) {
+                return;
+            }
+            var rect = bar.getBoundingClientRect();
+            var maxLeft = Math.max(1, bar.clientWidth - thumb.offsetWidth);
+            boardThumbLeft = Math.max(0, Math.min(maxLeft,
+                event.clientX - rect.left - thumb.offsetWidth / 2));
+            thumb.style.transform = 'translateX(' + boardThumbLeft + 'px)';
+            scrollBoardToThumb();
+        });
+        on(thumb, 'pointerdown', function (event) {
+            event.preventDefault();
+            boardDrag = { startX: event.clientX, startLeft: boardThumbLeft };
+            document.addEventListener('pointermove', onBoardThumbMove);
+            document.addEventListener('pointerup', stopBoardThumbDrag);
+            document.addEventListener('pointercancel', stopBoardThumbDrag);
         });
     }
 
@@ -1689,6 +1788,7 @@
     function init() {
         fillLabelMaps();
         bindEvents();
+        bindBoardScrollbar();
         syncFilterSelects();
         updateSortIndicators();
         watchChartTheme();

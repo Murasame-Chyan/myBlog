@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/career.css?v=9">
+    <link rel="stylesheet" href="/css/career.css?v=10">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('career')}"></header>
@@ -201,6 +201,9 @@
             <!-- ===== 6. 看板视图 ===== -->
             <section class="career-board" id="boardSection" hidden>
                 <div class="career-board-columns" id="boardColumns"></div>
+                <div class="career-board-scrollbar" id="boardScrollbar" hidden>
+                    <div class="career-board-thumb" id="boardThumb"></div>
+                </div>
                 <p class="career-board-hint" id="boardHint"></p>
             </section>
         </div>
@@ -354,7 +357,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/confirm-dialog.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-    <script src="/js/career.js?v=11"></script>
+    <script src="/js/career.js?v=12"></script>
 
     <footer th:replace="~{fragment/footer :: footer}"></footer>
     <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>

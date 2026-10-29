@@ -1258,6 +1258,45 @@ body.career-drawer-open {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 10px;
     align-items: start;
+    /* 隐藏原生滚动条，改用下方自定义拖动条 */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.career-board-columns::-webkit-scrollbar {
+    display: none;
+}
+
+/* 看板横向滚动条（自定义，仅内容超宽时显示） */
+.career-board-scrollbar {
+    position: relative;
+    height: 8px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: var(--glass-10);
+    cursor: pointer;
+    touch-action: none;
+}
+
+.career-board-thumb {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 8px;
+    width: 36px;
+    border-radius: 999px;
+    background: var(--accent-45);
+    cursor: grab;
+    transition: background 0.2s ease;
+}
+
+.career-board-thumb:hover {
+    background: var(--accent-70);
+}
+
+.career-board-thumb:active {
+    cursor: grabbing;
+    background: var(--accent);
 }
 
 .career-board-col {
