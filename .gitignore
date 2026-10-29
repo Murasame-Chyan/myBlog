@@ -73,6 +73,9 @@ docs/ref
 ### Docs: only screenshots are allowed (per project convention) ###
 docs/*.md
 
+### Agent analysis scratch files ###
+docs/_analysis/
+
 ### Music files: MP3 binaries store on CDN, not in repo ###
 src/main/resources/static/music/*.mp3
 
