@@ -77,6 +77,8 @@ public class SecurityConfiguration {
                     auth.requestMatchers("/api/admin/auth/login").permitAll();
                     // 管理端其他接口必须登录（更细粒度权限由 @RequirePermission + AOP 控制）
                     auth.requestMatchers("/api/admin/**").authenticated();
+                    // 求职进度模块 API 必须登录；页面 /career/** 不在此列，由 CareerController 重定向到首页
+                    auth.requestMatchers("/api/career/**").authenticated();
                     // 写操作端点必须认证（替代原 UserInterceptor 路径拦截）
                     auth.requestMatchers(
                             "/blogs/publish/**",
