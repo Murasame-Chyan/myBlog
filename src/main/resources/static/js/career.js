@@ -392,7 +392,7 @@
 
     function renderStatusChart(stats) {
         var el = $('statusChart');
-        if (!el || typeof window.echarts !== 'function') {
+        if (!el || !window.echarts || typeof window.echarts.init !== 'function') {
             return;
         }
         if (!statusChartInstance) {
@@ -434,7 +434,7 @@
 
     function renderTrendChart(stats) {
         var el = $('trendChart');
-        if (!el || typeof window.echarts !== 'function') {
+        if (!el || !window.echarts || typeof window.echarts.init !== 'function') {
             return;
         }
         if (!trendChartInstance) {
@@ -482,8 +482,28 @@
         }, true);
     }
 
+    function markChartsUnavailable() {
+        ['statusChart', 'trendChart'].forEach(function (id) {
+            var el = $(id);
+            if (!el || el.getAttribute('data-fallback')) {
+                return;
+            }
+            el.setAttribute('data-fallback', '1');
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.color = 'var(--text-disabled)';
+            el.style.fontSize = '0.78rem';
+            el.textContent = '图表库加载失败（请检查能否访问 cdn.jsdelivr.net）';
+        });
+    }
+
     function renderCharts(stats) {
         if (!stats) {
+            return;
+        }
+        if (!window.echarts || typeof window.echarts.init !== 'function') {
+            markChartsUnavailable();
             return;
         }
         lastStats = stats;
