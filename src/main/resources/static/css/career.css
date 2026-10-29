@@ -1103,6 +1103,35 @@ body.career-drawer-open {
     border-top: 1px solid var(--divider);
 }
 
+/* ===== 草稿提示条（仅新增模式显示） ===== */
+.career-draft-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 0 0 14px;
+    border: 1px dashed var(--accent-35);
+    border-radius: 10px;
+    background: var(--accent-08);
+    font-size: 0.75rem;
+    color: var(--text-disabled);
+}
+
+.career-draft-bar.is-visible {
+    display: flex;
+}
+
+.career-draft-bar .career-draft-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.career-drawer.mode-detail .career-draft-bar {
+    display: none !important;
+}
+
 /* ===== 响应式 ===== */
 @media (max-width: 991.98px) {
     .career-stats {

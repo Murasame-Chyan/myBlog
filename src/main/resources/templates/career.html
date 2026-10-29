@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/career.css?v=3">
+    <link rel="stylesheet" href="/css/career.css?v=4">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('career')}"></header>
@@ -223,6 +223,13 @@
                     </div>
                 </details>
 
+                <div class="career-draft-bar" id="draftBar">
+                    <span class="career-draft-hint">
+                        <i class="bi bi-clock-history"></i> 已自动保存草稿，下次「新增投递」会自动带出
+                    </span>
+                    <button type="button" class="career-link-btn" id="btnClearDraft">清空草稿</button>
+                </div>
+
                 <div class="career-form-actions">
                     <button type="submit" class="career-btn career-btn-primary" id="btnSaveApplication">保存</button>
                     <button type="button" class="career-btn career-btn-ghost" id="btnCancelDrawer">取消</button>
@@ -290,7 +297,7 @@
     <!-- ===== 8. 脚本 ===== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/confirm-dialog.js"></script>
-    <script src="/js/career.js?v=3"></script>
+    <script src="/js/career.js?v=4"></script>
 
     <footer th:replace="~{fragment/footer :: footer}"></footer>
     <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>

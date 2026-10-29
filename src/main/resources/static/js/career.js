@@ -103,6 +103,118 @@
         el.disabled = !!busy;
     }
 
+    // ==================== 新增表单草稿（localStorage） ====================
+    var DRAFT_KEY = 'career_application_draft';
+    var draftTimer = null;
+
+    function readDraft() {
+        try {
+            var raw = window.localStorage.getItem(DRAFT_KEY);
+            if (!raw) {
+                return null;
+            }
+            var data = JSON.parse(raw);
+            return (data && typeof data === 'object') ? data : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function collectDraft() {
+        return {
+            company: valueOf('companyInput'),
+            position: valueOf('positionInput'),
+            channel: valueOf('channelSelect'),
+            location: valueOf('locationInput'),
+            salaryRange: valueOf('salaryRangeInput'),
+            priority: valueOf('prioritySelect'),
+            appliedAt: valueOf('appliedAtInput'),
+            followUpAt: valueOf('followUpAtInput'),
+            nextAction: valueOf('nextActionInput'),
+            contact: valueOf('contactInput'),
+            resumeVersion: valueOf('resumeVersionInput'),
+            jobUrl: valueOf('jobUrlInput'),
+            notes: valueOf('notesInput'),
+            status: valueOf('statusInput'),
+            savedAt: Date.now()
+        };
+    }
+
+    function showDraftBar() {
+        var bar = $('draftBar');
+        if (bar) {
+            bar.classList.add('is-visible');
+        }
+    }
+
+    function hideDraftBar() {
+        var bar = $('draftBar');
+        if (bar) {
+            bar.classList.remove('is-visible');
+        }
+    }
+
+    function saveDraft() {
+        // 只在"新增"模式保存；编辑已有记录时不覆盖草稿
+        if (state.currentId !== null) {
+            return;
+        }
+        try {
+            window.localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft()));
+        } catch (e) {
+            return;
+        }
+        showDraftBar();
+    }
+
+    function saveDraftDebounced() {
+        if (draftTimer) {
+            clearTimeout(draftTimer);
+        }
+        draftTimer = setTimeout(saveDraft, 300);
+    }
+
+    function clearDraft() {
+        try {
+            window.localStorage.removeItem(DRAFT_KEY);
+        } catch (e) {
+            // localStorage 不可用时忽略
+        }
+        hideDraftBar();
+    }
+
+    function hasDraftContent(draft) {
+        if (!draft) {
+            return false;
+        }
+        var fields = ['company', 'position', 'jobUrl', 'nextAction', 'contact',
+            'resumeVersion', 'notes', 'salaryRange', 'location'];
+        for (var i = 0; i < fields.length; i++) {
+            var value = draft[fields[i]];
+            if (value !== null && value !== undefined && String(value).trim()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function applyDraft(draft) {
+        setValue('companyInput', draft.company);
+        setValue('positionInput', draft.position);
+        setValue('channelSelect', draft.channel || 'other');
+        setValue('locationInput', draft.location);
+        setValue('salaryRangeInput', draft.salaryRange);
+        setValue('prioritySelect', draft.priority || 'medium');
+        setValue('appliedAtInput', draft.appliedAt);
+        setValue('followUpAtInput', draft.followUpAt);
+        setValue('nextActionInput', draft.nextAction);
+        setValue('contactInput', draft.contact);
+        setValue('resumeVersionInput', draft.resumeVersion);
+        setValue('jobUrlInput', draft.jobUrl);
+        setValue('notesInput', draft.notes);
+        setValue('statusInput', draft.status || 'applied');
+    }
+
     // ==================== 日期 ====================
     function fmtDate(value) {
         if (!value) {
@@ -539,10 +651,18 @@
         state.currentId = null;
         state.detail = null;
         resetForm();
-        setValue('appliedAtInput', todayIso());
         var meta = $('detailMeta');
         if (meta) {
             meta.innerHTML = '';
+        }
+        // 优先恢复上次草稿；没有草稿才默认投递日期=今天
+        var draft = readDraft();
+        if (hasDraftContent(draft)) {
+            applyDraft(draft);
+            showDraftBar();
+        } else {
+            setValue('appliedAtInput', todayIso());
+            hideDraftBar();
         }
         openDrawer('create', '新增投递');
         setTimeout(function () {
@@ -954,6 +1074,24 @@
         // 表单
         on($('applicationForm'), 'submit', handleSave);
         on($('eventForm'), 'submit', handleAddEvent);
+
+        // 新增表单草稿：输入即保存（防抖），编辑模式不保存
+        ['companyInput', 'positionInput', 'channelSelect', 'locationInput', 'salaryRangeInput',
+            'prioritySelect', 'appliedAtInput', 'followUpAtInput', 'nextActionInput', 'contactInput',
+            'resumeVersionInput', 'jobUrlInput', 'notesInput', 'statusInput'].forEach(function (id) {
+            var el = $(id);
+            if (!el) {
+                return;
+            }
+            on(el, 'input', saveDraftDebounced);
+            on(el, 'change', saveDraftDebounced);
+        });
+        on($('btnClearDraft'), 'click', function () {
+            clearDraft();
+            resetForm();
+            setValue('appliedAtInput', todayIso());
+            toast('草稿已清空', 'info');
+        });
 
         // 详情操作
         on($('btnChangeStatus'), 'click', handleChangeStatus);
