@@ -27,7 +27,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Notes:
 - There is currently no dedicated lint command configured in `pom.xml` (no Checkstyle/PMD/SpotBugs plugin).
-- `src/test` is currently absent; test commands are standard Maven commands to use once tests are added.
+- `src/test` currently has 3 unit tests (`JwtUtil`, `CookieUtil`, `JwtAuthenticationFilter`); test commands are standard Maven commands.
+
+## Runtime verification workflow (IMPORTANT — user preference)
+
+- **Do not run builds, tests, or the application yourself.** The machine has Java 8 on `PATH` and no `mvn`; Maven only works inside IntelliJ IDEA with the project SDK.
+- Whenever a change needs compiling, testing, starting, or a SQL script executing, **ask the user to do it in IntelliJ IDEA** and to report back:
+  - Compile / build errors
+  - Startup exceptions and stack traces
+  - Relevant log lines (`ERROR`, `WARN`, SQL errors, HTTP status codes)
+- The agent's job is to provide the exact actions (run configuration / test class / SQL file), what to look for, and the expected result — **not** to run the toolchain.
+- Only when the user explicitly asks the agent to run it, use the IntelliJ-bundled toolchain:
+  - Project SDK (ms-17): `C:/Program Files/Microsoft/jdk-17.0.18.8-hotspot`
+  - Bundled Maven: `C:/Program Files/JetBrains/IntelliJ IDEA 2026.1.1/plugins/maven/lib/maven3/bin/mvn`
 
 ## High-level architecture
 
