@@ -6,6 +6,7 @@ import com.murasame.domain.dto.JobApplicationQueryDTO;
 import com.murasame.domain.dto.JobApplicationStatusChangeDTO;
 import com.murasame.domain.dto.JobApplicationUpdateDTO;
 import com.murasame.domain.vo.CountItemVO;
+import com.murasame.domain.vo.DailyCountVO;
 import com.murasame.domain.vo.JobApplicationBriefVO;
 import com.murasame.domain.vo.JobApplicationDetailVO;
 import com.murasame.domain.vo.JobApplicationEventVO;
@@ -393,6 +394,16 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                     channelCounts.getOrDefault(entry.getKey(), 0L)));
         }
         vo.setByChannel(byChannel);
+
+        // 近 30 天投递趋势（无数据补 0，前端画折线）
+        LocalDate from = today.minusDays(29);
+        Map<String, Long> dayCounts = toDayCountMap(jobApplicationMapper.countAppliedByDay(userId, from));
+        List<DailyCountVO> trend = new ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            LocalDate day = from.plusDays(i);
+            trend.add(new DailyCountVO(day.toString(), dayCounts.getOrDefault(day.toString(), 0L)));
+        }
+        vo.setTrend(trend);
         return vo;
     }
 
@@ -572,6 +583,33 @@ public class JobApplicationServiceImpl implements JobApplicationService {
             result.put(code, value);
         }
         return result;
+    }
+
+    /** 把 [{day, cnt}] 转成 day -> count（列名大小写不敏感） */
+    private static Map<String, Long> toDayCountMap(List<Map<String, Object>> rows) {
+        Map<String, Long> result = new LinkedHashMap<>();
+        if (rows == null) {
+            return result;
+        }
+        for (Map<String, Object> row : rows) {
+            String day = stringValue(row, "day");
+            if (day == null || day.isBlank()) {
+                continue;
+            }
+            result.put(day, parseLongValue(stringValue(row, "cnt")));
+        }
+        return result;
+    }
+
+    private static long parseLongValue(String value) {
+        if (value == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ignored) {
+            return 0L;
+        }
     }
 
     private static String stringValue(Map<String, Object> row, String key) {

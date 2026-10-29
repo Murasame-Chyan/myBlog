@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/theme.css">
-    <link rel="stylesheet" href="/css/career.css?v=7">
+    <link rel="stylesheet" href="/css/career.css?v=8">
 </head>
 <body>
     <header th:replace="~{fragment/header :: nav('career')}"></header>
@@ -58,7 +58,19 @@
                 </div>
             </section>
 
-            <!-- ===== 3. 置顶分组：今日跟进 / 逾期跟进 ===== -->
+            <!-- ===== 3. 统计图表 ===== -->
+            <section class="career-charts" id="chartsSection">
+                <div class="career-chart-card">
+                    <h3 class="career-chart-title">状态分布</h3>
+                    <div class="career-chart" id="statusChart"></div>
+                </div>
+                <div class="career-chart-card">
+                    <h3 class="career-chart-title">近 30 天投递趋势</h3>
+                    <div class="career-chart" id="trendChart"></div>
+                </div>
+            </section>
+
+            <!-- ===== 4. 置顶分组：今日跟进 / 逾期跟进 ===== -->
             <section class="career-groups">
                 <div class="career-group" id="groupDueToday">
                     <button type="button" class="career-group-head" id="toggleDueToday" aria-expanded="true">
@@ -327,7 +339,8 @@
     <!-- ===== 8. 脚本 ===== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/confirm-dialog.js"></script>
-    <script src="/js/career.js?v=8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="/js/career.js?v=9"></script>
 
     <footer th:replace="~{fragment/footer :: footer}"></footer>
     <div th:replace="~{fragment/musicPlayer :: musicPlayer}"></div>

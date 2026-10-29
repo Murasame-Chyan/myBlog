@@ -30,6 +30,10 @@
         detail: null
     };
 
+    var lastStats = null;
+    var statusChartInstance = null;
+    var trendChartInstance = null;
+
     var STATUS_LABELS = {};
     var CHANNEL_LABELS = {};
     var PRIORITY_LABELS = {};
@@ -352,7 +356,158 @@
             setText('statOffer', countOf(data.byStatus, 'offer'));
             setText('statRejected', countOf(data.byStatus, 'rejected'));
             setText('statOverdue', data.overdue || 0);
+            renderCharts(data);
         }).catch(noop);
+    }
+
+    // ==================== 统计图表（ECharts，复用 creatorAnalytics 的同一 CDN） ====================
+    function cssVar(name, fallback) {
+        try {
+            var value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            return value || fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function chartTextColor() {
+        return cssVar('--text-primary', '#e5e7eb');
+    }
+
+    function chartGridColor() {
+        return cssVar('--divider', 'rgba(255,255,255,0.12)');
+    }
+
+    function emptyChartOption() {
+        return {
+            graphic: [{
+                type: 'text',
+                left: 'center',
+                top: 'middle',
+                style: { text: '暂无数据', fill: cssVar('--text-disabled', '#999999'), fontSize: 12 }
+            }],
+            series: []
+        };
+    }
+
+    function renderStatusChart(stats) {
+        var el = $('statusChart');
+        if (!el || typeof window.echarts !== 'function') {
+            return;
+        }
+        if (!statusChartInstance) {
+            statusChartInstance = window.echarts.init(el);
+        }
+        var items = (stats.byStatus || []).filter(function (item) {
+            return item.count > 0;
+        });
+        if (!items.length) {
+            statusChartInstance.setOption(emptyChartOption(), true);
+            return;
+        }
+        var data = items.map(function (item) {
+            return {
+                name: item.label || item.code,
+                value: item.count,
+                itemStyle: { color: cssVar('--career-status-' + item.code, '#87CEEB') }
+            };
+        });
+        statusChartInstance.setOption({
+            tooltip: { trigger: 'item' },
+            legend: {
+                bottom: 0,
+                icon: 'circle',
+                itemWidth: 8,
+                itemHeight: 8,
+                textStyle: { color: chartTextColor(), fontSize: 11 }
+            },
+            series: [{
+                type: 'pie',
+                radius: ['42%', '66%'],
+                center: ['50%', '44%'],
+                avoidLabelOverlap: true,
+                label: { show: false },
+                data: data
+            }]
+        }, true);
+    }
+
+    function renderTrendChart(stats) {
+        var el = $('trendChart');
+        if (!el || typeof window.echarts !== 'function') {
+            return;
+        }
+        if (!trendChartInstance) {
+            trendChartInstance = window.echarts.init(el);
+        }
+        var trend = stats.trend || [];
+        if (!trend.length) {
+            trendChartInstance.setOption(emptyChartOption(), true);
+            return;
+        }
+        var accent = cssVar('--accent', '#87CEEB');
+        var textColor = chartTextColor();
+        var gridColor = chartGridColor();
+        trendChartInstance.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: 8, right: 14, top: 16, bottom: 24, containLabel: true },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: trend.map(function (item) {
+                    return String(item.date).slice(5);
+                }),
+                axisLine: { lineStyle: { color: gridColor } },
+                axisTick: { show: false },
+                axisLabel: { color: textColor, fontSize: 10 }
+            },
+            yAxis: {
+                type: 'value',
+                minInterval: 1,
+                splitLine: { lineStyle: { color: gridColor } },
+                axisLabel: { color: textColor, fontSize: 10 }
+            },
+            series: [{
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 4,
+                data: trend.map(function (item) {
+                    return item.count;
+                }),
+                lineStyle: { color: accent, width: 2 },
+                itemStyle: { color: accent },
+                areaStyle: { color: accent, opacity: 0.12 }
+            }]
+        }, true);
+    }
+
+    function renderCharts(stats) {
+        if (!stats) {
+            return;
+        }
+        lastStats = stats;
+        renderStatusChart(stats);
+        renderTrendChart(stats);
+    }
+
+    function watchChartTheme() {
+        window.addEventListener('resize', function () {
+            if (statusChartInstance) {
+                statusChartInstance.resize();
+            }
+            if (trendChartInstance) {
+                trendChartInstance.resize();
+            }
+        });
+        if (!window.MutationObserver) {
+            return;
+        }
+        new MutationObserver(function () {
+            if (lastStats) {
+                renderCharts(lastStats);
+            }
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     }
 
     // ==================== 表头排序 / 筛选联动 ====================
@@ -1301,6 +1456,7 @@
         bindEvents();
         syncFilterSelects();
         updateSortIndicators();
+        watchChartTheme();
         loadStats();
         loadList(1);
         loadDeleted();

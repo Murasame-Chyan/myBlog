@@ -14,4 +14,6 @@ public class JobApplicationStatsVO {
     private long dueToday;
     private List<CountItemVO> byStatus;
     private List<CountItemVO> byChannel;
+    /** 近 30 天投递趋势（按日期升序，无数据补 0） */
+    private List<DailyCountVO> trend;
 }

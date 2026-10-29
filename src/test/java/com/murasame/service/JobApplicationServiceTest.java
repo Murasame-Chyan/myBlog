@@ -278,6 +278,25 @@ class JobApplicationServiceTest {
         assertEquals(app.getCompany(), list.get(0).getCompany());
     }
 
+    // ==================== 11. 统计：近 30 天趋势零填充 ====================
+
+    @Test
+    void stats_builds30DayTrendWithZeroFill() {
+        java.util.Map<String, Object> row = new java.util.HashMap<>();
+        row.put("day", "2026-12-20");
+        row.put("cnt", 2);
+        when(appMapper.countAppliedByDay(eq(USER_ID), eq(LocalDate.of(2026, 12, 4))))
+                .thenReturn(java.util.List.of(row));
+
+        com.murasame.domain.vo.JobApplicationStatsVO vo = service.stats(USER_ID);
+
+        assertEquals(30, vo.getTrend().size());
+        assertEquals("2026-12-04", vo.getTrend().get(0).getDate());
+        assertEquals("2027-01-02", vo.getTrend().get(29).getDate());
+        assertEquals(2L, vo.getTrend().get(16).getCount());
+        assertEquals(0L, vo.getTrend().get(0).getCount());
+    }
+
     // ==================== 测试数据构造 ====================
 
     private JobApplication application(String status, LocalDate appliedAt, LocalDate followUpAt) {

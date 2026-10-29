@@ -135,6 +135,12 @@ public interface JobApplicationMapper {
                                         @Param("today") LocalDate today,
                                         @Param("limit") int limit);
 
+    /** 近 N 天投递趋势：按 applied_at 日期分组 */
+    @Select("SELECT DATE_FORMAT(applied_at, '%Y-%m-%d') AS day, COUNT(*) AS cnt " +
+            "FROM job_application WHERE u_id = #{userId} AND deleted_at IS NULL AND applied_at >= #{from} " +
+            "GROUP BY DATE_FORMAT(applied_at, '%Y-%m-%d')")
+    List<Map<String, Object>> countAppliedByDay(@Param("userId") Long userId, @Param("from") LocalDate from);
+
     /** 导出用：当前用户全部未删除记录（按投递日期倒序） */
     @Select("SELECT * FROM job_application WHERE u_id = #{userId} AND deleted_at IS NULL " +
             "ORDER BY applied_at DESC, id DESC")
