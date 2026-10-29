@@ -703,6 +703,7 @@
             contact: trimmedValueOf('contactInput') || null,
             nextAction: trimmedValueOf('nextActionInput') || null,
             followUpAt: valueOf('followUpAtInput') || null,
+            jobUrl: trimmedValueOf('jobUrlInput') || null,
             notes: trimmedValueOf('notesInput') || null
         };
     }
