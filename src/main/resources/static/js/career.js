@@ -1145,6 +1145,7 @@
             if (overdueEl) {
                 overdueEl.checked = false;
             }
+            setValue('sortByMobile', '');
             state.sortBy = '';
             state.sortOrder = 'desc';
             syncFilterSelects();
@@ -1173,6 +1174,19 @@
                 }
                 loadList(1);
             });
+        });
+        on($('sortByMobile'), 'change', function () {
+            var value = valueOf('sortByMobile') || '';
+            if (!value) {
+                state.sortBy = '';
+                state.sortOrder = 'desc';
+            } else {
+                var parts = value.split(':');
+                state.sortBy = parts[0];
+                state.sortOrder = parts[1] || 'desc';
+            }
+            updateSortIndicators();
+            loadList(1);
         });
         Array.prototype.forEach.call(document.querySelectorAll('.career-th-sort'), function (th) {
             on(th, 'click', function () {

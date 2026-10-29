@@ -116,6 +116,14 @@
                     <option value="">全部渠道</option>
                     <option th:each="opt : ${channelOptions}" th:value="${opt.code}" th:text="${opt.label}"></option>
                 </select>
+                <select id="sortByMobile" class="career-select" aria-label="排序（移动端）">
+                    <option value="">最新投递</option>
+                    <option value="applied:asc">投递日期（旧→新）</option>
+                    <option value="applied:desc">投递日期（新→旧）</option>
+                    <option value="followUp:asc">跟进日期（近→远）</option>
+                    <option value="followUp:desc">跟进日期（远→近）</option>
+                    <option value="updated:desc">最近更新</option>
+                </select>
             </section>
 
             <p class="career-total-text" id="listTotalText"></p>

@@ -38,14 +38,7 @@ public interface JobApplicationMapper {
             "<if test='status != null'>AND `status` = #{status} </if>" +
             "<if test='channel != null'>AND channel = #{channel} </if>" +
             "<if test='overdue'>AND follow_up_at IS NOT NULL AND follow_up_at &lt; #{today} AND `status` NOT IN ('offer','rejected','dropped','archived') </if>" +
-            "<choose>" +
-            "<when test='sortBy == \"applied\"'>ORDER BY applied_at " +
-            "<choose><when test='sortOrder == \"asc\"'>ASC</when><otherwise>DESC</otherwise></choose>, id DESC </when>" +
-            "<when test='sortBy == \"followUp\"'>ORDER BY follow_up_at IS NULL, follow_up_at " +
-            "<choose><when test='sortOrder == \"asc\"'>ASC</when><otherwise>DESC</otherwise></choose>, id DESC </when>" +
-            "<when test='sortBy == \"updated\"'>ORDER BY updated_at DESC, id DESC </when>" +
-            "<otherwise>ORDER BY applied_at DESC, id DESC </otherwise>" +
-            "</choose>" +
+            "ORDER BY ${orderBy}, id DESC " +
             "LIMIT #{pageSize} OFFSET #{offset}" +
             "</script>")
     List<JobApplication> selectPage(@Param("userId") Long userId,
@@ -53,8 +46,7 @@ public interface JobApplicationMapper {
                                     @Param("status") String status,
                                     @Param("channel") String channel,
                                     @Param("overdue") boolean overdue,
-                                    @Param("sortBy") String sortBy,
-                                    @Param("sortOrder") String sortOrder,
+                                    @Param("orderBy") String orderBy,
                                     @Param("today") LocalDate today,
                                     @Param("offset") int offset,
                                     @Param("pageSize") int pageSize);

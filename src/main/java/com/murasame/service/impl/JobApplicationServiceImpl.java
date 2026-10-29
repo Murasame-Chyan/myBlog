@@ -75,12 +75,11 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         String status = normalizeStatusFilter(q.getStatus());
         String channel = normalizeChannelFilter(q.getChannel());
         boolean overdue = Boolean.TRUE.equals(q.getOverdue());
-        String sortBy = normalizeSortBy(q.getSortBy());
-        String sortOrder = normalizeSortOrder(q.getSortOrder());
+        String orderBy = resolveOrderBy(blankToNull(q.getSortBy()), q.getSortOrder());
         LocalDate today = today();
 
         List<JobApplication> rows = jobApplicationMapper.selectPage(
-                userId, keyword, status, channel, overdue, sortBy, sortOrder, today, offset, pageSize);
+                userId, keyword, status, channel, overdue, orderBy, today, offset, pageSize);
         long total = jobApplicationMapper.countPage(userId, keyword, status, channel, overdue, today);
 
         JobApplicationPageVO vo = new JobApplicationPageVO();
@@ -535,14 +534,19 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         return value != null && CareerEnums.isValidChannel(value) ? value : null;
     }
 
-    private static String normalizeSortBy(String sortBy) {
-        String value = blankToNull(sortBy);
-        return ("applied".equals(value) || "followUp".equals(value) || "updated".equals(value)) ? value : null;
-    }
-
-    private static String normalizeSortOrder(String sortOrder) {
-        String value = blankToNull(sortOrder);
-        return "asc".equalsIgnoreCase(value) ? "asc" : "desc";
+    /** 排序白名单：只允许固定片段，避免 SQL 注入（Mapper 用 ${orderBy} 拼接） */
+    private static String resolveOrderBy(String sortBy, String sortOrder) {
+        boolean asc = "asc".equalsIgnoreCase(blankToNull(sortOrder));
+        if ("followUp".equals(sortBy)) {
+            return asc ? "follow_up_at IS NULL, follow_up_at ASC" : "follow_up_at IS NULL, follow_up_at DESC";
+        }
+        if ("updated".equals(sortBy)) {
+            return "updated_at DESC";
+        }
+        if ("applied".equals(sortBy)) {
+            return asc ? "applied_at ASC" : "applied_at DESC";
+        }
+        return "applied_at DESC";
     }
 
     /** 把 [{code, cnt}] 转成 code -> count（列名大小写不敏感，兼容不同驱动） */
