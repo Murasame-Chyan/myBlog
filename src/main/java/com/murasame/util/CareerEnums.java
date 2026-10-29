@@ -139,4 +139,13 @@ public final class CareerEnums {
     public static boolean isManualEventType(String type) {
         return type != null && MANUAL_EVENT_TYPES.contains(type);
     }
+
+    /** 手动可添加的事件类型标签（note/interview/follow_up），供前端下拉使用 */
+    public static Map<String, String> manualEventTypeLabels() {
+        Map<String, String> labels = new LinkedHashMap<>();
+        for (String type : MANUAL_EVENT_TYPES) {
+            labels.put(type, EVENT_TYPE_LABELS.getOrDefault(type, type));
+        }
+        return Collections.unmodifiableMap(labels);
+    }
 }

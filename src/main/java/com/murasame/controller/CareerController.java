@@ -73,7 +73,8 @@ public class CareerController {
         model.addAttribute("statusOptions", toOptions(CareerEnums.statusLabels()));
         model.addAttribute("channelOptions", toOptions(CareerEnums.channelLabels()));
         model.addAttribute("priorityOptions", toOptions(CareerEnums.priorityLabels()));
-        model.addAttribute("eventTypeOptions", toOptions(CareerEnums.eventTypeLabels()));
+        // 只允许手动追加 note/interview/follow_up（created/status_change 由系统写入）
+        model.addAttribute("eventTypeOptions", toOptions(CareerEnums.manualEventTypeLabels()));
         return "career";
     }
 
