@@ -258,17 +258,18 @@
   --text-disabled: #999;
 
   /* Glass surfaces — more opaque for light mode */
-  --glass-03: rgba(255, 255, 255, 0.5);
-  --glass-04: rgba(255, 255, 255, 0.55);
-  --glass-05: rgba(255, 255, 255, 0.6);
-  --glass-06: rgba(255, 255, 255, 0.65);
-  --glass-07: rgba(255, 255, 255, 0.675);
-  --glass-08: rgba(255, 255, 255, 0.7);
-  --glass-10: rgba(255, 255, 255, 0.75);
-  --glass-12: rgba(255, 255, 255, 0.78);
-  --glass-14: rgba(255, 255, 255, 0.8);
-  --glass-15: rgba(255, 255, 255, 0.82);
-  --glass-18: rgba(255, 255, 255, 0.88);
+  /* 暖米黄（替代纯白，减少刺眼感） */
+  --glass-03: rgba(250, 244, 232, 0.5);
+  --glass-04: rgba(250, 244, 232, 0.55);
+  --glass-05: rgba(250, 244, 232, 0.6);
+  --glass-06: rgba(250, 244, 232, 0.65);
+  --glass-07: rgba(250, 244, 232, 0.675);
+  --glass-08: rgba(250, 244, 232, 0.7);
+  --glass-10: rgba(250, 244, 232, 0.75);
+  --glass-12: rgba(250, 244, 232, 0.78);
+  --glass-14: rgba(250, 244, 232, 0.8);
+  --glass-15: rgba(250, 244, 232, 0.82);
+  --glass-18: rgba(250, 244, 232, 0.88);
   --glass-20: rgba(0, 0, 0, 0.08);
   --glass-25: rgba(0, 0, 0, 0.12);
   --glass-28: rgba(0, 0, 0, 0.135);
@@ -321,12 +322,12 @@
   --overlay-gradient: none;
 
   /* Surfaces */
-  --dropdown-bg: rgba(255, 255, 255, 0.97);
-  --modal-bg: #ffffff;
+  --dropdown-bg: rgba(250, 245, 234, 0.97);
+  --modal-bg: #faf6ec;
   --input-text: #333;
 
   /* Navbar */
-  --navbar-bg: rgba(255, 255, 255, 0.92);
+  --navbar-bg: rgba(250, 245, 234, 0.92);
   --navbar-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   --nav-link-color: rgba(26, 30, 43, 0.65);
   --nav-link-hover: #1a1e2b;
@@ -356,13 +357,13 @@
 
   /* Misc */
   --body-text: #1a1e2b;
-  --card-bg: rgba(255, 255, 255, 0.75);
-  --card-bg-hover: rgba(255, 255, 255, 0.92);
+  --card-bg: rgba(250, 245, 234, 0.78);
+  --card-bg-hover: rgba(252, 248, 239, 0.94);
   --card-border-hover: rgba(74, 155, 181, 0.35);
   --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1), 0 0 15px rgba(74, 155, 181, 0.12);
   --meta-color: rgba(26, 30, 43, 0.6);
   --meta-icon: #4a9bb5;
-  --divider: rgba(0, 0, 0, 0.1);
+  --divider: rgba(120, 96, 60, 0.16);
   --tag-bg: rgba(74, 155, 181, 0.1);
   --tag-border: rgba(74, 155, 181, 0.25);
   --tag-hover-bg: rgba(74, 155, 181, 0.2);
@@ -393,7 +394,7 @@
   --level-lv7: #AB47BC;
 
   /* Content card border */
-  --content-card-border: rgba(0, 0, 0, 0.06);
+  --content-card-border: rgba(120, 96, 60, 0.14);
 
   /* Link */
   --link-color: #1a1e2b;
@@ -474,9 +475,10 @@
 
 /* 亮色模式：泛白半透明遮罩 */
 [data-theme="light"] body::before {
+  /* 暖米黄遮罩，替代泛白遮罩 */
   background: radial-gradient(ellipse at center,
-    rgba(255, 255, 255, 0.25) 0%,
-    rgba(255, 255, 255, 0.45) 100%);
+    rgba(247, 239, 224, 0.35) 0%,
+    rgba(243, 233, 214, 0.55) 100%);
 }
 
 /* ---- Smooth transition on body ---- */
