@@ -103,6 +103,36 @@
         el.disabled = !!busy;
     }
 
+    // ==================== URL 处理 ====================
+    /** 只允许 http/https，其余（含 javascript: 等）一律不渲染成链接 */
+    function safeUrl(url) {
+        if (!url) {
+            return '';
+        }
+        var value = String(url).trim();
+        return /^https?:\/\//i.test(value) ? value : '';
+    }
+
+    /** 保存前归一化：没写协议的自动补 https:// */
+    function normalizeUrl(url) {
+        var value = String(url === null || url === undefined ? '' : url).trim();
+        if (!value) {
+            return null;
+        }
+        return /^https?:\/\//i.test(value) ? value : ('https://' + value);
+    }
+
+    /** 渠道展示：填了 JD 链接就渲染成可点击的外链，否则纯文本 */
+    function channelHtml(app, withIcon) {
+        var text = escapeHtml(app.channelLabel || labelOf(CHANNEL_LABELS, app.channel));
+        var url = safeUrl(app.jobUrl);
+        if (!url) {
+            return text;
+        }
+        return '<a class="career-channel-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer"' +
+            ' title="打开 JD 链接">' + text + (withIcon === false ? '' : ' <i class="bi bi-box-arrow-up-right"></i>') + '</a>';
+    }
+
     // ==================== 新增表单草稿（localStorage） ====================
     var DRAFT_KEY = 'career_application_draft';
     var draftTimer = null;
@@ -430,7 +460,7 @@
             '<div class="career-cell-company">' + escapeHtml(app.company) + '</div>' +
             '<div class="career-cell-position">' + escapeHtml(app.position) + location + '</div>' +
             '</td>' +
-            '<td>' + escapeHtml(app.channelLabel || labelOf(CHANNEL_LABELS, app.channel)) + '</td>' +
+            '<td>' + channelHtml(app) + '</td>' +
             '<td>' + statusBadgeHtml(app) + '</td>' +
             '<td class="career-cell-date">' + escapeHtml(fmtDate(app.appliedAt)) + '</td>' +
             '<td class="' + followDateClass(app) + '">' + (app.followUpAt ? escapeHtml(fmtDate(app.followUpAt)) : '—') + '</td>' +
@@ -487,7 +517,7 @@
             '<div class="career-card-meta">' +
             '<span>' + escapeHtml(fmtDate(app.appliedAt)) + '</span>' +
             '<span>' + escapeHtml(days) + '</span>' +
-            '<span>' + escapeHtml(app.channelLabel || labelOf(CHANNEL_LABELS, app.channel)) + '</span>' +
+            '<span>' + channelHtml(app, false) + '</span>' +
             (app.followUpAt ? '<span>跟进 ' + escapeHtml(fmtDate(app.followUpAt)) + '</span>' : '') +
             '</div>' +
             '</div>';
@@ -703,7 +733,7 @@
             contact: trimmedValueOf('contactInput') || null,
             nextAction: trimmedValueOf('nextActionInput') || null,
             followUpAt: valueOf('followUpAtInput') || null,
-            jobUrl: trimmedValueOf('jobUrlInput') || null,
+            jobUrl: normalizeUrl(valueOf('jobUrlInput')),
             notes: trimmedValueOf('notesInput') || null
         };
     }
@@ -717,6 +747,10 @@
             return '<div class="career-meta-item"><span>' + escapeHtml(label) + '</span><strong>' +
                 escapeHtml(value) + '</strong></div>';
         };
+        var metaItemHtml = function (label, valueHtml) {
+            return '<div class="career-meta-item"><span>' + escapeHtml(label) + '</span><strong>' +
+                valueHtml + '</strong></div>';
+        };
         box.innerHTML =
             '<div class="career-meta-head">' +
             '<span class="career-meta-company">' + escapeHtml(app.company) + '</span>' +
@@ -728,7 +762,7 @@
             metaItem('已投天数', (app.appliedDays || 0) + ' 天') +
             metaItem('当前状态停留', (app.statusDays || 0) + ' 天') +
             metaItem('跟进日期', app.followUpAt ? fmtDate(app.followUpAt) : '未设置') +
-            metaItem('渠道', app.channelLabel || labelOf(CHANNEL_LABELS, app.channel)) +
+            metaItemHtml('渠道', channelHtml(app)) +
             metaItem('优先级', app.priorityLabel || labelOf(PRIORITY_LABELS, app.priority)) +
             metaItem('薪资', app.salaryRange || '—') +
             metaItem('下一步', app.nextAction || '—') +

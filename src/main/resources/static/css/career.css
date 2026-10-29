@@ -507,6 +507,21 @@
     color: var(--text-disabled);
 }
 
+.career-channel-link {
+    color: var(--accent);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.career-channel-link:hover {
+    text-decoration: underline;
+}
+
+.career-channel-link i {
+    font-size: 0.68rem;
+    opacity: 0.8;
+}
+
 .career-cell-date {
     font-variant-numeric: tabular-nums;
     color: var(--text-disabled);

@@ -21,6 +21,8 @@ public class JobApplicationBriefVO {
     private String priority;
     private String priorityLabel;
     private String location;
+    /** JD 链接（列表里渠道可点击跳转，前端只认 http/https） */
+    private String jobUrl;
     private LocalDate appliedAt;
     private LocalDate followUpAt;
     private String nextAction;

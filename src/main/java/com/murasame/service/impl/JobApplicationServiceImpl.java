@@ -364,6 +364,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         vo.setPriority(app.getPriority());
         vo.setPriorityLabel(CareerEnums.priorityLabel(app.getPriority()));
         vo.setLocation(app.getLocation());
+        vo.setJobUrl(app.getJobUrl());
         vo.setAppliedAt(app.getAppliedAt());
         vo.setFollowUpAt(app.getFollowUpAt());
         vo.setNextAction(app.getNextAction());
