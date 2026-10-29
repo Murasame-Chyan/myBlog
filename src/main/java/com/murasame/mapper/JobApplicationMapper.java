@@ -120,4 +120,22 @@ public interface JobApplicationMapper {
             "AND follow_up_at = #{today} " +
             "AND `status` NOT IN ('offer','rejected','dropped','archived')")
     long countDueToday(@Param("userId") Long userId, @Param("today") LocalDate today);
+
+    /** 逾期跟进列表（列表页置顶分组，按跟进日期升序） */
+    @Select("SELECT * FROM job_application WHERE u_id = #{userId} AND deleted_at IS NULL " +
+            "AND follow_up_at IS NOT NULL AND follow_up_at < #{today} " +
+            "AND `status` NOT IN ('offer','rejected','dropped','archived') " +
+            "ORDER BY follow_up_at ASC, id DESC LIMIT #{limit}")
+    List<JobApplication> selectOverdue(@Param("userId") Long userId,
+                                       @Param("today") LocalDate today,
+                                       @Param("limit") int limit);
+
+    /** 今日跟进列表（列表页置顶分组） */
+    @Select("SELECT * FROM job_application WHERE u_id = #{userId} AND deleted_at IS NULL " +
+            "AND follow_up_at = #{today} " +
+            "AND `status` NOT IN ('offer','rejected','dropped','archived') " +
+            "ORDER BY id DESC LIMIT #{limit}")
+    List<JobApplication> selectDueToday(@Param("userId") Long userId,
+                                        @Param("today") LocalDate today,
+                                        @Param("limit") int limit);
 }
